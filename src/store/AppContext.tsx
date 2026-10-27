@@ -9,6 +9,7 @@ type Ctx = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (p: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (updates: Partial<User>) => void;
   favs: string[]; toggleFav: (id: string) => void;
   search: SearchState; setSearch: (s: SearchState) => void;
   filters: FilterState; setFilters: (f: FilterState) => void;
@@ -62,11 +63,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser((prev) => prev ? { ...prev, ...updates } : prev);
+  }, []);
+
   const toggleFav = (id: string) => setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   const addBooking = (b: Booking) => setBookings((x) => [b, ...x]);
 
   return (
-    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking }}>
+    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, updateUser, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking }}>
       {children}
     </C.Provider>
   );

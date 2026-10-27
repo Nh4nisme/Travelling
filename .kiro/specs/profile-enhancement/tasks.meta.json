@@ -1,0 +1,252 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Extend navigation types for profile sub-screens": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102036564
+      },
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102053572
+      },
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102088382
+      }
+    ],
+    "1.2 Create profile feature types file": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102036829
+      },
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102115692
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102480460
+      }
+    ],
+    "2.1 Create MenuItem component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102036940
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102569647
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951681
+      }
+    ],
+    "2.2 Create ProfileHeader component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037043
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102569837
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951098
+      }
+    ],
+    "2.3 Create SettingRow component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037151
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102569916
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951278
+      }
+    ],
+    "3.1 Add PATCH /api/auth/me endpoint to server": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037327
+      },
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102115843
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102496616
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102559762
+      }
+    ],
+    "4.1 Create userService.ts": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037445
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102570054
+      },
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951758
+      }
+    ],
+    "5.1 Create PersonalInfoScreen component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037610
+      },
+      {
+        "executionId": "bc017bc5-3354-443d-9471-7e2ac3cff875",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793103232306
+      }
+    ],
+    "6.1 Create PaymentsScreen component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037731
+      },
+      {
+        "executionId": "bc017bc5-3354-443d-9471-7e2ac3cff875",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793103232114
+      }
+    ],
+    "7.1 Create NotificationsScreen component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037814
+      },
+      {
+        "executionId": "bc017bc5-3354-443d-9471-7e2ac3cff875",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793103234090
+      }
+    ],
+    "8.1 Create HelpCenterScreen component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102037896
+      },
+      {
+        "executionId": "bc017bc5-3354-443d-9471-7e2ac3cff875",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793103235557
+      }
+    ],
+    "9.1 Create SettingsScreen component": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038032
+      },
+      {
+        "executionId": "bc017bc5-3354-443d-9471-7e2ac3cff875",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793103235465
+      }
+    ],
+    "10.1 Refactor ProfileScreen to use new components": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038126
+      }
+    ],
+    "11.1 Add profile sub-screens to RootNavigator": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038310
+      }
+    ],
+    "12.1 Update profile index.ts exports": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038410
+      }
+    ],
+    "13. Checkpoint - Test navigation and core flows": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038509
+      }
+    ],
+    "15. Final checkpoint - Verify all requirements": [
+      {
+        "executionId": "2d343c1e-d110-4a92-9fc2-4a23bf55d558",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102038588
+      }
+    ],
+    "1. Set up types, interfaces, and navigation routes": [
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102480500
+      }
+    ],
+    "3. Implement backend endpoint for profile updates": [
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102559937
+      }
+    ],
+    "2. Create shared profile components": [
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951828
+      }
+    ],
+    "4. Create userService for profile operations": [
+      {
+        "executionId": "4e2dbf3d-b04f-4b6e-9163-1a3db692cfd3",
+        "chatSessionId": "sess_3b2019b9-78b5-4e78-84a6-3bfe03cdaf2b",
+        "timestamp": 1793102951927
+      }
+    ]
+  }
+}

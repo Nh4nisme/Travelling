@@ -50,4 +50,44 @@ router.post('/login', async (req, res) => {
 // GET /api/auth/me  (cần header Authorization: Bearer <token>)
 router.get('/me', auth, (req, res) => res.json({ user: req.user.toPublic() }));
 
+// PATCH /api/auth/me - Update user profile
+router.patch('/me', auth, async (req, res) => {
+  try {
+    const { name, phone } = req.body || {};
+
+    // Validate name - required and not empty
+    if (name !== undefined) {
+      if (typeof name !== 'string' || name.trim() === '') {
+        return res.status(400).json({ message: 'Tên không được để trống' });
+      }
+    }
+
+    // Build update object
+    const updates = {};
+    if (name !== undefined) updates.name = name.trim();
+    if (phone !== undefined) updates.phone = typeof phone === 'string' ? phone.trim() : '';
+
+    // Only proceed if there are updates
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'Không có dữ liệu cập nhật' });
+    }
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    res.json({ user: user.toPublic() });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
 module.exports = router;

@@ -1,27 +1,88 @@
-import { View, Text, Pressable, ScrollView, Image, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { Screen, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
-import { avatar } from '@/data/reviews';
+import { ProfileHeader } from '../components/ProfileHeader';
+import { MenuItem } from '../components/MenuItem';
 import { useApp } from '@/store/AppContext';
 
 export function ProfileScreen({ navigation }: any) {
   const { user, signOut, favs, bookings } = useApp();
-  const items = [['person-outline', 'Personal info'], ['card-outline', 'Payments'], ['notifications-outline', 'Notifications'], ['help-circle-outline', 'Help center']] as const;
+
+  const handleMenuItemPress = (screenName: string) => {
+    if (!user) {
+      navigation.navigate('Auth');
+      return;
+    }
+
+    switch (screenName) {
+      case 'Personal info':
+        navigation.navigate('PersonalInfo');
+        break;
+      case 'Payments':
+        navigation.navigate('Payments');
+        break;
+      case 'Notifications':
+        navigation.navigate('Notifications');
+        break;
+      case 'Help center':
+        navigation.navigate('HelpCenter');
+        break;
+      case 'Settings':
+        navigation.navigate('Settings');
+        break;
+      default:
+        Alert.alert(screenName, 'Coming soon');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+  };
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={{ alignItems: 'center', marginVertical: 20 }}>
-          <Image source={{ uri: avatar(32) }} style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: c.soft }} />
-          <Text style={[S.h2, { marginTop: 12 }]}>{user?.name ?? 'Guest'}</Text><Text style={S.muted}>{user?.email}</Text>{!!user?.phone && <Text style={S.muted}>{user.phone}</Text>}
-          <Text style={[S.muted, { marginTop: 6 }]}>{favs.length} favorites · {bookings.length} bookings</Text>
+        <ProfileHeader
+          user={user}
+          favsCount={favs.length}
+          bookingsCount={bookings.length}
+        />
+
+        <View style={{ marginTop: 8 }}>
+          <MenuItem
+            icon="person-outline"
+            title="Personal info"
+            onPress={() => handleMenuItemPress('Personal info')}
+          />
+          <MenuItem
+            icon="card-outline"
+            title="Payments"
+            onPress={() => handleMenuItemPress('Payments')}
+          />
+          <MenuItem
+            icon="notifications-outline"
+            title="Notifications"
+            onPress={() => handleMenuItemPress('Notifications')}
+          />
+          <MenuItem
+            icon="help-circle-outline"
+            title="Help center"
+            onPress={() => handleMenuItemPress('Help center')}
+          />
+          <MenuItem
+            icon="settings-outline"
+            title="Settings"
+            onPress={() => handleMenuItemPress('Settings')}
+          />
         </View>
-        {items.map(([ic, t]) => (
-          <Pressable key={t} onPress={() => Alert.alert(t, 'Coming soon')} style={[S.between, { paddingVertical: 16, borderBottomWidth: 1, borderColor: c.soft }]}>
-            <View style={[S.row, { gap: 12 }]}><Ionicons name={ic as any} size={22} /><Text style={{ fontSize: 16 }}>{t}</Text></View><Ionicons name="chevron-forward" size={18} color={c.m} />
-          </Pressable>
-        ))}
-        <Btn outline color="#D94A55" title="Log out" style={{ marginTop: 28 }} onPress={async () => { await signOut(); navigation.reset({ index: 0, routes: [{ name: 'Auth' }] }); }} />
+
+        <Btn
+          outline
+          color="#D94A55"
+          title={user ? "Log out" : "Sign in"}
+          style={{ marginTop: 28 }}
+          onPress={user ? handleLogout : () => navigation.navigate('Auth')}
+        />
       </ScrollView>
     </Screen>
   );
