@@ -1,1 +1,17 @@
-{ "expo": { "name": "Travelling App", "slug": "travelling-app", "version": "1.0.0", "orientation": "portrait", "userInterfaceStyle": "light", "ios": { "supportsTablet": false }, "android": {}, "web": {} } }
+{
+  "expo": {
+    "name": "Travelling App",
+    "slug": "travelling-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {},
+    "web": {},
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

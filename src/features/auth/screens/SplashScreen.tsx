@@ -1,12 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Screen } from '@/components';
 import { S } from '@/constants/theme';
 import { useApp } from '@/store/AppContext';
 
 export function SplashScreen({ navigation }: any) {
-  const { loggedIn } = useApp();
-  useEffect(() => { const t = setTimeout(() => navigation.replace(loggedIn ? 'Main' : 'Auth'), 1200); return () => clearTimeout(t); }, []);
+  const { loggedIn, authReady } = useApp();
+  const [minElapsed, setMinElapsed] = useState(false);
+
+  useEffect(() => { const t = setTimeout(() => setMinElapsed(true), 1200); return () => clearTimeout(t); }, []);
+
+  // Chờ cả hiệu ứng splash lẫn việc kiểm tra token xong rồi mới điều hướng
+  useEffect(() => {
+    if (authReady && minElapsed) navigation.replace(loggedIn ? 'Main' : 'Auth');
+  }, [authReady, minElapsed, loggedIn]);
+
   return (
     <Screen style={{ alignItems: 'center', justifyContent: 'center' }}>
       <View style={S.row}>
