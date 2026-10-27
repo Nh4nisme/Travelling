@@ -6,14 +6,14 @@ import { avatar } from '@/data/reviews';
 import { useApp } from '@/store/AppContext';
 
 export function ProfileScreen({ navigation }: any) {
-  const { setLoggedIn, favs, bookings } = useApp();
+  const { user, signOut, favs, bookings } = useApp();
   const items = [['person-outline', 'Personal info'], ['card-outline', 'Payments'], ['notifications-outline', 'Notifications'], ['help-circle-outline', 'Help center']] as const;
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={{ alignItems: 'center', marginVertical: 20 }}>
           <Image source={{ uri: avatar(32) }} style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: c.soft }} />
-          <Text style={[S.h2, { marginTop: 12 }]}>Alex Nguyen</Text><Text style={S.muted}>+1 555 0100</Text>
+          <Text style={[S.h2, { marginTop: 12 }]}>{user?.name ?? 'Guest'}</Text><Text style={S.muted}>{user?.email}</Text>{!!user?.phone && <Text style={S.muted}>{user.phone}</Text>}
           <Text style={[S.muted, { marginTop: 6 }]}>{favs.length} favorites · {bookings.length} bookings</Text>
         </View>
         {items.map(([ic, t]) => (
@@ -21,7 +21,7 @@ export function ProfileScreen({ navigation }: any) {
             <View style={[S.row, { gap: 12 }]}><Ionicons name={ic as any} size={22} /><Text style={{ fontSize: 16 }}>{t}</Text></View><Ionicons name="chevron-forward" size={18} color={c.m} />
           </Pressable>
         ))}
-        <Btn outline color="#D94A55" title="Log out" style={{ marginTop: 28 }} onPress={() => { setLoggedIn(false); navigation.reset({ index: 0, routes: [{ name: 'Auth' }] }); }} />
+        <Btn outline color="#D94A55" title="Log out" style={{ marginTop: 28 }} onPress={async () => { await signOut(); navigation.reset({ index: 0, routes: [{ name: 'Auth' }] }); }} />
       </ScrollView>
     </Screen>
   );
