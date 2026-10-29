@@ -1,8 +1,11 @@
-/**
- * Địa chỉ backend. Đặt trong file .env ở thư mục gốc project Expo:
- *   EXPO_PUBLIC_API_URL=http://192.168.1.10:4000/api
- * (Điện thoại thật phải dùng IP LAN của máy tính, KHÔNG dùng localhost.)
- */
+import { Platform } from 'react-native';
+
+const defaultApiHost = Platform.select({
+  android: '10.0.2.2',
+  ios: 'localhost',
+  default: 'localhost',
+});
+
 export const ENV = {
-  apiUrl: (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000/api').replace(/\/$/, ''),
+  apiUrl: (process.env.EXPO_PUBLIC_API_URL?.trim() || `http://${defaultApiHost}:4000/api`).replace(/\/+$/, ''),
 };

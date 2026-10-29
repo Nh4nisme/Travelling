@@ -9,10 +9,15 @@ import { useApp } from '@/store/AppContext';
 import { defaultSearch } from '@/store/defaults';
 import { Calendar } from '@/features/search/components/Calendar';
 
-export const REGIONS = [['Anywhere', IMG.anywhere], ['Europe', IMG.europe], ['Asia', IMG.asia], ['Americas', IMG.americas]];
+const REGION_IMAGES: Record<string, string> = { Europe: IMG.europe, Asia: IMG.asia, Americas: IMG.americas };
 
 export function SearchScreen({ navigation }: any) {
-  const { search, setSearch } = useApp();
+  const { search, setSearch, listings } = useApp();
+  const regions = [
+    { name: 'Anywhere', image: IMG.anywhere },
+    ...[...new Set(listings.map((listing) => listing.region))]
+      .map((region) => ({ name: region, image: REGION_IMAGES[region] ?? IMG.anywhere })),
+  ];
   const [s, setS] = useState({ ...search });
   const [open, setOpen] = useState<'where' | 'when' | 'who'>('where');
   const [anytime, setAnytime] = useState(false);
@@ -32,10 +37,10 @@ export function SearchScreen({ navigation }: any) {
             <Text style={[S.h1, { marginBottom: 14 }]}>Where to?</Text>
             <View style={[S.row, S.input, { gap: 8, paddingVertical: 4 }]}><Ionicons name="search" size={18} /><TextInput value={s.query} onChangeText={(q) => setS({ ...s, query: q })} placeholder="Search" style={{ flex: 1, fontSize: 16, paddingVertical: 8 }} /></View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16 }}>
-              {REGIONS.map(([n, img]) => (
-                <Pressable key={n} onPress={() => setS({ ...s, location: n })} style={{ marginRight: 14 }}>
-                  <Photo uri={img} style={{ width: 110, height: 110, borderRadius: 12, borderWidth: 3, borderColor: s.location === n ? c.p : 'transparent' }} />
-                  <Text style={{ marginTop: 6, fontWeight: s.location === n ? '700' : '400' }}>{n}</Text>
+              {regions.map(({ name, image }) => (
+                <Pressable key={name} onPress={() => setS({ ...s, location: name })} style={{ marginRight: 14 }}>
+                  <Photo uri={image} style={{ width: 110, height: 110, borderRadius: 12, borderWidth: 3, borderColor: s.location === name ? c.p : 'transparent' }} />
+                  <Text style={{ marginTop: 6, fontWeight: s.location === name ? '700' : '400' }}>{name}</Text>
                 </Pressable>
               ))}
             </ScrollView>

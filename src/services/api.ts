@@ -29,7 +29,7 @@ export async function api<T>(path: string, { method = 'GET', body, token, timeou
   } catch (e: any) {
     if (e instanceof ApiError) throw e;
     if (e?.name === 'AbortError') throw new ApiError('Máy chủ phản hồi quá lâu, vui lòng thử lại');
-    throw new ApiError('Không kết nối được máy chủ. Kiểm tra mạng và EXPO_PUBLIC_API_URL');
+    throw new ApiError(`Không kết nối được máy chủ tại ${ENV.apiUrl}. Kiểm tra máy chủ đang chạy và cấu hình EXPO_PUBLIC_API_URL cho simulator/thiết bị.`);
   } finally {
     clearTimeout(timer);
   }

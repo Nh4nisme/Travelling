@@ -3,18 +3,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn, Photo } from '@/components';
 import { c, S } from '@/constants/theme';
 import { fmt } from '@/utils/date';
-import { listingService } from '@/services/listingService';
 import { useApp } from '@/store/AppContext';
+import { ListingState } from '@/features/listing/components/shared';
 
 export function BookingsScreen({ navigation }: any) {
-  const { bookings } = useApp();
+  const { bookings, listings, listingsLoading, listingsError, refreshListings } = useApp();
+  const visibleBookings = bookings.filter((booking) => listings.some((listing) => listing.id === booking.listingId));
   return (
     <Screen>
       <Text style={[S.h1, { padding: 16 }]}>Bookings</Text>
-      <FlatList data={bookings} keyExtractor={(b) => b.id} contentContainerStyle={{ padding: 16, gap: 14 }}
-        ListEmptyComponent={<View style={{ alignItems: 'center', marginTop: 80 }}><Ionicons name="grid-outline" size={56} color={c.b} /><Text style={S.muted}>No bookings yet.</Text><Btn title="Find a place" onPress={() => navigation.navigate('Search')} style={{ marginTop: 16 }} /></View>}
+      <FlatList data={visibleBookings} keyExtractor={(b) => b.id} contentContainerStyle={{ padding: 16, gap: 14 }}
+        ListEmptyComponent={listingsLoading || listingsError
+          ? <ListingState loading={listingsLoading} error={listingsError} onRetry={() => void refreshListings()} />
+          : <View style={{ alignItems: 'center', marginTop: 80 }}><Ionicons name="grid-outline" size={56} color={c.b} /><Text style={S.muted}>No bookings yet.</Text><Btn title="Find a place" onPress={() => navigation.navigate('Search')} style={{ marginTop: 16 }} /></View>}
         renderItem={({ item }) => {
-          const l = listingService.getById(item.listingId);
+          const l = listings.find((listing) => listing.id === item.listingId);
+          if (!l) return null;
           return (
             <Pressable onPress={() => navigation.navigate('Detail', { id: l.id })} style={[S.row, S.box, { gap: 12 }]}>
               <Photo uri={l.images[0]} style={{ width: 90, height: 90, borderRadius: 10 }} />

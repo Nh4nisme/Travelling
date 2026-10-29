@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Btn, Stars, Photo, Heart } from '@/components';
+import { Btn, Stars, Photo, Heart, Screen } from '@/components';
 import { c, S, W } from '@/constants/theme';
-import { IMG } from '@/data/images';
-import { REVIEWS, avatar } from '@/data/reviews';
-import { getListing, ICON, Section, More } from '@/features/listing/components/shared';
+import { avatar } from '@/data/reviews';
+import { ICON, Section, More, useListing, ListingState } from '@/features/listing/components/shared';
+import { useApp } from '@/store/AppContext';
 
 export function DetailScreen({ route, navigation }: any) {
-  const l = getListing(route);
+  const l = useListing(route.params.id);
+  const { listingsLoading, listingsError, refreshListings } = useApp();
   const [idx, setIdx] = useState(0);
-  const feats = ['Wifi', ...l.facilities.filter((f) => f !== 'Internet access'), 'Garden'].slice(0, 4);
+  if (!l) return <Screen><ListingState loading={listingsLoading} error={listingsError} onRetry={() => void refreshListings()} /></Screen>;
+  const reviews = l.reviewItems ?? [];
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView>
@@ -25,36 +27,36 @@ export function DetailScreen({ route, navigation }: any) {
           <Text style={S.h1}>{l.title}</Text>
           <View style={[S.between, { marginTop: 8 }]}>
             <View style={[S.row, { gap: 4 }]}><Ionicons name="location" size={16} color={c.p} /><Text style={S.muted}>{l.city}, {l.country}</Text></View>
-            <Pressable onPress={() => navigation.navigate('Description')}><Text style={{ color: c.p, textDecorationLine: 'underline' }}>View map</Text></Pressable>
+            <Pressable onPress={() => navigation.navigate('Description', { id: l.id })}><Text style={{ color: c.p, textDecorationLine: 'underline' }}>View map</Text></Pressable>
           </View>
           <Pressable onPress={() => navigation.navigate('Reviews', { id: l.id })} style={[S.between, { backgroundColor: c.soft, borderRadius: 8, padding: 12, marginTop: 14 }]}>
-            <Text><Ionicons name="star" color={c.star} /> {l.rating === 5 ? '4.5' : l.rating}/5</Text><Text style={S.muted}>{l.reviews} reviews  ›</Text>
+            <Text><Ionicons name="star" color={c.star} /> {l.rating.toFixed(1)}/5</Text><Text style={S.muted}>{l.reviews} reviews  ›</Text>
           </Pressable>
         </View>
         <Section title="Facilities & services">
-          <Text style={[S.muted, { marginBottom: 10 }]}>2 Guests   {l.bedrooms} bedroom   1 bed   1 bath</Text>
-          {feats.map((f) => <View key={f} style={[S.row, { gap: 12, marginVertical: 6 }]}><Ionicons name={ICON[f] ?? 'checkmark-circle-outline'} size={20} /><Text style={{ fontSize: 16 }}>{f}</Text></View>)}
+          <Text style={[S.muted, { marginBottom: 10 }]}>{l.maxGuests} guests   {l.bedrooms} bedrooms   {l.beds} beds   {l.baths} baths</Text>
+          {l.facilities.slice(0, 4).map((f) => <View key={f} style={[S.row, { gap: 12, marginVertical: 6 }]}><Ionicons name={ICON[f] ?? 'checkmark-circle-outline'} size={20} /><Text style={{ fontSize: 16 }}>{f}</Text></View>)}
           <More t="Show all" onPress={() => navigation.navigate('Facilities', { id: l.id })} />
         </Section>
         <Section title="Reviews" right={<Pressable onPress={() => navigation.navigate('Reviews', { id: l.id })}><Text style={S.muted}>See all ›</Text></Pressable>}>
-          <Text style={{ fontSize: 34, fontWeight: '700' }}>4.5<Text style={{ fontSize: 16, color: c.m }}>/5</Text></Text>
+          <Text style={{ fontSize: 34, fontWeight: '700' }}>{l.rating.toFixed(1)}<Text style={{ fontSize: 16, color: c.m }}>/5</Text></Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-            {REVIEWS.map((r) => (
+            {reviews.map((r) => (
               <View key={r.name} style={[S.box, { width: W * 0.72, marginRight: 12 }]}>
-                <View style={S.between}><View style={[S.row, { gap: 8 }]}><Image source={{ uri: avatar(r.av) }} style={{ width: 36, height: 36, borderRadius: 18 }} /><View><Text style={{ fontWeight: '700' }}>{r.name}</Text><Text style={S.muted}>A day ago</Text></View></View><Stars n={r.stars} /></View>
+              <View style={S.between}><View style={[S.row, { gap: 8 }]}><Image source={{ uri: avatar(r.avatar) }} style={{ width: 36, height: 36, borderRadius: 18 }} /><Text style={{ fontWeight: '700' }}>{r.name}</Text></View><Stars n={r.stars} /></View>
                 <Text numberOfLines={2} style={[S.muted, { marginTop: 10 }]}>{r.text}</Text>
               </View>
             ))}
           </ScrollView>
         </Section>
         <Section title="Policies">
-          <View style={{ backgroundColor: c.soft, padding: 12, borderRadius: 8 }}><Text style={{ fontWeight: '700', marginBottom: 8 }}>House rules</Text><Text style={S.muted}>🕑 Earliest check-in time: 14:00</Text><Text style={[S.muted, { marginTop: 6 }]}>🕑 Latest check-out time: 12:00</Text></View>
+          <View style={{ backgroundColor: c.soft, padding: 12, borderRadius: 8 }}><Text style={{ fontWeight: '700', marginBottom: 8 }}>House rules</Text><Text style={S.muted}>🕑 Earliest check-in time: {l.checkInTime}</Text><Text style={[S.muted, { marginTop: 6 }]}>🕑 Latest check-out time: {l.checkOutTime}</Text></View>
           <Text style={{ fontWeight: '700', marginTop: 12 }}>Check-in policies</Text>
-          <Text numberOfLines={2} style={S.muted}>It's always a good idea to confirm the check-in policy directly with the owner/manager before your arrival so that you can...</Text>
+          <Text numberOfLines={2} style={S.muted}>{l.checkInPolicy}</Text>
           <More t="View more  ›" onPress={() => navigation.navigate('Description', { id: l.id })} />
         </Section>
         <Section title="Description">
-          <Photo uri={IMG.pool} style={{ height: 150, borderRadius: 8 }} />
+          <Photo uri={l.images[0]} style={{ height: 150, borderRadius: 8 }} />
           <Text numberOfLines={3} style={[S.muted, { marginTop: 10 }]}>{l.desc}</Text>
           <More t="View more  ›" onPress={() => navigation.navigate('Description', { id: l.id })} />
         </Section>

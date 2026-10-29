@@ -3,6 +3,8 @@ import { defaultSearch, defaultFilters } from '@/store/defaults';
 import type { SearchState, FilterState, Booking, User } from '@/store/types';
 import { authService } from '@/services/authService';
 import { tokenStorage } from '@/services/tokenStorage';
+import { listingService } from '@/services/listingService';
+import type { Listing } from '@/types/listing';
 
 type Ctx = {
   user: User | null; loggedIn: boolean; authReady: boolean;
@@ -13,6 +15,7 @@ type Ctx = {
   search: SearchState; setSearch: (s: SearchState) => void;
   filters: FilterState; setFilters: (f: FilterState) => void;
   bookings: Booking[]; addBooking: (b: Booking) => void;
+  listings: Listing[]; listingsLoading: boolean; listingsError: string | null; refreshListings: () => Promise<void>;
 };
 
 const C = createContext<Ctx>(null as any);
@@ -22,10 +25,27 @@ export const useApp = () => useContext(C);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [favs, setFavs] = useState<string[]>(['1', '3']);
+  const [favs, setFavs] = useState<string[]>([]);
   const [search, setSearch] = useState(defaultSearch);
   const [filters, setFilters] = useState(defaultFilters);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+  const [listingsError, setListingsError] = useState<string | null>(null);
+
+  const refreshListings = useCallback(async () => {
+    setListingsLoading(true);
+    try {
+      setListings(await listingService.getAll());
+      setListingsError(null);
+    } catch (error) {
+      setListingsError(error instanceof Error ? error.message : 'Unable to load places.');
+    } finally {
+      setListingsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void refreshListings(); }, [refreshListings]);
 
   // Khôi phục phiên đăng nhập khi mở app
   useEffect(() => {
@@ -66,7 +86,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addBooking = (b: Booking) => setBookings((x) => [b, ...x]);
 
   return (
-    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking }}>
+    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking, listings, listingsLoading, listingsError, refreshListings }}>
       {children}
     </C.Provider>
   );

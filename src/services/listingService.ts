@@ -1,11 +1,23 @@
-import { LISTINGS } from '@/data/listings';
+import { api } from '@/services/api';
 import type { Listing } from '@/types/listing';
+import type { FilterState, SearchState } from '@/store/types';
 
-/**
- * Điểm mở rộng để nối backend sau này (REST/GraphQL/Supabase...).
- * Hiện đọc từ mock data; chỉ cần thay thân hàm, giữ nguyên chữ ký.
- */
+function queryString(params: Record<string, string | number>) {
+  return Object.entries(params).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`).join('&');
+}
+
 export const listingService = {
-  getAll: (): Listing[] => LISTINGS,
-  getById: (id: string): Listing => LISTINGS.find((l) => l.id === id)!,
+  getAll: (): Promise<Listing[]> => api('/listings'),
+  getById: (id: string): Promise<Listing> => api(`/listings/${encodeURIComponent(id)}`),
+  search: (search: SearchState, filters: FilterState): Promise<Listing[]> => {
+    const params: Record<string, string | number> = {
+      q: search.query.trim(),
+      region: search.location,
+      minPrice: filters.min,
+      maxPrice: filters.max,
+    };
+    if (filters.types.length) params.types = filters.types.join(',');
+    if (filters.facilities.length) params.facilities = filters.facilities.join(',');
+    return api(`/listings/search?${queryString(params)}`);
+  },
 };
