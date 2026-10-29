@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Alert, Modal, Pressable } from 'react-native';
-import { Header, Screen } from '@/components';
+
 import { SettingRow } from '../components/SettingRow';
 import { c, S } from '@/constants/theme';
 import type { ThemeOption } from '../types';
@@ -38,8 +38,8 @@ export function SettingsScreen() {
   };
 
   return (
-    <Screen>
-      <Header title="Settings" />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+
 
       <View style={[S.pad, { flex: 1 }]}>
         <Text style={[S.muted, { marginVertical: 12 }]}>PREFERENCES</Text>
@@ -106,6 +106,6 @@ export function SettingsScreen() {
           </View>
         </Pressable>
       </Modal>
-    </Screen>
+    </View>
   );
 }

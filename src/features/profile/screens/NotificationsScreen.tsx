@@ -1,5 +1,5 @@
 import { View, Text, Alert } from 'react-native';
-import { Screen, Header } from '@/components';
+
 import { SettingRow } from '../components/SettingRow';
 import { c, S } from '@/constants/theme';
 
@@ -9,8 +9,8 @@ export function NotificationsScreen() {
   };
 
   return (
-    <Screen>
-      <Header title="Notifications" />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+
       <View style={[S.pad, { flex: 1 }]}>
         <Text style={[S.muted, { marginVertical: 16 }]}>
           Coming soon
@@ -34,6 +34,6 @@ export function NotificationsScreen() {
           onToggle={handleTogglePress}
         />
       </View>
-    </Screen>
+    </View>
   );
 }
