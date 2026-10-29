@@ -1,7 +1,8 @@
 import { u } from '@/data/images';
 import type { Conversation } from './types';
 
-export const CONVERSATIONS: Conversation[] = [
+// Danh sách hội thoại khi người dùng đăng nhập với tư cách KHÁCH HÀNG (Renter / Inquirer) - ví dụ Sơn
+export const RENTER_CONVERSATIONS: Conversation[] = [
   {
     id: 'conv-1',
     hostName: 'Jinny Oslin',
@@ -154,3 +155,119 @@ export const CONVERSATIONS: Conversation[] = [
     ],
   },
 ];
+
+// Danh sách hội thoại khi người dùng đăng nhập với tư cách CHỦ NHÀ (Host) - ví dụ Jinny Oslin
+export const HOST_CONVERSATIONS: Conversation[] = [
+  {
+    id: 'host-conv-1',
+    hostName: 'Sơn (Guest)',
+    hostAvatar: 23,
+    role: 'Verified Guest',
+    status: 'inquiry',
+    statusLabel: 'Inquiry · Balian treehouse',
+    listingId: '4',
+    listingTitle: 'Balian treehouse',
+    listingImage: u('1522708323590-d24dbb6b0267'),
+    listingPrice: 20,
+    dates: 'Inquiry · 3 nights',
+    lastMessage: 'Could you let me know if high-speed wifi is good for video calls?',
+    lastMessageTime: '5m ago',
+    unread: true,
+    messages: [
+      {
+        id: 'hm1',
+        sender: 'renter',
+        text: 'Chào bạn! Mình là Sơn (SĐT: 0833756579). Mình đang muốn đặt phòng Balian treehouse cho chuyến đi sắp tới.',
+        time: '11:00 AM',
+      },
+      {
+        id: 'hm2',
+        sender: 'renter',
+        text: 'Could you let me know if high-speed wifi is good for video calls and if parking is available?',
+        time: '11:02 AM',
+      },
+    ],
+  },
+  {
+    id: 'host-conv-2',
+    hostName: 'Alex Miller',
+    hostAvatar: 5,
+    role: 'Confirmed Guest',
+    status: 'confirmed',
+    statusLabel: 'Reserved · May 1 - 6',
+    listingId: '4',
+    listingTitle: 'Balian treehouse',
+    listingImage: u('1522708323590-d24dbb6b0267'),
+    listingPrice: 20,
+    dates: 'May 1 - 6, 2026',
+    lastMessage: 'Thanks Jinny! We will arrive around 3 PM on May 1st.',
+    lastMessageTime: '1h ago',
+    unread: false,
+    messages: [
+      {
+        id: 'hm201',
+        sender: 'host',
+        text: 'Hello Alex! We are excited to host you at Balian Treehouse on May 1st. Standard check-in is from 14:00.',
+        time: '9:00 AM',
+      },
+      {
+        id: 'hm202',
+        sender: 'renter',
+        text: 'Thanks Jinny! We will arrive around 3 PM on May 1st.',
+        time: '9:30 AM',
+      },
+    ],
+  },
+  {
+    id: 'host-conv-3',
+    hostName: 'Elena Rostova',
+    hostAvatar: 38,
+    role: 'Past Guest',
+    status: 'past',
+    statusLabel: 'Past stay · Balian treehouse',
+    listingId: '4',
+    listingTitle: 'Balian treehouse',
+    listingImage: u('1522708323590-d24dbb6b0267'),
+    listingPrice: 20,
+    dates: 'Checked out Apr 25, 2026',
+    lastMessage: 'Thank you for being an amazing host, Jinny! 5 stars!',
+    lastMessageTime: '4d ago',
+    unread: false,
+    messages: [
+      {
+        id: 'hm301',
+        sender: 'renter',
+        text: 'Thank you for being an amazing host, Jinny! 5 stars!',
+        time: 'Apr 25',
+      },
+      {
+        id: 'hm302',
+        sender: 'host',
+        text: 'Thank you Elena! You were a wonderful guest. Hope to see you again soon!',
+        time: 'Apr 25',
+      },
+    ],
+  },
+  {
+    id: 'host-conv-4',
+    hostName: 'Host Partner Support',
+    hostAvatar: 68,
+    role: 'Support Team',
+    status: 'support',
+    statusLabel: 'Host Payouts & Policies',
+    lastMessage: 'Your payout settings for Balian treehouse are verified.',
+    lastMessageTime: '2d ago',
+    unread: false,
+    messages: [
+      {
+        id: 'hm401',
+        sender: 'host',
+        text: 'Welcome to Travelling Host Hub! Your payout settings for Balian treehouse are verified.',
+        time: 'Apr 27',
+      },
+    ],
+  },
+];
+
+// Fallback mặc định
+export const CONVERSATIONS = RENTER_CONVERSATIONS;
