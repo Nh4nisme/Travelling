@@ -8,6 +8,12 @@ export function ProfileScreen({ navigation }: any) {
   const { user, signOut, favs, bookings } = useApp();
 
   const handleMenuItemPress = (screenName: string) => {
+    // Trung tâm trợ giúp luôn truy cập được, kể cả khi chưa đăng nhập
+    if (screenName === 'Help center') {
+      navigation.navigate('HelpCenter');
+      return;
+    }
+
     if (!user) {
       navigation.navigate('Auth');
       return;
@@ -22,9 +28,6 @@ export function ProfileScreen({ navigation }: any) {
         break;
       case 'Notifications':
         navigation.navigate('Notifications');
-        break;
-      case 'Help center':
-        navigation.navigate('HelpCenter');
         break;
       case 'Settings':
         navigation.navigate('Settings');
