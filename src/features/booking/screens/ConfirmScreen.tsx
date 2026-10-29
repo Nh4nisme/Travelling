@@ -5,13 +5,14 @@ import { Screen, Btn, Header, Photo } from '@/components';
 import { c, S } from '@/constants/theme';
 import { fmt, nightsBetween } from '@/utils/date';
 import { calcPrice, FEES } from '@/utils/pricing';
-import { listingService } from '@/services/listingService';
 import { useApp } from '@/store/AppContext';
+import { ListingState, useListing } from '@/features/listing/components/shared';
 
 export function ConfirmScreen({ route, navigation }: any) {
-  const l = listingService.getById(route.params.id);
-  const { search } = useApp();
+  const l = useListing(route.params.id);
+  const { search, listingsLoading, listingsError, refreshListings } = useApp();
   const [pay, setPay] = useState<'full' | 'part' | null>(null);
+  if (!l) return <Screen><ListingState loading={listingsLoading} error={listingsError} onRetry={() => void refreshListings()} /></Screen>;
   const nights = nightsBetween(search.start, search.end);
   const guests = search.adults + search.children || 1;
   const { subtotal, total } = calcPrice(l.price, nights);

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
 import { c, S } from '@/constants/theme';
 import { useApp } from '@/store/AppContext';
+import { ApiError } from '@/services/api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,8 +35,8 @@ export function AuthScreen({ navigation }: any) {
       if (isLogin) await signIn(email, password);
       else await signUp({ name, email, password, phone: phone.trim() });
       navigation.replace('Main');
-    } catch (e: any) {
-      setError(e?.message ?? 'Đã có lỗi xảy ra');
+    } catch (e) {
+      setError(e instanceof ApiError || e instanceof Error ? e.message : 'Đã có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
