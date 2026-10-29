@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Alert } from 'react-native';
-import { Screen, Header } from '@/components';
+
 import { MenuItem } from '../components/MenuItem';
 
 export function HelpCenterScreen() {
@@ -9,8 +9,8 @@ export function HelpCenterScreen() {
   };
 
   return (
-    <Screen>
-      <Header title="Help Center" />
+    <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: 16 }}>
+
       <View style={{ paddingHorizontal: 16 }}>
         <MenuItem
           icon="help-circle-outline"
@@ -28,6 +28,6 @@ export function HelpCenterScreen() {
           onPress={() => handlePress('Report a Problem')}
         />
       </View>
-    </Screen>
+    </View>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, ActivityIndicator } from 'react-native';
-import { Header, Btn } from '@/components';
+import { Btn } from '@/components';
 import { c, S } from '@/constants/theme';
 import { useApp } from '@/store/AppContext';
 import { userService } from '@/services/userService';
@@ -71,7 +71,7 @@ export function PersonalInfoScreen() {
   if (!user) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <Header title="Personal info" />
+
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={S.muted}>Please sign in to view your profile</Text>
         </View>
@@ -81,7 +81,7 @@ export function PersonalInfoScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <Header title="Personal info" />
+
       <View style={{ padding: 16, gap: 16 }}>
         {/* Name Field */}
         <View>
