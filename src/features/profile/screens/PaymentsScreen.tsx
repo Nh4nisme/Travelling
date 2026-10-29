@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen, Header, Btn } from '@/components';
+import { Btn } from '@/components';
 import { c, S } from '@/constants/theme';
 
 export function PaymentsScreen() {
@@ -9,8 +9,8 @@ export function PaymentsScreen() {
   };
 
   return (
-    <Screen>
-      <Header title="Payments" />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <Text style={[S.muted, { marginBottom: 16 }]}>Manage your payment methods</Text>
         
@@ -45,6 +45,6 @@ export function PaymentsScreen() {
           style={{ marginTop: 8 }}
         />
       </ScrollView>
-    </Screen>
+    </View>
   );
 }
