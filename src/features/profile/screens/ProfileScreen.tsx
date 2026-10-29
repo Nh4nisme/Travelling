@@ -48,7 +48,7 @@ export function ProfileScreen({ navigation }: any) {
         <ProfileHeader
           user={user}
           favsCount={favs.length}
-          bookingsCount={bookings.length}
+          bookingsCount={bookings.filter((b) => b.status === 'confirmed').length}
         />
 
         <View style={{ marginTop: 8 }}>

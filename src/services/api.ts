@@ -2,9 +2,11 @@ import { ENV } from '@/config/env';
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status = 0) {
+  code?: string;
+  constructor(message: string, status = 0, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -24,7 +26,7 @@ export async function api<T>(path: string, { method = 'GET', body, token, timeou
       signal: ctrl.signal,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new ApiError((data as any)?.message ?? 'Đã có lỗi xảy ra', res.status);
+    if (!res.ok) throw new ApiError((data as any)?.message ?? 'Đã có lỗi xảy ra', res.status, (data as any)?.code);
     return data as T;
   } catch (e: any) {
     if (e instanceof ApiError) throw e;

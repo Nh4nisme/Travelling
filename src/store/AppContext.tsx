@@ -5,6 +5,7 @@ import { authService } from '@/services/authService';
 import { tokenStorage } from '@/services/tokenStorage';
 import { listingService } from '@/services/listingService';
 import type { Listing } from '@/types/listing';
+import { bookingService } from '@/services/bookingService';
 
 type Ctx = {
   user: User | null; loggedIn: boolean; authReady: boolean;
@@ -15,7 +16,8 @@ type Ctx = {
   favs: string[]; toggleFav: (id: string) => void;
   search: SearchState; setSearch: (s: SearchState) => void;
   filters: FilterState; setFilters: (f: FilterState) => void;
-  bookings: Booking[]; addBooking: (b: Booking) => void;
+  bookings: Booking[]; bookingsLoading: boolean; bookingsError: string | null;
+  refreshBookings: () => Promise<void>; upsertBooking: (b: Booking) => void;
   listings: Listing[]; listingsLoading: boolean; listingsError: string | null; refreshListings: () => Promise<void>;
 };
 
@@ -30,6 +32,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState(defaultSearch);
   const [filters, setFilters] = useState(defaultFilters);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [listingsLoading, setListingsLoading] = useState(true);
   const [listingsError, setListingsError] = useState<string | null>(null);
@@ -86,12 +90,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateUser = useCallback((updates: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   }, []);
+    const refreshBookings = useCallback(async () => {
+    setBookingsLoading(true);
+    try {
+      const { bookings } = await bookingService.list();
+      setBookings(bookings);
+      setBookingsError(null);
+    } catch (e: any) {
+      setBookingsError(e?.message ?? 'Unable to load bookings.');
+    } finally {
+      setBookingsLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
+    if (user) void refreshBookings();
+    else { setBookings([]); setBookingsError(null); }
+  }, [user?.id, refreshBookings]);
+
+  const upsertBooking = useCallback((b: Booking) => {
+    setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]));
+  }, []);
   const toggleFav = (id: string) => setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
-  const addBooking = (b: Booking) => setBookings((x) => [b, ...x]);
+  
 
   return (
-    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, updateUser, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking, listings, listingsLoading, listingsError, refreshListings }}>
+    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, updateUser, favs, toggleFav, search, setSearch, filters, setFilters, bookings, bookingsLoading, bookingsError, refreshBookings, upsertBooking, listings, listingsLoading, listingsError, refreshListings }}>
       {children}
     </C.Provider>
   );

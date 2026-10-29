@@ -9,11 +9,13 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use('/api/listings', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+app.use('/api/bookings', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 app.use('/api/support', rateLimit({ windowMs: 15 * 60 * 1000, max: 30 }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/listings', require('./routes/listings'));
+app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/support', require('./routes/support'));
 
 app.use((err, _req, res, _next) => {
@@ -23,7 +25,10 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 4000;
 connectDB()
-  .then(() => app.listen(PORT, '0.0.0.0', () => console.log(`🚀 API chạy tại http://localhost:${PORT}`)))
+  .then(async () => {
+    await Promise.all([require('./models/Booking').init(), require('./models/BookedNight').init()]);
+    app.listen(PORT, '0.0.0.0', () => console.log(`🚀 API chạy tại http://localhost:${PORT}`));
+  })
   .catch((err) => {
     console.error('❌ Không kết nối được MongoDB:', err.message);
     process.exit(1);

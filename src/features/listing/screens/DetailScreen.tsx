@@ -6,13 +6,23 @@ import { c, S, W } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
 import { ICON, Section, More, useListing, ListingState } from '@/features/listing/components/shared';
 import { useApp } from '@/store/AppContext';
+import { confirmDialog } from '@/utils/dialog';
 
 export function DetailScreen({ route, navigation }: any) {
   const l = useListing(route.params.id);
-  const { listingsLoading, listingsError, refreshListings } = useApp();
+  const { user, search, listingsLoading, listingsError, refreshListings } = useApp();
   const [idx, setIdx] = useState(0);
   if (!l) return <Screen><ListingState loading={listingsLoading} error={listingsError} onRetry={() => void refreshListings()} /></Screen>;
   const reviews = l.reviewItems ?? [];
+  // Chưa đăng nhập -> mời đăng nhập; chưa chọn ngày -> sang màn chọn ngày (có lịch đã đặt); đã có ngày -> xác nhận luôn
+  const onBook = async () => {
+    if (!user) {
+      if (await confirmDialog('Sign in required', 'Please sign in to book this place.', 'Sign in')) navigation.navigate('Auth');
+      return;
+    }
+    const hasDates = !!search.start && !!search.end && +search.end > +search.start;
+    navigation.navigate(hasDates && search.adults >= 1 ? 'Confirm' : 'BookingDates', { id: l.id });
+  };
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView>
@@ -63,7 +73,7 @@ export function DetailScreen({ route, navigation }: any) {
       </ScrollView>
       <View style={[S.between, { padding: 16, paddingBottom: 28, borderTopWidth: 1, borderColor: c.soft }]}>
         <Text style={S.muted}>From: <Text style={{ fontWeight: '700', color: c.t, fontSize: 16 }}>${l.price}</Text>/night</Text>
-        <Btn title="Book now" onPress={() => navigation.navigate('Confirm', { id: l.id })} style={{ paddingHorizontal: 40 }} />
+        <Btn title="Book now" onPress={() => void onBook()} style={{ paddingHorizontal: 40 }} />
       </View>
     </View>
   );

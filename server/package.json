@@ -1,12 +1,13 @@
 {
   "name": "stayapp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "seed:listings": "node src/seedListings.js"
+    "seed:listings": "node src/seedListings.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
