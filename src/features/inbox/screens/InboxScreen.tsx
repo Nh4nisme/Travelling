@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components';
 import { c, S } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
-import { CONVERSATIONS } from '../mockData';
 import { ChatDetailScreen } from './ChatDetailScreen';
+import { InboxProvider, useInbox } from '../context/InboxContext';
 import type { ConversationStatus, Conversation } from '../types';
 
 const TABS: { id: ConversationStatus; label: string }[] = [
@@ -16,28 +16,39 @@ const TABS: { id: ConversationStatus; label: string }[] = [
   { id: 'support', label: 'Support' },
 ];
 
-export function InboxScreen() {
+function InboxMain() {
   const navigation = useNavigation<any>();
+  const { conversations, markAsRead, unreadCount, isHostUser } = useInbox();
   const [activeTab, setActiveTab] = useState<ConversationStatus>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
-  // Mở màn hình chat chi tiết với Safe View chống tai thỏ
-  if (selectedConversationId) {
-    return (
-      <ChatDetailScreen
-        conversationId={selectedConversationId}
-        navigation={navigation}
-        onBack={() => setSelectedConversationId(null)}
-      />
-    );
-  }
+  // 1. TẤT CẢ CÁC HOOKS ĐƯỢC GỌI Ở ĐẦU COMPONENT TRƯỚC BẤT KỲ LỆNH RETURN NÀO
+  const filtered = useMemo(() => {
+    return conversations.filter((item) => {
+      // Lọc theo tab
+      const matchTab = activeTab === 'all' || item.status === activeTab;
+      if (!matchTab) return false;
 
-  const filtered = CONVERSATIONS.filter((item) => {
-    if (activeTab === 'all') return true;
-    return item.status === activeTab;
-  });
+      // Lọc theo từ khóa tìm kiếm
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      const matchHost = item.hostName.toLowerCase().includes(q);
+      const matchListing = (item.listingTitle ?? '').toLowerCase().includes(q);
+      const matchMessage = item.lastMessage.toLowerCase().includes(q);
+      return matchHost || matchListing || matchMessage;
+    });
+  }, [conversations, activeTab, searchQuery]);
 
-  const getStatusBadgeStyle = (status: Conversation['status']) => {
+  const handleSelectConv = useCallback(
+    (id: string) => {
+      markAsRead(id);
+      setSelectedConversationId(id);
+    },
+    [markAsRead]
+  );
+
+  const getStatusBadgeStyle = useCallback((status: Conversation['status']) => {
     switch (status) {
       case 'confirmed':
         return { bg: '#E6FCFF', border: '#B5F5FC', text: '#00838F' };
@@ -49,16 +60,68 @@ export function InboxScreen() {
       default:
         return { bg: '#EFF4FE', border: '#C5D8FD', text: '#1E56C9' };
     }
-  };
+  }, []);
+
+  // 2. CONDITIONAL RETURN CHỈ ĐẶT SAU KHI ĐÃ GỌI HẾT TẤT CẢ CÁC HOOKS
+  if (selectedConversationId) {
+    return (
+      <ChatDetailScreen
+        conversationId={selectedConversationId}
+        navigation={navigation}
+        onBack={() => setSelectedConversationId(null)}
+      />
+    );
+  }
 
   return (
     <Screen>
-      {/* Title - Đã được Screen (SafeAreaView) bảo vệ chống tai thỏ */}
+      {/* Title Header */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-        <Text style={S.h1}>Inbox</Text>
+        <View style={[S.row, { justifyContent: 'space-between' }]}>
+          <View style={[S.row, { gap: 8 }]}>
+            <Text style={S.h1}>{isHostUser ? 'Host Inbox' : 'Inbox'}</Text>
+            {isHostUser ? (
+              <View style={styles.hostRoleBadge}>
+                <Ionicons name="home" size={12} color="#9E6400" />
+                <Text style={styles.hostRoleText}>Host View</Text>
+              </View>
+            ) : null}
+          </View>
+          {unreadCount > 0 ? (
+            <View style={styles.headerUnreadBadge}>
+              <Text style={styles.headerUnreadText}>{unreadCount} unread</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={[S.muted, { marginTop: 4 }]}>
-          Messages with Airbnb hosts and support
+          {isHostUser
+            ? 'Guest inquiries & reservations for Balian Treehouse'
+            : 'Messages with Hosts and 24/7 Support'}
         </Text>
+      </View>
+
+      {/* Search Input Bar */}
+      <View style={styles.searchBarContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={c.m} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={
+              isHostUser
+                ? 'Search guest name, property or message...'
+                : 'Search host, property or message...'
+            }
+            placeholderTextColor={c.m}
+            clearButtonMode="while-editing"
+          />
+          {searchQuery.length > 0 ? (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
+              <Ionicons name="close-circle" size={18} color={c.m} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       {/* Filter Tabs */}
@@ -70,6 +133,10 @@ export function InboxScreen() {
         >
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
+            const count = conversations.filter(
+              (item) => tab.id === 'all' || item.status === tab.id
+            ).length;
+
             return (
               <Pressable
                 key={tab.id}
@@ -85,7 +152,7 @@ export function InboxScreen() {
                     active && { color: '#fff', fontWeight: '700' },
                   ]}
                 >
-                  {tab.label}
+                  {tab.label} ({count})
                 </Text>
               </Pressable>
             );
@@ -97,8 +164,15 @@ export function InboxScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={48} color={c.b} />
-            <Text style={[S.muted, { marginTop: 12 }]}>No messages in this folder</Text>
+            <Ionicons name="chatbubbles-outline" size={52} color={c.b} />
+            <Text style={[S.h2, { marginTop: 16, textAlign: 'center' }]}>No messages found</Text>
+            <Text style={[S.muted, { marginTop: 6, textAlign: 'center' }]}>
+              {searchQuery
+                ? `No conversation matches "${searchQuery}"`
+                : isHostUser
+                ? 'When travelers inquire or book your property, messages will show here.'
+                : 'When you inquire or book a place, your conversations will appear here.'}
+            </Text>
           </View>
         ) : (
           filtered.map((item) => {
@@ -106,7 +180,7 @@ export function InboxScreen() {
             return (
               <Pressable
                 key={item.id}
-                onPress={() => setSelectedConversationId(item.id)}
+                onPress={() => handleSelectConv(item.id)}
                 style={({ pressed }) => [
                   styles.convItem,
                   pressed && { backgroundColor: c.soft },
@@ -115,20 +189,26 @@ export function InboxScreen() {
                 {/* Avatar with unread badge */}
                 <View style={{ position: 'relative' }}>
                   <Image source={{ uri: avatar(item.hostAvatar) }} style={styles.avatar} />
-                  {item.unread && <View style={styles.unreadDot} />}
+                  {item.unread ? <View style={styles.unreadDot} /> : null}
                 </View>
 
                 {/* Content */}
                 <View style={{ flex: 1 }}>
                   {/* Row 1: Name + Time */}
                   <View style={S.between}>
-                    <View style={[S.row, { gap: 6 }]}>
-                      <Text style={[styles.hostName, item.unread && { fontWeight: '800' }]}>
+                    <View style={[S.row, { gap: 6, flex: 1, paddingRight: 8 }]}>
+                      <Text
+                        style={[styles.hostName, item.unread && { fontWeight: '800' }]}
+                        numberOfLines={1}
+                      >
                         {item.hostName}
                       </Text>
-                      {item.role === 'Superhost' && (
+                      {item.role === 'Superhost' ? (
                         <Ionicons name="medal" size={13} color="#C47D00" />
-                      )}
+                      ) : null}
+                      {item.role === 'Verified Guest' ? (
+                        <Ionicons name="checkmark-circle" size={13} color={c.p} />
+                      ) : null}
                     </View>
                     <Text style={[S.muted, { fontSize: 12 }]}>{item.lastMessageTime}</Text>
                   </View>
@@ -151,7 +231,7 @@ export function InboxScreen() {
                   <Text
                     style={[
                       styles.lastMessage,
-                      item.unread ? { color: c.t, fontWeight: '600' } : { color: c.m },
+                      item.unread ? { color: c.t, fontWeight: '700' } : { color: c.m },
                     ]}
                     numberOfLines={1}
                   >
@@ -174,9 +254,66 @@ export function InboxScreen() {
   );
 }
 
+export function InboxScreen() {
+  return (
+    <InboxProvider>
+      <InboxMain />
+    </InboxProvider>
+  );
+}
+
 const styles = StyleSheet.create({
+  headerUnreadBadge: {
+    backgroundColor: '#FFEBEA',
+    borderColor: '#FFD3D1',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    alignSelf: 'center',
+  },
+  headerUnreadText: {
+    color: '#D9381E',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  hostRoleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFF7E6',
+    borderWidth: 1,
+    borderColor: '#FFE0A3',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  hostRoleText: {
+    color: '#9E6400',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  searchBarContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: c.soft,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: c.t,
+    padding: 0,
+  },
   tabsContainer: {
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderColor: c.soft,
   },
@@ -184,9 +321,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: c.soft,
     borderWidth: 1,
-    borderColor: c.b,
+    borderColor: c.soft,
   },
   tabChipText: {
     fontSize: 13,
@@ -195,15 +332,16 @@ const styles = StyleSheet.create({
   },
   convItem: {
     flexDirection: 'row',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     gap: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: c.soft,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: c.soft,
   },
   unreadDot: {
@@ -213,19 +351,19 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: c.p,
+    backgroundColor: '#FF3B30',
     borderWidth: 2,
     borderColor: '#fff',
   },
   hostName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     color: c.t,
   },
   statusBadge: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 4,
     borderWidth: 1,
   },
   statusText: {
@@ -234,12 +372,12 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 13,
-    marginTop: 6,
-    lineHeight: 18,
+    marginTop: 4,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 32,
   },
 });

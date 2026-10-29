@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,34 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Photo } from '@/components';
 import { c, S, W } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
-import { CONVERSATIONS } from '../mockData';
-import type { ChatMessage } from '../types';
+import { RENTER_CONVERSATIONS } from '../mockData';
+import { useInbox, InboxProvider, InboxContext } from '../context/InboxContext';
 
-const QUICK_SUGGESTIONS = [
+const RENTER_SUGGESTIONS = [
   '🕑 What is the exact check-in time?',
   '📶 What is the wifi network & password?',
   '🚗 Is parking space available?',
   '🐾 Are pets allowed?',
+  '🍳 Can I cook in the kitchen?',
+  '💰 Do you offer any discount?',
 ];
+
+const HOST_SUGGESTIONS = [
+  '🕑 Standard check-in is at 14:00. Welcome!',
+  '📶 Wifi: Travelling_Guest, Pass: welcome2026',
+  '🚗 Free private parking is available on premises',
+  '🐾 Small pets under 10kg are warmly welcome',
+  '🍳 Kitchen is fully equipped for cooking',
+];
+
+const SAMPLE_ATTACHMENT = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800';
 
 interface ChatDetailScreenProps {
   route?: any;
@@ -32,7 +45,7 @@ interface ChatDetailScreenProps {
   onBack?: () => void;
 }
 
-export function ChatDetailScreen({
+function ChatDetailInner({
   route,
   navigation,
   conversationId: propConvId,
@@ -40,10 +53,42 @@ export function ChatDetailScreen({
 }: ChatDetailScreenProps) {
   const insets = useSafeAreaInsets();
   const convId = propConvId ?? route?.params?.conversationId ?? 'conv-1';
-  const conv = CONVERSATIONS.find((item) => item.id === convId) ?? CONVERSATIONS[0];
+  const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages } =
+    useInbox();
 
-  const [messages, setMessages] = useState<ChatMessage[]>(conv.messages);
+  const conv = conversations.find((item) => item.id === convId) ?? RENTER_CONVERSATIONS[0];
   const [inputText, setInputText] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const scrollViewRef = useRef<any>(null);
+
+  const isPartnerTyping = Boolean(typingMap[conv.id]);
+  const messageList = useMemo(() => conv.messages || [], [conv.messages]);
+
+  const suggestions = useMemo(() => {
+    return isHostUser ? HOST_SUGGESTIONS : RENTER_SUGGESTIONS;
+  }, [isHostUser]);
+
+  // 1. Tải danh sách tin nhắn từ Database MongoDB Atlas khi mở hội thoại
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoadingMessages(true);
+      await fetchMessages(conv.id);
+      if (active) setLoadingMessages(false);
+    })();
+    markAsRead(conv.id);
+    return () => {
+      active = false;
+    };
+  }, [conv.id, fetchMessages, markAsRead]);
+
+  // 2. Cuộn mượt xuống cuối khi có tin nhắn mới hoặc đối phương đang gõ
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [messageList.length, isPartnerTyping]);
 
   const handleBack = () => {
     if (onBack) {
@@ -53,26 +98,26 @@ export function ChatDetailScreen({
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputText.trim()) return;
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'renter',
-      text: inputText.trim(),
-      time: 'Just now',
-    };
-    setMessages((prev) => [...prev, newMsg]);
+    const textToSend = inputText.trim();
     setInputText('');
+    await sendMessage(conv.id, textToSend);
   };
 
-  const handleSelectSuggestion = (suggestion: string) => {
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'renter',
-      text: suggestion.replace(/^[^\s]+\s/, ''),
-      time: 'Just now',
-    };
-    setMessages((prev) => [...prev, newMsg]);
+  const handleSelectSuggestion = async (suggestion: string) => {
+    const cleanText = suggestion.replace(/^[^\s]+\s/, '');
+    await sendMessage(conv.id, cleanText);
+  };
+
+  const handleSendAttachment = async () => {
+    await sendMessage(
+      conv.id,
+      isHostUser
+        ? 'Here are the room check-in photos:'
+        : 'Here is the photo of our room inquiry:',
+      SAMPLE_ATTACHMENT
+    );
   };
 
   return (
@@ -90,15 +135,27 @@ export function ChatDetailScreen({
             <Text style={{ fontSize: 16, fontWeight: '700', color: c.t }} numberOfLines={1}>
               {conv.hostName}
             </Text>
-            {conv.role === 'Superhost' && (
+            {conv.role === 'Superhost' ? (
               <View style={styles.superhostBadge}>
                 <Ionicons name="medal" size={11} color="#C47D00" />
                 <Text style={styles.superhostText}>Superhost</Text>
               </View>
-            )}
+            ) : null}
+            {conv.role === 'Verified Guest' ? (
+              <View style={styles.guestBadge}>
+                <Ionicons name="checkmark-circle" size={11} color={c.p} />
+                <Text style={styles.guestBadgeText}>Guest</Text>
+              </View>
+            ) : null}
           </View>
           <Text style={[S.muted, { fontSize: 12 }]}>
-            {conv.role === 'Support Team' ? 'Customer Support 24/7' : 'Typically replies in 1 hr'}
+            {isPartnerTyping
+              ? '✍️ Typing a reply...'
+              : conv.partnerPhone
+              ? `Phone: ${conv.partnerPhone}`
+              : isHostUser
+              ? 'Direct guest message'
+              : 'Typically replies in a few minutes'}
           </Text>
         </View>
 
@@ -121,11 +178,12 @@ export function ChatDetailScreen({
         keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Pinned Listing Card (Airbnb style) */}
-          {conv.listingTitle && (
+          {Boolean(conv.listingTitle) ? (
             <Pressable
               onPress={() => {
                 if (conv.listingId && navigation?.navigate) {
@@ -143,59 +201,74 @@ export function ChatDetailScreen({
                 <Text style={{ fontWeight: '700', fontSize: 14, color: c.t }} numberOfLines={1}>
                   {conv.listingTitle}
                 </Text>
-                {conv.dates && (
+                {Boolean(conv.dates) ? (
                   <Text style={[S.muted, { fontSize: 12, marginTop: 2 }]}>{conv.dates}</Text>
-                )}
-                {conv.listingPrice && (
+                ) : null}
+                {Boolean(conv.listingPrice) ? (
                   <Text style={{ fontSize: 13, marginTop: 4 }}>
                     <Text style={{ fontWeight: '700', color: c.p }}>${conv.listingPrice}</Text>
                     <Text style={S.muted}> / night</Text>
                   </Text>
-                )}
+                ) : null}
               </View>
               <Ionicons name="chevron-forward" size={18} color={c.m} />
             </Pressable>
-          )}
+          ) : null}
 
           {/* Date separator */}
           <View style={styles.dateSeparator}>
             <View style={styles.dateLine} />
-            <Text style={styles.dateText}>Conversation with Host</Text>
+            <Text style={styles.dateText}>Realtime Database Message · MongoDB Atlas</Text>
             <View style={styles.dateLine} />
           </View>
 
+          {/* Indicator khi đang tải tin nhắn */}
+          {loadingMessages && messageList.length === 0 ? (
+            <ActivityIndicator size="small" color={c.p} style={{ marginVertical: 20 }} />
+          ) : null}
+
           {/* Messages Stream */}
-          {messages.map((m) => {
-            const isRenter = m.sender === 'renter';
+          {messageList.map((m) => {
+            const isSelf = isHostUser ? m.sender === 'host' : m.sender === 'renter';
             return (
               <View
                 key={m.id}
                 style={[
                   styles.msgRow,
-                  isRenter ? { justifyContent: 'flex-end' } : { justifyContent: 'flex-start' },
+                  isSelf ? { justifyContent: 'flex-end' } : { justifyContent: 'flex-start' },
                 ]}
               >
-                {!isRenter && (
+                {!isSelf ? (
                   <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
-                )}
+                ) : null}
                 <View
                   style={[
                     styles.bubble,
-                    isRenter ? styles.bubbleRenter : styles.bubbleHost,
+                    isSelf ? styles.bubbleRenter : styles.bubbleHost,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.msgText,
-                      isRenter ? { color: '#fff' } : { color: c.t },
-                    ]}
-                  >
-                    {m.text}
-                  </Text>
+                  {/* Nếu tin nhắn có hình ảnh */}
+                  {Boolean(m.image) ? (
+                    <Image
+                      source={{ uri: m.image }}
+                      style={styles.messageImage}
+                      resizeMode="cover"
+                    />
+                  ) : null}
+                  {Boolean(m.text) ? (
+                    <Text
+                      style={[
+                        styles.msgText,
+                        isSelf ? { color: '#fff' } : { color: c.t },
+                      ]}
+                    >
+                      {m.text}
+                    </Text>
+                  ) : null}
                   <Text
                     style={[
                       styles.msgTime,
-                      isRenter
+                      isSelf
                         ? { color: 'rgba(255,255,255,0.75)', textAlign: 'right' }
                         : { color: c.m },
                     ]}
@@ -206,6 +279,17 @@ export function ChatDetailScreen({
               </View>
             );
           })}
+
+          {/* Hiệu ứng Đối tác đang gõ phản hồi */}
+          {isPartnerTyping ? (
+            <View style={[styles.msgRow, { justifyContent: 'flex-start' }]}>
+              <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
+              <View style={[styles.bubble, styles.bubbleHost, styles.typingBubble]}>
+                <Ionicons name="ellipsis-horizontal" size={20} color={c.p} />
+                <Text style={styles.typingText}>{conv.hostName} is typing...</Text>
+              </View>
+            </View>
+          ) : null}
         </ScrollView>
 
         {/* Quick Suggestion Chips */}
@@ -215,10 +299,10 @@ export function ChatDetailScreen({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
           >
-            {QUICK_SUGGESTIONS.map((s, idx) => (
+            {suggestions.map((s, idx) => (
               <Pressable
                 key={idx}
-                onPress={() => handleSelectSuggestion(s)}
+                onPress={() => void handleSelectSuggestion(s)}
                 style={styles.suggestionChip}
               >
                 <Text style={styles.suggestionText}>{s}</Text>
@@ -234,8 +318,12 @@ export function ChatDetailScreen({
             { paddingBottom: Math.max(insets.bottom, 12) },
           ]}
         >
-          <Pressable style={styles.attachBtn}>
-            <Ionicons name="image-outline" size={22} color={c.m} />
+          <Pressable
+            style={styles.attachBtn}
+            hitSlop={8}
+            onPress={() => void handleSendAttachment()}
+          >
+            <Ionicons name="image-outline" size={24} color={c.m} />
           </Pressable>
 
           <TextInput
@@ -248,7 +336,8 @@ export function ChatDetailScreen({
           />
 
           <Pressable
-            onPress={handleSend}
+            onPress={() => void handleSend()}
+            disabled={!inputText.trim()}
             style={[
               styles.sendBtn,
               { backgroundColor: inputText.trim() ? c.p : c.soft },
@@ -264,6 +353,19 @@ export function ChatDetailScreen({
       </KeyboardAvoidingView>
     </View>
   );
+}
+
+// Bọc an toàn không vi phạm quy tắc Hooks
+export function ChatDetailScreen(props: ChatDetailScreenProps) {
+  const context = useContext(InboxContext);
+  if (!context) {
+    return (
+      <InboxProvider>
+        <ChatDetailInner {...props} />
+      </InboxProvider>
+    );
+  }
+  return <ChatDetailInner {...props} />;
 }
 
 const styles = StyleSheet.create({
@@ -305,6 +407,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#9E6400',
   },
+  guestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#EFF4FE',
+    borderWidth: 1,
+    borderColor: '#C5D8FD',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  guestBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1E56C9',
+  },
   infoBtn: {
     padding: 4,
   },
@@ -336,7 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: c.soft,
   },
   dateText: {
-    fontSize: 12,
+    fontSize: 11,
     color: c.m,
     fontWeight: '500',
   },
@@ -354,7 +472,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bubble: {
-    maxWidth: W * 0.72,
+    maxWidth: W * 0.74,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 18,
@@ -367,6 +485,12 @@ const styles = StyleSheet.create({
     backgroundColor: c.p,
     borderBottomRightRadius: 4,
   },
+  messageImage: {
+    width: W * 0.62,
+    height: 140,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
   msgText: {
     fontSize: 15,
     lineHeight: 20,
@@ -374,6 +498,18 @@ const styles = StyleSheet.create({
   msgTime: {
     fontSize: 10,
     marginTop: 4,
+  },
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  typingText: {
+    fontSize: 12,
+    color: c.m,
+    fontStyle: 'italic',
   },
   suggestionsContainer: {
     paddingVertical: 8,

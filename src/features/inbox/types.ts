@@ -3,17 +3,23 @@ export type ConversationStatus = 'all' | 'inquiry' | 'confirmed' | 'past' | 'sup
 export interface ChatMessage {
   id: string;
   sender: 'host' | 'renter';
+  senderName?: string;
   text: string;
   time: string;
+  timestamp?: number;
+  image?: string;
 }
 
 export interface Conversation {
   id: string;
   hostName: string;
   hostAvatar: number; // seed for avatar(seed)
-  role: string; // 'Host' | 'Superhost' | 'Support'
+  role: string; // 'Host' | 'Superhost' | 'Verified Guest' | 'Support Team'
   status: 'inquiry' | 'confirmed' | 'past' | 'support';
-  statusLabel: string; // 'Inquiry' | 'Reservation' | 'Past stay' | 'Support'
+  statusLabel: string; // 'Inquiry' | 'Reserved · May 1 - 6' | 'Past stay' | 'Official Support'
+  isHostView?: boolean;
+  partnerEmail?: string;
+  partnerPhone?: string;
   listingId?: string;
   listingTitle?: string;
   listingImage?: string;
@@ -22,5 +28,6 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   unread: boolean;
-  messages: ChatMessage[];
+  messages?: ChatMessage[];
+  isTyping?: boolean;
 }
