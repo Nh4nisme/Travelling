@@ -1,33 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { Btn } from '@/components';
 import { c, S } from '@/constants/theme';
 import { useApp } from '@/store/AppContext';
 import { userService } from '@/services/userService';
 import { tokenStorage } from '@/services/tokenStorage';
 
+const PHONE_REGEX = /^[0-9+\-\s]{8,15}$/;
+
 export function PersonalInfoScreen() {
   const { user, updateUser } = useApp();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [fetching, setFetching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize form with current user data
+  // Fetch latest data from API when opening screen
   useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setPhone(user.phone ?? '');
+    let isMounted = true;
+    (async () => {
+      try {
+        const token = await tokenStorage.get();
+        if (token) {
+          setFetching(true);
+          const { user: freshUser } = await userService.getProfile(token);
+          if (isMounted && freshUser) {
+            setName(freshUser.name);
+            setPhone(freshUser.phone ?? '');
+            if (typeof updateUser === 'function') {
+              updateUser(freshUser);
+            }
+          }
+        }
+      } catch (err) {
+        // Fallback to existing user from context
+      } finally {
+        if (isMounted) setFetching(false);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Update local state when user in context updates
+  useEffect(() => {
+    if (user && !fetching) {
+      setName((prev) => (prev ? prev : user.name));
+      setPhone((prev) => (prev ? prev : (user.phone ?? '')));
     }
   }, [user]);
 
-  // Check if form has changes
-  const hasChanges = user && (name !== user.name || phone !== (user.phone ?? ''));
+  // Check if form has changes compared to current user
+  const hasChanges =
+    user &&
+    (name.trim() !== user.name.trim() || phone.trim() !== (user.phone ?? '').trim());
 
   // Validate form
   const validate = (): boolean => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       setError('Name is required');
+      return false;
+    }
+    if (trimmedName.length > 80) {
+      setError('Name cannot exceed 80 characters');
+      return false;
+    }
+    const trimmedPhone = phone.trim();
+    if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
+      setError('Please enter a valid phone number (8-15 digits)');
       return false;
     }
     setError(null);
@@ -44,21 +87,23 @@ export function PersonalInfoScreen() {
     try {
       const token = await tokenStorage.get();
       if (!token) {
-        setError('Authentication required');
+        setError('Authentication required. Please sign in again.');
         setSaving(false);
         return;
       }
 
-      const payload: { name?: string; phone?: string } = {};
-      if (name !== user.name) payload.name = name.trim();
-      if (phone !== (user.phone ?? '')) payload.phone = phone.trim() || undefined;
+      const payload: { name?: string; phone?: string } = {
+        name: name.trim(),
+        phone: phone.trim(),
+      };
 
-      await userService.updateProfile(payload, token);
-      
-      // Update user in context
-      updateUser({ name: name.trim(), phone: phone.trim() || undefined });
-      
-      Alert.alert('Success', 'Your profile has been updated.');
+      const res = await userService.updateProfile(payload, token);
+
+      if (typeof updateUser === 'function') {
+        updateUser(res.user);
+      }
+
+      Alert.alert('Success', 'Your personal info has been updated.');
     } catch (e: any) {
       const message = e?.message || 'Failed to update profile. Please try again.';
       setError(message);
@@ -68,28 +113,34 @@ export function PersonalInfoScreen() {
     }
   };
 
-  if (!user) {
+  if (!user && !fetching) {
     return (
-      <View style={{ flex: 1, backgroundColor: c.bg }}>
-
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={S.muted}>Please sign in to view your profile</Text>
-        </View>
+      <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={S.muted}>Please sign in to view your profile</Text>
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+        {fetching && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 }}>
+            <ActivityIndicator size="small" color={c.p} />
+            <Text style={[S.muted, { fontSize: 13 }]}>Syncing latest profile...</Text>
+          </View>
+        )}
 
-      <View style={{ padding: 16, gap: 16 }}>
         {/* Name Field */}
         <View>
           <Text style={[S.muted, { marginBottom: 6 }]}>Name</Text>
           <TextInput
             style={S.input}
             value={name}
-            onChangeText={setName}
+            onChangeText={(v) => {
+              setName(v);
+              if (error) setError(null);
+            }}
             placeholder="Enter your name"
             placeholderTextColor={c.m}
             autoCapitalize="words"
@@ -102,7 +153,7 @@ export function PersonalInfoScreen() {
           <Text style={[S.muted, { marginBottom: 6 }]}>Email</Text>
           <TextInput
             style={[S.input, { backgroundColor: c.soft, color: c.m }]}
-            value={user.email}
+            value={user?.email ?? ''}
             editable={false}
           />
           <Text style={[S.muted, { fontSize: 12, marginTop: 4 }]}>
@@ -116,7 +167,10 @@ export function PersonalInfoScreen() {
           <TextInput
             style={S.input}
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={(v) => {
+              setPhone(v);
+              if (error) setError(null);
+            }}
             placeholder="Enter your phone number"
             placeholderTextColor={c.m}
             keyboardType="phone-pad"
@@ -134,13 +188,13 @@ export function PersonalInfoScreen() {
           title={saving ? 'Saving...' : 'Save Changes'}
           onPress={handleSave}
           disabled={!hasChanges || saving}
-          style={{ marginTop: 16 }}
+          style={{ marginTop: 12 }}
         />
 
         {saving && (
           <ActivityIndicator size="small" color={c.p} style={{ marginTop: 8 }} />
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }

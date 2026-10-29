@@ -84,14 +84,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateUser = useCallback((updates: Partial<User>) => {
-    setUser((prev) => prev ? { ...prev, ...updates } : prev);
+    setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   }, []);
 
   const toggleFav = (id: string) => setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   const addBooking = (b: Booking) => setBookings((x) => [b, ...x]);
 
   return (
-    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking, listings, listingsLoading, listingsError, refreshListings }}>
+    <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, updateUser, favs, toggleFav, search, setSearch, filters, setFilters, bookings, addBooking, listings, listingsLoading, listingsError, refreshListings }}>
       {children}
     </C.Provider>
   );
