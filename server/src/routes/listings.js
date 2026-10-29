@@ -1,5 +1,7 @@
 const express = require('express');
 const Listing = require('../models/Listing');
+const BookedNight = require('../models/BookedNight');
+const rules = require('../services/bookingRules');
 
 const router = express.Router();
 
@@ -42,6 +44,27 @@ router.get('/search', async (req, res, next) => {
 
     const listings = await Listing.find(query).sort({ id: 1 }).lean();
     res.json(listings.map(({ _id, ...listing }) => listing));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/listings/:id/availability?from=YYYY-MM-DD&to=YYYY-MM-DD
+// Trả về các ĐÊM đã có người đặt (khách có thể nhận phòng đúng ngày khách trước trả phòng).
+router.get('/:id/availability', async (req, res, next) => {
+  try {
+    const listing = await Listing.findOne({ id: req.params.id }).select('id').lean();
+    if (!listing) return res.status(404).json({ message: 'Listing not found' });
+
+    const today = rules.todayUTC();
+    const from = req.query.from === undefined ? today : rules.parseDateOnly(req.query.from);
+    const to = req.query.to === undefined ? rules.addDays(today, rules.MAX_ADVANCE_DAYS + rules.MAX_NIGHTS) : rules.parseDateOnly(req.query.to);
+    if (!from || !to || to < from || rules.diffDays(from, to) > 800) {
+      return res.status(400).json({ message: 'Invalid date range' });
+    }
+    const nights = await BookedNight.find({ listingId: listing.id, night: { $gte: from, $lte: to } })
+      .select('night -_id').sort({ night: 1 }).lean();
+    res.json({ listingId: listing.id, from: rules.toDateOnly(from), to: rules.toDateOnly(to), bookedNights: nights.map((n) => rules.toDateOnly(n.night)) });
   } catch (error) {
     next(error);
   }
