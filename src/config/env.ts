@@ -6,6 +6,9 @@ const defaultApiHost = Platform.select({
   default: 'localhost',
 });
 
+const defaultBaseUrl = `http://${defaultApiHost}:4000`;
+
 export const ENV = {
-  apiUrl: (process.env.EXPO_PUBLIC_API_URL?.trim() || `http://${defaultApiHost}:4000/api`).replace(/\/+$/, ''),
+  apiUrl: (process.env.EXPO_PUBLIC_API_URL?.trim() || `${defaultBaseUrl}/api`).replace(/\/+$/, ''),
+  socketUrl: (process.env.EXPO_PUBLIC_SOCKET_URL?.trim() || defaultBaseUrl).replace(/\/+$/, ''),
 };

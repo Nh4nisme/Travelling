@@ -18,6 +18,8 @@ import { c, S, W } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
 import { RENTER_CONVERSATIONS } from '../mockData';
 import { useInbox, InboxProvider, InboxContext } from '../context/InboxContext';
+import { socketService } from '@/services/socketService';
+import { useApp } from '@/store/AppContext';
 
 const RENTER_SUGGESTIONS = [
   '🕑 What is the exact check-in time?',
@@ -52,6 +54,7 @@ function ChatDetailInner({
   onBack,
 }: ChatDetailScreenProps) {
   const insets = useSafeAreaInsets();
+  const { user } = useApp();
   const convId = propConvId ?? route?.params?.conversationId ?? 'conv-1';
   const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages } =
     useInbox();
@@ -60,6 +63,7 @@ function ChatDetailInner({
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const scrollViewRef = useRef<any>(null);
+  const typingTimerRef = useRef<any>(null);
 
   const isPartnerTyping = Boolean(typingMap[conv.id]);
   const messageList = useMemo(() => conv.messages || [], [conv.messages]);
@@ -68,19 +72,24 @@ function ChatDetailInner({
     return isHostUser ? HOST_SUGGESTIONS : RENTER_SUGGESTIONS;
   }, [isHostUser]);
 
-  // 1. Tải danh sách tin nhắn từ Database MongoDB Atlas khi mở hội thoại
+  // 1. Tham gia phòng Socket.io của hội thoại này và tải tin nhắn từ Database
   useEffect(() => {
     let active = true;
+    socketService.joinConversation(conv.id);
+
     (async () => {
       setLoadingMessages(true);
       await fetchMessages(conv.id);
       if (active) setLoadingMessages(false);
     })();
     markAsRead(conv.id);
+
     return () => {
       active = false;
+      if (user?.id) socketService.emitTypingStop(conv.id, user.id);
+      socketService.leaveConversation(conv.id);
     };
-  }, [conv.id, fetchMessages, markAsRead]);
+  }, [conv.id, fetchMessages, markAsRead, user?.id]);
 
   // 2. Cuộn mượt xuống cuối khi có tin nhắn mới hoặc đối phương đang gõ
   useEffect(() => {
@@ -91,6 +100,7 @@ function ChatDetailInner({
   }, [messageList.length, isPartnerTyping]);
 
   const handleBack = () => {
+    if (user?.id) socketService.emitTypingStop(conv.id, user.id);
     if (onBack) {
       onBack();
     } else if (navigation?.goBack) {
@@ -98,10 +108,26 @@ function ChatDetailInner({
     }
   };
 
+  const handleTextChange = (text: string) => {
+    setInputText(text);
+    if (user?.id) {
+      if (text.trim().length > 0) {
+        socketService.emitTypingStart(conv.id, user.id, user.name || 'User');
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => {
+          socketService.emitTypingStop(conv.id, user.id);
+        }, 2000);
+      } else {
+        socketService.emitTypingStop(conv.id, user.id);
+      }
+    }
+  };
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
     const textToSend = inputText.trim();
     setInputText('');
+    if (user?.id) socketService.emitTypingStop(conv.id, user.id);
     await sendMessage(conv.id, textToSend);
   };
 
@@ -329,7 +355,7 @@ function ChatDetailInner({
           <TextInput
             style={styles.textInput}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleTextChange}
             placeholder={`Message ${conv.hostName}...`}
             placeholderTextColor={c.m}
             multiline
