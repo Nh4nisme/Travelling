@@ -9,4 +9,6 @@ export const userService = {
   getProfile: (token: string) => api<{ user: User }>('/auth/me', { token }),
   updateProfile: (payload: UpdateUserPayload, token: string) =>
     api<UpdateUserResponse>('/auth/me', { method: 'PATCH', body: payload, token }),
+  toggleFavorite: (listingId: string, token: string) =>
+    api<{ favorites: string[] }>(`/auth/favorites/${listingId}`, { method: 'POST', token }),
 };

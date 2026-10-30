@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { defaultSearch, defaultFilters } from '@/store/defaults';
 import type { SearchState, FilterState, Booking, User } from '@/store/types';
 import { authService } from '@/services/authService';
+import { userService } from '@/services/userService';
 import { tokenStorage } from '@/services/tokenStorage';
 import { listingService } from '@/services/listingService';
 import type { Listing } from '@/types/listing';
@@ -60,6 +61,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (token) {
           const { user } = await authService.me(token);
           setUser(user);
+          if (Array.isArray(user.favorites)) {
+            setFavs(user.favorites);
+          }
         }
       } catch (e: any) {
         // 401 = token hết hạn/sai -> xoá; lỗi mạng thì giữ token để thử lại lần sau
@@ -74,23 +78,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { token, user } = await authService.login(email.trim(), password);
     await tokenStorage.set(token);
     setUser(user);
+    if (Array.isArray(user.favorites)) {
+      setFavs(user.favorites);
+    } else {
+      setFavs([]);
+    }
   }, []);
 
   const signUp = useCallback(async (p: { name: string; email: string; password: string; phone?: string }) => {
     const { token, user } = await authService.register({ ...p, email: p.email.trim(), name: p.name.trim() });
     await tokenStorage.set(token);
     setUser(user);
+    if (Array.isArray(user.favorites)) {
+      setFavs(user.favorites);
+    } else {
+      setFavs([]);
+    }
   }, []);
 
   const signOut = useCallback(async () => {
     await tokenStorage.clear();
     setUser(null);
+    setFavs([]);
   }, []);
 
   const updateUser = useCallback((updates: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updates } : prev));
   }, []);
-    const refreshBookings = useCallback(async () => {
+
+  const refreshBookings = useCallback(async () => {
     setBookingsLoading(true);
     try {
       const { bookings } = await bookingService.list();
@@ -111,8 +127,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const upsertBooking = useCallback((b: Booking) => {
     setBookings((prev) => (prev.some((x) => x.id === b.id) ? prev.map((x) => (x.id === b.id ? b : x)) : [b, ...prev]));
   }, []);
-  const toggleFav = (id: string) => setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
-  
+
+  const toggleFav = useCallback(async (id: string) => {
+    // 1. Cập nhật state UI lạc quan (Optimistic update)
+    setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
+
+    // 2. Nếu đã đăng nhập, lưu đồng bộ vào database MongoDB Atlas
+    try {
+      const token = await tokenStorage.get();
+      if (token) {
+        const res = await userService.toggleFavorite(id, token);
+        if (res?.favorites) {
+          setFavs(res.favorites);
+          setUser((prev) => (prev ? { ...prev, favorites: res.favorites } : prev));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync favorite to server:', err);
+    }
+  }, []);
 
   return (
     <C.Provider value={{ user, loggedIn: !!user, authReady, signIn, signUp, signOut, updateUser, favs, toggleFav, search, setSearch, filters, setFilters, bookings, bookingsLoading, bookingsError, refreshBookings, upsertBooking, listings, listingsLoading, listingsError, refreshListings }}>
