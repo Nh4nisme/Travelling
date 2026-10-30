@@ -90,4 +90,32 @@ router.patch('/me', auth, async (req, res) => {
   }
 });
 
+// POST /api/auth/favorites/:id - Toggle favorite listing id
+router.post('/favorites/:id', auth, async (req, res) => {
+  try {
+    const listingId = String(req.params.id);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    if (!Array.isArray(user.favorites)) {
+      user.favorites = [];
+    }
+
+    const index = user.favorites.indexOf(listingId);
+    if (index > -1) {
+      user.favorites.splice(index, 1);
+    } else {
+      user.favorites.push(listingId);
+    }
+
+    await user.save();
+    res.json({ favorites: user.favorites });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Lỗi máy chủ' });
+  }
+});
+
 module.exports = router;

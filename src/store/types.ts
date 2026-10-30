@@ -2,7 +2,7 @@ export type SearchState = { location: string; query: string; start?: Date; end?:
 
 export type FilterState = { min: number; max: number; types: string[]; facilities: string[]; total: boolean };
 
-export type User = { id: string; name: string; email: string; phone?: string };
+export type User = { id: string; name: string; email: string; phone?: string; favorites?: string[] };
 
 // ---------- Booking (dữ liệu lấy từ server, ngày luôn là chuỗi 'YYYY-MM-DD') ----------
 export type PaymentMethod = 'full' | 'part';
