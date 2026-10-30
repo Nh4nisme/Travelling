@@ -153,17 +153,34 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     await conversation.save();
 
     const isHost = conversation.host.equals(userId);
+    const formattedTime = formatTime(message.createdAt);
+    const messagePayload = {
+      id: message._id.toString(),
+      conversationId: id,
+      sender: isHost ? 'host' : 'renter',
+      senderName: req.user.name,
+      text: message.text,
+      image: message.image,
+      time: formattedTime,
+      timestamp: message.createdAt.getTime(),
+    };
+
+    // Bắn sự kiện realtime qua Socket.io
+    const io = req.app.get('io');
+    if (io) {
+      // 1. Gửi tin nhắn tức thì vào phòng chat (room)
+      io.to(id).emit('message:received', messagePayload);
+      // 2. Cập nhật preview tin nhắn cuối cùng trên màn hình danh sách Inbox
+      io.emit('conversation:updated', {
+        id,
+        lastMessage: conversation.lastMessage,
+        lastMessageTime: formattedTime,
+        unreadFor: otherUserId.toString(),
+      });
+    }
 
     res.status(201).json({
-      message: {
-        id: message._id.toString(),
-        sender: isHost ? 'host' : 'renter',
-        senderName: req.user.name,
-        text: message.text,
-        image: message.image,
-        time: formatTime(message.createdAt),
-        timestamp: message.createdAt.getTime(),
-      },
+      message: messagePayload,
     });
   } catch (error) {
     console.error('Lỗi gửi message:', error.message);
