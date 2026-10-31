@@ -59,7 +59,10 @@ function ChatDetailInner({
   const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages } =
     useInbox();
 
-  const conv = conversations.find((item) => item.id === convId) ?? RENTER_CONVERSATIONS[0];
+  const conv =
+    conversations.find((item) => item.id === convId) ??
+    conversations[0] ??
+    RENTER_CONVERSATIONS[0];
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const scrollViewRef = useRef<any>(null);

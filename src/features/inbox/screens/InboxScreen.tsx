@@ -1,12 +1,23 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, Image, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  ScrollView,
+  TextInput,
+  Modal,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Screen } from '@/components';
+import { Screen, Btn } from '@/components';
 import { c, S } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
 import { ChatDetailScreen } from './ChatDetailScreen';
 import { InboxProvider, useInbox } from '../context/InboxContext';
+import { chatService, type ContactUser } from '@/services/chatService';
 import type { ConversationStatus, Conversation } from '../types';
 
 const TABS: { id: ConversationStatus; label: string }[] = [
@@ -18,19 +29,22 @@ const TABS: { id: ConversationStatus; label: string }[] = [
 
 function InboxMain() {
   const navigation = useNavigation<any>();
-  const { conversations, markAsRead, unreadCount, isHostUser } = useInbox();
+  const { conversations, markAsRead, unreadCount, isHostUser, createInquiry } = useInbox();
   const [activeTab, setActiveTab] = useState<ConversationStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
-  // 1. TẤT CẢ CÁC HOOKS ĐƯỢC GỌI Ở ĐẦU COMPONENT TRƯỚC BẤT KỲ LỆNH RETURN NÀO
+  // Modal chọn người để bắt đầu cuộc trò chuyện mới
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [contacts, setContacts] = useState<ContactUser[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
+
   const filtered = useMemo(() => {
     return conversations.filter((item) => {
-      // Lọc theo tab
       const matchTab = activeTab === 'all' || item.status === activeTab;
       if (!matchTab) return false;
 
-      // Lọc theo từ khóa tìm kiếm
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase().trim();
       const matchHost = item.hostName.toLowerCase().includes(q);
@@ -48,6 +62,55 @@ function InboxMain() {
     [markAsRead]
   );
 
+  const handleOpenNewChat = async () => {
+    setShowNewChatModal(true);
+    setLoadingContacts(true);
+    try {
+      const list = await chatService.getContacts();
+      setContacts(list);
+    } catch {
+      setContacts([]);
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const handleStartChatWith = async (contact: ContactUser) => {
+    setStartingChat(true);
+    try {
+      const convId = await createInquiry({
+        hostId: contact.id,
+        hostEmail: contact.email,
+        title: 'Balian treehouse',
+      });
+      if (convId) {
+        setShowNewChatModal(false);
+        setSelectedConversationId(convId);
+      }
+    } catch (err) {
+      console.error('Không thể bắt đầu chat:', err);
+    } finally {
+      setStartingChat(false);
+    }
+  };
+
+  const handleDirectChatHost = async () => {
+    setStartingChat(true);
+    try {
+      const convId = await createInquiry({
+        hostEmail: 'jinny@gmail.com',
+        title: 'Balian treehouse',
+      });
+      if (convId) {
+        setSelectedConversationId(convId);
+      }
+    } catch (err) {
+      console.error('Lỗi kết nối chủ nhà:', err);
+    } finally {
+      setStartingChat(false);
+    }
+  };
+
   const getStatusBadgeStyle = useCallback((status: Conversation['status']) => {
     switch (status) {
       case 'confirmed':
@@ -62,7 +125,6 @@ function InboxMain() {
     }
   }, []);
 
-  // 2. CONDITIONAL RETURN CHỈ ĐẶT SAU KHI ĐÃ GỌI HẾT TẤT CẢ CÁC HOOKS
   if (selectedConversationId) {
     return (
       <ChatDetailScreen
@@ -87,11 +149,21 @@ function InboxMain() {
               </View>
             ) : null}
           </View>
-          {unreadCount > 0 ? (
-            <View style={styles.headerUnreadBadge}>
-              <Text style={styles.headerUnreadText}>{unreadCount} unread</Text>
-            </View>
-          ) : null}
+
+          <View style={[S.row, { gap: 10 }]}>
+            {unreadCount > 0 ? (
+              <View style={styles.headerUnreadBadge}>
+                <Text style={styles.headerUnreadText}>{unreadCount} unread</Text>
+              </View>
+            ) : null}
+            <Pressable
+              style={styles.newChatBtn}
+              onPress={handleOpenNewChat}
+              hitSlop={8}
+            >
+              <Ionicons name="create-outline" size={22} color={c.p} />
+            </Pressable>
+          </View>
         </View>
         <Text style={[S.muted, { marginTop: 4 }]}>
           {isHostUser
@@ -165,7 +237,9 @@ function InboxMain() {
         {filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="chatbubbles-outline" size={52} color={c.b} />
-            <Text style={[S.h2, { marginTop: 16, textAlign: 'center' }]}>No messages found</Text>
+            <Text style={[{ fontSize: 18, fontWeight: '700', color: c.t }, { marginTop: 16, textAlign: 'center' }]}>
+              No messages found
+            </Text>
             <Text style={[S.muted, { marginTop: 6, textAlign: 'center' }]}>
               {searchQuery
                 ? `No conversation matches "${searchQuery}"`
@@ -173,6 +247,16 @@ function InboxMain() {
                 ? 'When travelers inquire or book your property, messages will show here.'
                 : 'When you inquire or book a place, your conversations will appear here.'}
             </Text>
+
+            {!isHostUser ? (
+              <Btn
+                title={startingChat ? 'Connecting...' : 'Chat with Host Jinny Oslin'}
+                icon="chatbubble-ellipses-outline"
+                style={{ marginTop: 20 }}
+                disabled={startingChat}
+                onPress={handleDirectChatHost}
+              />
+            ) : null}
           </View>
         ) : (
           filtered.map((item) => {
@@ -250,6 +334,55 @@ function InboxMain() {
           })
         )}
       </ScrollView>
+
+      {/* Modal Bắt đầu cuộc trò chuyện mới */}
+      <Modal
+        visible={showNewChatModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNewChatModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={[S.row, { justifyContent: 'space-between', marginBottom: 16 }]}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: c.t }}>
+                Start a Conversation
+              </Text>
+              <Pressable onPress={() => setShowNewChatModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={24} color={c.t} />
+              </Pressable>
+            </View>
+
+            {loadingContacts ? (
+              <ActivityIndicator size="small" color={c.p} style={{ marginVertical: 30 }} />
+            ) : contacts.length === 0 ? (
+              <Text style={[S.muted, { textAlign: 'center', marginVertical: 20 }]}>
+                No contacts available.
+              </Text>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {contacts.map((contact) => (
+                  <Pressable
+                    key={contact.id}
+                    style={[S.row, styles.contactItem]}
+                    onPress={() => handleStartChatWith(contact)}
+                    disabled={startingChat}
+                  >
+                    <Image source={{ uri: avatar(20) }} style={styles.contactAvatar} />
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={{ fontSize: 15, fontWeight: '600', color: c.t }}>
+                        {contact.name}
+                      </Text>
+                      <Text style={[S.muted, { fontSize: 13 }]}>{contact.email}</Text>
+                    </View>
+                    <Ionicons name="chatbubble-outline" size={20} color={c.p} />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -293,6 +426,13 @@ const styles = StyleSheet.create({
     color: '#9E6400',
     fontSize: 11,
     fontWeight: '700',
+  },
+  newChatBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchBarContainer: {
     paddingHorizontal: 16,
@@ -379,5 +519,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 80,
     paddingHorizontal: 32,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '75%',
+  },
+  contactItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: c.soft,
+    alignItems: 'center',
+  },
+  contactAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: c.soft,
   },
 });

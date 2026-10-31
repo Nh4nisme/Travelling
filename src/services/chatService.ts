@@ -2,6 +2,13 @@ import { api } from './api';
 import { tokenStorage } from './tokenStorage';
 import type { Conversation, ChatMessage } from '@/features/inbox/types';
 
+export type ContactUser = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+};
+
 export const chatService = {
   async getConversations(overrideToken?: string | null): Promise<Conversation[]> {
     const token = overrideToken ?? (await tokenStorage.get());
@@ -36,7 +43,8 @@ export const chatService = {
 
   async createInquiry(
     payload: {
-      hostId: string;
+      hostId?: string;
+      hostEmail?: string;
       listingId?: string;
       listingTitle?: string;
       listingImage?: string;
@@ -51,5 +59,12 @@ export const chatService = {
       token,
     });
     return res.conversationId;
+  },
+
+  async getContacts(overrideToken?: string | null): Promise<ContactUser[]> {
+    const token = overrideToken ?? (await tokenStorage.get());
+    if (!token) return [];
+    const res = await api<{ users: ContactUser[] }>('/chat/contacts', { token });
+    return res.users;
   },
 };

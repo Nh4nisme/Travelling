@@ -2,6 +2,7 @@ export type ConversationStatus = 'all' | 'inquiry' | 'confirmed' | 'past' | 'sup
 
 export interface ChatMessage {
   id: string;
+  conversationId?: string;
   sender: 'host' | 'renter';
   senderName?: string;
   text: string;
