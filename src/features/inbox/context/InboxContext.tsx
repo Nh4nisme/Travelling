@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import type { Conversation, ChatMessage } from '../types';
-import { RENTER_CONVERSATIONS } from '../mockData';
 import { chatService } from '@/services/chatService';
 import { tokenStorage } from '@/services/tokenStorage';
 import { socketService } from '@/services/socketService';
@@ -17,12 +16,14 @@ export interface InboxContextType {
   fetchMessages: (convId: string) => Promise<ChatMessage[]>;
   sendMessage: (convId: string, text: string, image?: string) => Promise<void>;
   markAsRead: (convId: string) => void;
-  createInquiry: (listing: {
-    id: string;
-    title: string;
-    image: string;
-    price: number;
+  createInquiry: (listing?: {
+    id?: string;
+    title?: string;
+    image?: string;
+    price?: number;
     hostName?: string;
+    hostId?: string;
+    hostEmail?: string;
   }) => Promise<string>;
 }
 
@@ -49,17 +50,14 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const token = await tokenStorage.get();
       if (!token) {
-        setConversations(RENTER_CONVERSATIONS);
+        setConversations([]);
         return;
       }
       const data = await chatService.getConversations(token);
-      if (data && data.length > 0) {
-        setConversations(data);
-      } else {
-        setConversations(RENTER_CONVERSATIONS);
-      }
-    } catch {
-      setConversations(RENTER_CONVERSATIONS);
+      setConversations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.warn('Lỗi tải conversations từ MongoDB:', err);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -255,9 +253,11 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
           const savedMsg = await chatService.sendMessage(convId, trimmedText, image, token);
           setConversations((prev) =>
             prev.map((c) => {
-              if (c.id === convId) {
+              const targetId = savedMsg.conversationId || convId;
+              if (c.id === convId || c.id === targetId) {
                 return {
                   ...c,
+                  id: targetId,
                   messages: (c.messages || []).map((m) => (m.id === tempId ? savedMsg : m)),
                 };
               }
@@ -274,23 +274,28 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
 
   // 8. Tạo cuộc trò chuyện mới trên Database
   const createInquiry = useCallback(
-    async (listing: {
-      id: string;
-      title: string;
-      image: string;
-      price: number;
+    async (listing?: {
+      id?: string;
+      title?: string;
+      image?: string;
+      price?: number;
       hostName?: string;
+      hostId?: string;
+      hostEmail?: string;
     }): Promise<string> => {
       try {
         const token = await tokenStorage.get();
         if (token) {
           const convId = await chatService.createInquiry(
             {
-              hostId: '6ae2ea544bc06f0a8736c77f',
-              listingId: listing.id,
-              listingTitle: listing.title,
-              listingImage: listing.image,
-              listingPrice: listing.price,
+              hostEmail: listing?.hostEmail || 'jinny@gmail.com',
+              hostId: listing?.hostId,
+              listingId: listing?.id || '4',
+              listingTitle: listing?.title || 'Balian treehouse',
+              listingImage:
+                listing?.image ||
+                'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
+              listingPrice: listing?.price || 20,
             },
             token
           );
@@ -300,7 +305,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Lỗi tạo inquiry trên MongoDB:', e);
       }
-      return 'conv-1';
+      return '';
     },
     [refreshConversations]
   );

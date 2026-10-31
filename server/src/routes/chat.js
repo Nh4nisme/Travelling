@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
+const User = require('../models/User');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 
@@ -18,12 +20,49 @@ function formatTime(date) {
 router.get('/conversations', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    const conversations = await Conversation.find({
+    let conversations = await Conversation.find({
       $or: [{ host: userId }, { renter: userId }],
     })
       .populate('host', 'name email phone')
       .populate('renter', 'name email phone')
       .sort({ lastMessageTime: -1 });
+
+    // NẾU NGƯỜI DÙNG LÀ RENTER MỚI VÀ CHƯA CÓ HỘI THOẠI NÀO TRÊN MONGODB:
+    // Tự động khởi tạo ngay 1 cuộc hội thoại thật trên MongoDB với Host Jinny Oslin!
+    if (conversations.length === 0 && req.user.email !== 'jinny@gmail.com') {
+      const host = await User.findOne({ email: 'jinny@gmail.com' });
+      if (host) {
+        const newConv = await Conversation.create({
+          host: host._id,
+          renter: userId,
+          listingId: '4',
+          listingTitle: 'Balian treehouse',
+          listingImage:
+            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
+          listingPrice: 20,
+          dates: 'Inquiry',
+          status: 'inquiry',
+          statusLabel: 'Inquiry · Balian treehouse',
+          lastMessage: `Hi ${req.user.name}! Welcome to Travelling. Let me know if you need any details about Balian treehouse!`,
+          lastMessageTime: new Date(),
+          unreadBy: [userId],
+        });
+
+        await Message.create({
+          conversation: newConv._id,
+          sender: host._id,
+          text: `Hi ${req.user.name}! Welcome to Travelling. Let me know if you need any details about Balian treehouse!`,
+        });
+
+        // Nạp lại danh sách từ MongoDB
+        conversations = await Conversation.find({
+          $or: [{ host: userId }, { renter: userId }],
+        })
+          .populate('host', 'name email phone')
+          .populate('renter', 'name email phone')
+          .sort({ lastMessageTime: -1 });
+      }
+    }
 
     const formatted = conversations.map((c) => {
       const isHost = c.host && c.host._id.equals(userId);
@@ -62,9 +101,29 @@ router.get('/conversations', auth, async (req, res) => {
 router.get('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { id } = req.params;
+    let convId = req.params.id;
 
-    const conversation = await Conversation.findById(id)
+    // Khắc phục nếu client truyền mock ID như 'conv-1'
+    if (!mongoose.Types.ObjectId.isValid(convId)) {
+      const host = await User.findOne({ email: 'jinny@gmail.com' });
+      if (host) {
+        const existing = await Conversation.findOne({
+          $or: [
+            { host: host._id, renter: userId },
+            { host: userId, renter: host._id },
+          ],
+        });
+        if (existing) {
+          convId = existing._id.toString();
+        } else {
+          return res.status(404).json({ message: 'Hội thoại không tồn tại' });
+        }
+      } else {
+        return res.status(404).json({ message: 'Hội thoại không tồn tại' });
+      }
+    }
+
+    const conversation = await Conversation.findById(convId)
       .populate('host', 'name')
       .populate('renter', 'name');
 
@@ -84,14 +143,14 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
       await conversation.save();
     }
 
-    const messages = await Message.find({ conversation: id })
+    const messages = await Message.find({ conversation: convId })
       .sort({ createdAt: 1 })
       .populate('sender', 'name');
 
     const isHost = conversation.host._id.equals(userId);
 
     const formattedMessages = messages.map((m) => {
-      const isSelf = m.sender._id.equals(userId);
+      const isSelf = m.sender && m.sender._id.equals(userId);
       return {
         id: m._id.toString(),
         sender: isSelf ? (isHost ? 'host' : 'renter') : isHost ? 'renter' : 'host',
@@ -114,14 +173,47 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
 router.post('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { id } = req.params;
+    let convId = req.params.id;
     const { text, image } = req.body;
 
     if (!text && !image) {
       return res.status(400).json({ message: 'Nội dung tin nhắn không được rỗng' });
     }
 
-    const conversation = await Conversation.findById(id);
+    // Khắc phục nếu client truyền mock ID như 'conv-1': tự động liên kết hoặc tạo hội thoại MongoDB
+    if (!mongoose.Types.ObjectId.isValid(convId)) {
+      const host = await User.findOne({ email: 'jinny@gmail.com' });
+      if (host) {
+        let existing = await Conversation.findOne({
+          $or: [
+            { host: host._id, renter: userId },
+            { host: userId, renter: host._id },
+          ],
+        });
+        if (!existing) {
+          existing = await Conversation.create({
+            host: host._id,
+            renter: userId,
+            listingId: '4',
+            listingTitle: 'Balian treehouse',
+            listingImage:
+              'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
+            listingPrice: 20,
+            dates: 'Inquiry',
+            status: 'inquiry',
+            statusLabel: 'Inquiry · Balian treehouse',
+            lastMessage: (text || '').trim(),
+            lastMessageTime: new Date(),
+            unreadBy: [host._id],
+          });
+        }
+        convId = existing._id.toString();
+      } else {
+        return res.status(404).json({ message: 'Hội thoại không tồn tại' });
+      }
+    }
+
+    const conversation = await Conversation.findById(convId);
     if (!conversation) {
       return res.status(404).json({ message: 'Hội thoại không tồn tại' });
     }
@@ -132,9 +224,9 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
       return res.status(403).json({ message: 'Bạn không có quyền nhắn tin trong hội thoại này' });
     }
 
-    // Tạo message mới
+    // Tạo message mới trong MongoDB Atlas
     const message = await Message.create({
-      conversation: id,
+      conversation: convId,
       sender: userId,
       text: (text || '').trim(),
       image: image || '',
@@ -156,7 +248,7 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     const formattedTime = formatTime(message.createdAt);
     const messagePayload = {
       id: message._id.toString(),
-      conversationId: id,
+      conversationId: convId,
       sender: isHost ? 'host' : 'renter',
       senderName: req.user.name,
       text: message.text,
@@ -169,10 +261,10 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       // 1. Gửi tin nhắn tức thì vào phòng chat (room)
-      io.to(id).emit('message:received', messagePayload);
+      io.to(convId).emit('message:received', messagePayload);
       // 2. Cập nhật preview tin nhắn cuối cùng trên màn hình danh sách Inbox
       io.emit('conversation:updated', {
-        id,
+        id: convId,
         lastMessage: conversation.lastMessage,
         lastMessageTime: formattedTime,
         unreadFor: otherUserId.toString(),
@@ -192,28 +284,48 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
 router.post('/inquire', auth, async (req, res) => {
   try {
     const renterId = req.user._id;
-    const { hostId, listingId, listingTitle, listingImage, listingPrice } = req.body;
+    let { hostId, hostEmail, listingId, listingTitle, listingImage, listingPrice } =
+      req.body || {};
+
+    if (!hostId && hostEmail) {
+      const hostUser = await User.findOne({ email: String(hostEmail).toLowerCase().trim() });
+      if (hostUser) hostId = hostUser._id;
+    }
 
     if (!hostId) {
-      return res.status(400).json({ message: 'Thiếu hostId' });
+      const defaultHost = await User.findOne({ email: 'jinny@gmail.com' });
+      if (defaultHost) hostId = defaultHost._id;
+    }
+
+    if (!hostId) {
+      return res.status(400).json({ message: 'Không tìm thấy thông tin chủ nhà' });
+    }
+
+    // Không cho tự chat với chính mình
+    if (String(hostId) === String(renterId)) {
+      return res.status(400).json({ message: 'Không thể tạo cuộc trò chuyện với chính mình' });
     }
 
     let conversation = await Conversation.findOne({
-      host: hostId,
-      renter: renterId,
-      listingId: listingId || '',
+      $or: [
+        { host: hostId, renter: renterId, listingId: listingId || '' },
+        { host: renterId, renter: hostId, listingId: listingId || '' },
+        { host: hostId, renter: renterId },
+      ],
     });
 
     if (!conversation) {
       conversation = await Conversation.create({
         host: hostId,
         renter: renterId,
-        listingId: listingId || '',
-        listingTitle: listingTitle || 'Listing',
-        listingImage: listingImage || '',
-        listingPrice: listingPrice || 0,
+        listingId: listingId || '4',
+        listingTitle: listingTitle || 'Balian treehouse',
+        listingImage:
+          listingImage ||
+          'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
+        listingPrice: listingPrice || 20,
         status: 'inquiry',
-        statusLabel: `Inquiry · ${listingTitle || 'Stay'}`,
+        statusLabel: `Inquiry · ${listingTitle || 'Balian treehouse'}`,
         lastMessage: 'Started conversation with host.',
         lastMessageTime: new Date(),
         unreadBy: [hostId],
@@ -223,7 +335,7 @@ router.post('/inquire', auth, async (req, res) => {
       await Message.create({
         conversation: conversation._id,
         sender: hostId,
-        text: `Hi ${req.user.name}! Thank you for your interest in ${listingTitle || 'our home'}. How can I assist you?`,
+        text: `Hi ${req.user.name}! Thank you for reaching out. How can I assist you with your stay?`,
       });
     }
 
@@ -231,6 +343,25 @@ router.post('/inquire', auth, async (req, res) => {
   } catch (error) {
     console.error('Lỗi tạo inquiry:', error.message);
     res.status(500).json({ message: 'Không thể tạo cuộc hội thoại' });
+  }
+});
+
+// 5. Lấy danh sách thành viên trong hệ thống để bắt đầu cuộc trò chuyện
+router.get('/contacts', auth, async (req, res) => {
+  try {
+    const currentUserId = req.user._id;
+    const users = await User.find({ _id: { $ne: currentUserId } }).select('name email phone');
+    res.json({
+      users: users.map((u) => ({
+        id: u._id.toString(),
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+      })),
+    });
+  } catch (error) {
+    console.error('Lỗi lấy contacts:', error.message);
+    res.status(500).json({ message: 'Không thể tải danh sách liên hệ' });
   }
 });
 
