@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,9 +27,16 @@ const TABS: { id: ConversationStatus; label: string }[] = [
   { id: 'support', label: 'Support' },
 ];
 
-function InboxMain() {
+function InboxMain({
+  openConversationId,
+  navTimestamp,
+}: {
+  openConversationId?: string;
+  navTimestamp?: number;
+}) {
   const navigation = useNavigation<any>();
-  const { conversations, markAsRead, unreadCount, isHostUser, createInquiry } = useInbox();
+  const { conversations, markAsRead, unreadCount, isHostUser, createInquiry, refreshConversations } =
+    useInbox();
   const [activeTab, setActiveTab] = useState<ConversationStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -39,6 +46,17 @@ function InboxMain() {
   const [contacts, setContacts] = useState<ContactUser[]>([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+
+  // Auto-open conversation nếu được navigate từ DetailScreen với openConversationId
+  useEffect(() => {
+    if (openConversationId) {
+      void (async () => {
+        await refreshConversations();
+        markAsRead(openConversationId);
+        setSelectedConversationId(openConversationId);
+      })();
+    }
+  }, [openConversationId, navTimestamp, refreshConversations, markAsRead]);
 
   const filtered = useMemo(() => {
     return conversations.filter((item) => {
@@ -130,7 +148,12 @@ function InboxMain() {
       <ChatDetailScreen
         conversationId={selectedConversationId}
         navigation={navigation}
-        onBack={() => setSelectedConversationId(null)}
+        onBack={() => {
+          setSelectedConversationId(null);
+          try {
+            navigation.setParams({ openConversationId: undefined, t: undefined });
+          } catch {}
+        }}
       />
     );
   }
@@ -249,13 +272,19 @@ function InboxMain() {
             </Text>
 
             {!isHostUser ? (
-              <Btn
-                title={startingChat ? 'Connecting...' : 'Chat with Host Jinny Oslin'}
-                icon="chatbubble-ellipses-outline"
-                style={{ marginTop: 20 }}
-                disabled={startingChat}
-                onPress={handleDirectChatHost}
-              />
+              <View style={[S.row, { gap: 10, marginTop: 20 }]}>
+                <Btn
+                  title="Explore places"
+                  icon="search-outline"
+                  onPress={() => navigation.navigate('Search')}
+                />
+                <Btn
+                  title="New message"
+                  icon="create-outline"
+                  outline
+                  onPress={handleOpenNewChat}
+                />
+              </View>
             ) : null}
           </View>
         ) : (
@@ -387,12 +416,11 @@ function InboxMain() {
   );
 }
 
-export function InboxScreen() {
-  return (
-    <InboxProvider>
-      <InboxMain />
-    </InboxProvider>
-  );
+export function InboxScreen({ route }: any) {
+  // Lấy openConversationId và t từ route params (truyền từ DetailScreen khi bấm Contact Host)
+  const openConversationId: string | undefined = route?.params?.openConversationId;
+  const navTimestamp: number | undefined = route?.params?.t;
+  return <InboxMain openConversationId={openConversationId} navTimestamp={navTimestamp} />;
 }
 
 const styles = StyleSheet.create({

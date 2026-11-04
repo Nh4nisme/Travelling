@@ -24,6 +24,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
     "checkInPolicy": "Please confirm your check-in instructions with the host before arrival.",
+    "hostEmail": "sarah.omaha@gmail.com",
+    "hostName": "Sarah Jenkins",
     "reviewItems": [
       { "name": "John King", "stars": 4, "text": "We loved staying in this charming home! It had all the amenities we needed, and the historic...", "avatar": 11 },
       { "name": "Jennifer Harris", "stars": 3, "text": "While the location of this home was convenient, we were disappointed with the cleanliness and overall...", "avatar": 47 },
@@ -56,6 +58,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "The host will share arrival instructions before your stay.",
+    "hostEmail": "alex.miller@gmail.com",
+    "hostName": "Alex Miller",
     "reviewItems": []
   },
   {
@@ -83,6 +87,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "Please coordinate your arrival time with the host.",
+    "hostEmail": "sarah.omaha@gmail.com",
+    "hostName": "Sarah Jenkins",
     "reviewItems": []
   },
   {
@@ -110,6 +116,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
     "checkInPolicy": "The host will provide check-in details before your arrival.",
+    "hostEmail": "jinny@gmail.com",
+    "hostName": "Jinny Oslin",
     "reviewItems": []
   },
   {
@@ -133,10 +141,12 @@
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=70"
     ],
     "facilities": ["Kitchen", "Outdoor space", "Internet access"],
-    "desc": "A warm alpine chalet with mountain views, a generous living area, and space to unwind after a day outdoors.",
+    "desc": "A warm alpine chalet with mountain views, a generous living area, and space to unwind after a day outdoors in Chamonix.",
     "checkInTime": "16:00",
     "checkOutTime": "10:00",
     "checkInPolicy": "Please contact the host to arrange your arrival.",
+    "hostEmail": "pierre.chalet@gmail.com",
+    "hostName": "Pierre Dubois",
     "reviewItems": []
   },
   {
@@ -164,6 +174,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "The host will share access instructions before check-in.",
+    "hostEmail": "marco.dolomites@gmail.com",
+    "hostName": "Marco Rossi",
     "reviewItems": []
   },
   {
@@ -191,6 +203,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "Check in at the campsite reception on arrival.",
+    "hostEmail": "minhduc.dalat@gmail.com",
+    "hostName": "Minh Đức",
     "reviewItems": []
   },
   {
@@ -218,6 +232,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "Please check in with the campground host when you arrive.",
+    "hostEmail": "david.banff@gmail.com",
+    "hostName": "David Tremblay",
     "reviewItems": []
   }
 ]

@@ -20,49 +20,12 @@ function formatTime(date) {
 router.get('/conversations', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    let conversations = await Conversation.find({
+    const conversations = await Conversation.find({
       $or: [{ host: userId }, { renter: userId }],
     })
       .populate('host', 'name email phone')
       .populate('renter', 'name email phone')
       .sort({ lastMessageTime: -1 });
-
-    // NẾU NGƯỜI DÙNG LÀ RENTER MỚI VÀ CHƯA CÓ HỘI THOẠI NÀO TRÊN MONGODB:
-    // Tự động khởi tạo ngay 1 cuộc hội thoại thật trên MongoDB với Host Jinny Oslin!
-    if (conversations.length === 0 && req.user.email !== 'jinny@gmail.com') {
-      const host = await User.findOne({ email: 'jinny@gmail.com' });
-      if (host) {
-        const newConv = await Conversation.create({
-          host: host._id,
-          renter: userId,
-          listingId: '4',
-          listingTitle: 'Balian treehouse',
-          listingImage:
-            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
-          listingPrice: 20,
-          dates: 'Inquiry',
-          status: 'inquiry',
-          statusLabel: 'Inquiry · Balian treehouse',
-          lastMessage: `Hi ${req.user.name}! Welcome to Travelling. Let me know if you need any details about Balian treehouse!`,
-          lastMessageTime: new Date(),
-          unreadBy: [userId],
-        });
-
-        await Message.create({
-          conversation: newConv._id,
-          sender: host._id,
-          text: `Hi ${req.user.name}! Welcome to Travelling. Let me know if you need any details about Balian treehouse!`,
-        });
-
-        // Nạp lại danh sách từ MongoDB
-        conversations = await Conversation.find({
-          $or: [{ host: userId }, { renter: userId }],
-        })
-          .populate('host', 'name email phone')
-          .populate('renter', 'name email phone')
-          .sort({ lastMessageTime: -1 });
-      }
-    }
 
     const formatted = conversations.map((c) => {
       const isHost = c.host && c.host._id.equals(userId);
@@ -101,26 +64,10 @@ router.get('/conversations', auth, async (req, res) => {
 router.get('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    let convId = req.params.id;
+    const convId = req.params.id;
 
-    // Khắc phục nếu client truyền mock ID như 'conv-1'
     if (!mongoose.Types.ObjectId.isValid(convId)) {
-      const host = await User.findOne({ email: 'jinny@gmail.com' });
-      if (host) {
-        const existing = await Conversation.findOne({
-          $or: [
-            { host: host._id, renter: userId },
-            { host: userId, renter: host._id },
-          ],
-        });
-        if (existing) {
-          convId = existing._id.toString();
-        } else {
-          return res.status(404).json({ message: 'Hội thoại không tồn tại' });
-        }
-      } else {
-        return res.status(404).json({ message: 'Hội thoại không tồn tại' });
-      }
+      return res.status(404).json({ message: 'Hội thoại không tồn tại' });
     }
 
     const conversation = await Conversation.findById(convId)
@@ -173,44 +120,15 @@ router.get('/conversations/:id/messages', auth, async (req, res) => {
 router.post('/conversations/:id/messages', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    let convId = req.params.id;
+    const convId = req.params.id;
     const { text, image } = req.body;
 
     if (!text && !image) {
       return res.status(400).json({ message: 'Nội dung tin nhắn không được rỗng' });
     }
 
-    // Khắc phục nếu client truyền mock ID như 'conv-1': tự động liên kết hoặc tạo hội thoại MongoDB
     if (!mongoose.Types.ObjectId.isValid(convId)) {
-      const host = await User.findOne({ email: 'jinny@gmail.com' });
-      if (host) {
-        let existing = await Conversation.findOne({
-          $or: [
-            { host: host._id, renter: userId },
-            { host: userId, renter: host._id },
-          ],
-        });
-        if (!existing) {
-          existing = await Conversation.create({
-            host: host._id,
-            renter: userId,
-            listingId: '4',
-            listingTitle: 'Balian treehouse',
-            listingImage:
-              'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
-            listingPrice: 20,
-            dates: 'Inquiry',
-            status: 'inquiry',
-            statusLabel: 'Inquiry · Balian treehouse',
-            lastMessage: (text || '').trim(),
-            lastMessageTime: new Date(),
-            unreadBy: [host._id],
-          });
-        }
-        convId = existing._id.toString();
-      } else {
-        return res.status(404).json({ message: 'Hội thoại không tồn tại' });
-      }
+      return res.status(400).json({ message: 'ID hội thoại không hợp lệ' });
     }
 
     const conversation = await Conversation.findById(convId);
@@ -287,56 +205,86 @@ router.post('/inquire', auth, async (req, res) => {
     let { hostId, hostEmail, listingId, listingTitle, listingImage, listingPrice } =
       req.body || {};
 
+    // Ưu tiên 1: nếu có listingId, tìm listing trong DB để lấy đúng thông tin và host của căn hộ đó
+    if (listingId) {
+      const Listing = require('../models/Listing');
+      const listing = await Listing.findOne({ id: String(listingId) }).select('hostEmail hostName title images price');
+      if (listing) {
+        if (!listingTitle) listingTitle = listing.title;
+        if (!listingImage && listing.images && listing.images[0]) listingImage = listing.images[0];
+        if (!listingPrice) listingPrice = listing.price;
+        if (!hostEmail && listing.hostEmail) hostEmail = listing.hostEmail;
+      }
+    }
+
+    // Ưu tiên 2: tìm host theo hostEmail
     if (!hostId && hostEmail) {
       const hostUser = await User.findOne({ email: String(hostEmail).toLowerCase().trim() });
       if (hostUser) hostId = hostUser._id;
     }
 
+    // Ưu tiên 3: Fallback Jinny Oslin nếu không tìm được
     if (!hostId) {
       const defaultHost = await User.findOne({ email: 'jinny@gmail.com' });
       if (defaultHost) hostId = defaultHost._id;
     }
 
     if (!hostId) {
-      return res.status(400).json({ message: 'Không tìm thấy thông tin chủ nhà' });
+      return res.status(404).json({ message: 'Không tìm thấy thông tin chủ nhà cho căn hộ này' });
     }
 
-    // Không cho tự chat với chính mình
+    // Kiểm tra: không cho tự chat với chính mình
     if (String(hostId) === String(renterId)) {
-      return res.status(400).json({ message: 'Không thể tạo cuộc trò chuyện với chính mình' });
+      return res.status(400).json({
+        message: 'Bạn là chủ nhà của căn hộ này! Hãy đăng nhập tài khoản khách khác (ví dụ: nguyensonn2k5@gmail.com) để thử nghiệm nhắn tin cho chủ nhà.',
+      });
     }
 
+    // Tìm cuộc hội thoại đã tồn tại giữa 2 người này cho căn hộ này (hoặc giữa 2 người này)
     let conversation = await Conversation.findOne({
       $or: [
         { host: hostId, renter: renterId, listingId: listingId || '' },
         { host: renterId, renter: hostId, listingId: listingId || '' },
         { host: hostId, renter: renterId },
+        { host: renterId, renter: hostId },
       ],
-    });
+    }).sort({ createdAt: 1 });
+
+    // Nếu tìm thấy, kiểm tra xem có duplicate không và dọn dẹp
+    if (conversation) {
+      const allConvs = await Conversation.find({
+        $or: [
+          { host: hostId, renter: renterId, listingId: listingId || '' },
+          { host: renterId, renter: hostId, listingId: listingId || '' },
+          { host: hostId, renter: renterId },
+          { host: renterId, renter: hostId },
+        ],
+      }).sort({ createdAt: 1 });
+
+      if (allConvs.length > 1) {
+        const toDelete = allConvs.slice(1).map((c) => c._id);
+        await Message.deleteMany({ conversation: { $in: toDelete } });
+        await Conversation.deleteMany({ _id: { $in: toDelete } });
+      }
+    }
 
     if (!conversation) {
       conversation = await Conversation.create({
         host: hostId,
         renter: renterId,
         listingId: listingId || '4',
-        listingTitle: listingTitle || 'Balian treehouse',
+        listingTitle: listingTitle || 'Property',
         listingImage:
           listingImage ||
           'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70',
         listingPrice: listingPrice || 20,
         status: 'inquiry',
-        statusLabel: `Inquiry · ${listingTitle || 'Balian treehouse'}`,
-        lastMessage: 'Started conversation with host.',
+        statusLabel: `Inquiry · ${listingTitle || 'Property'}`,
+        lastMessage: 'Chưa có tin nhắn',
         lastMessageTime: new Date(),
-        unreadBy: [hostId],
+        unreadBy: [],
       });
-
-      // Tạo tin nhắn chào mở đầu
-      await Message.create({
-        conversation: conversation._id,
-        sender: hostId,
-        text: `Hi ${req.user.name}! Thank you for reaching out. How can I assist you with your stay?`,
-      });
+      // Không tạo tin nhắn tự động để giữ lịch sử chat trống ban đầu
     }
 
     res.json({ conversationId: conversation._id.toString() });
@@ -362,6 +310,23 @@ router.get('/contacts', auth, async (req, res) => {
   } catch (error) {
     console.error('Lỗi lấy contacts:', error.message);
     res.status(500).json({ message: 'Không thể tải danh sách liên hệ' });
+  }
+});
+
+// 6. Xóa sạch 100% lịch sử chat (cho testing / reset dữ liệu)
+router.post('/clear-all', auth, async (_req, res) => {
+  try {
+    const cResult = await Conversation.deleteMany({});
+    const mResult = await Message.deleteMany({});
+    res.json({
+      ok: true,
+      message: 'Đã xóa toàn bộ lịch sử trò chuyện trong hệ thống.',
+      deletedConversations: cResult.deletedCount,
+      deletedMessages: mResult.deletedCount,
+    });
+  } catch (error) {
+    console.error('Lỗi xóa lịch sử chat:', error.message);
+    res.status(500).json({ message: 'Không thể xóa lịch sử trò chuyện' });
   }
 });
 

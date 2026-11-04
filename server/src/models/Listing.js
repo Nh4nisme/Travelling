@@ -33,6 +33,8 @@ const listingSchema = new mongoose.Schema(
     checkInTime: { type: String, required: true },
     checkOutTime: { type: String, required: true },
     checkInPolicy: { type: String, required: true },
+    hostEmail: { type: String, default: '' }, // Email chủ nhà phụ trách listing này
+    hostName: { type: String, default: '' }, // Tên chủ nhà phụ trách listing này
   },
   { timestamps: true, versionKey: false },
 );

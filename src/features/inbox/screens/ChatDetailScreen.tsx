@@ -56,20 +56,25 @@ function ChatDetailInner({
   const insets = useSafeAreaInsets();
   const { user } = useApp();
   const convId = propConvId ?? route?.params?.conversationId ?? 'conv-1';
-  const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages } =
+  const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages, refreshConversations } =
     useInbox();
 
-  const conv =
-    conversations.find((item) => item.id === convId) ??
-    conversations[0] ??
-    RENTER_CONVERSATIONS[0];
+  const conv = conversations.find((item) => item.id === convId);
+
+  // Nếu chưa tìm thấy conv (đang tải hoặc mới tạo từ listing), refresh lại
+  useEffect(() => {
+    if (!conv && convId && convId !== 'conv-1') {
+      void refreshConversations();
+    }
+  }, [conv, convId, refreshConversations]);
+
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const scrollViewRef = useRef<any>(null);
   const typingTimerRef = useRef<any>(null);
 
-  const isPartnerTyping = Boolean(typingMap[conv.id]);
-  const messageList = useMemo(() => conv.messages || [], [conv.messages]);
+  const isPartnerTyping = conv ? Boolean(typingMap[conv.id]) : false;
+  const messageList = useMemo(() => conv?.messages || [], [conv?.messages]);
 
   const suggestions = useMemo(() => {
     return isHostUser ? HOST_SUGGESTIONS : RENTER_SUGGESTIONS;
@@ -77,6 +82,7 @@ function ChatDetailInner({
 
   // 1. Tham gia phòng Socket.io của hội thoại này và tải tin nhắn từ Database
   useEffect(() => {
+    if (!conv?.id) return;
     let active = true;
     socketService.joinConversation(conv.id);
 
@@ -92,7 +98,7 @@ function ChatDetailInner({
       if (user?.id) socketService.emitTypingStop(conv.id, user.id);
       socketService.leaveConversation(conv.id);
     };
-  }, [conv.id, fetchMessages, markAsRead, user?.id]);
+  }, [conv?.id, fetchMessages, markAsRead, user?.id]);
 
   // 2. Cuộn mượt xuống cuối khi có tin nhắn mới hoặc đối phương đang gõ
   useEffect(() => {
@@ -103,13 +109,25 @@ function ChatDetailInner({
   }, [messageList.length, isPartnerTyping]);
 
   const handleBack = () => {
-    if (user?.id) socketService.emitTypingStop(conv.id, user.id);
+    if (user?.id && conv?.id) socketService.emitTypingStop(conv.id, user.id);
     if (onBack) {
       onBack();
     } else if (navigation?.goBack) {
       navigation.goBack();
     }
   };
+
+  if (!conv) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={c.p} />
+        <Text style={[S.muted, { marginTop: 14, fontSize: 14 }]}>Connecting to conversation...</Text>
+        <Pressable onPress={handleBack} style={{ marginTop: 20, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: c.soft }}>
+          <Text style={{ color: c.p, fontWeight: '600' }}>Cancel</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   const handleTextChange = (text: string) => {
     setInputText(text);
@@ -254,6 +272,21 @@ function ChatDetailInner({
           {/* Indicator khi đang tải tin nhắn */}
           {loadingMessages && messageList.length === 0 ? (
             <ActivityIndicator size="small" color={c.p} style={{ marginVertical: 20 }} />
+          ) : null}
+
+          {/* Chưa từng chat: hiển thị empty state */}
+          {!loadingMessages && messageList.length === 0 ? (
+            <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40, paddingHorizontal: 24 }}>
+              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.soft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Ionicons name="chatbubbles-outline" size={26} color={c.p} />
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: c.t, textAlign: 'center' }}>
+                Chưa có lịch sử trò chuyện với {conv.hostName}
+              </Text>
+              <Text style={[S.muted, { textAlign: 'center', marginTop: 6, fontSize: 13 }]}>
+                Bạn chưa từng nhắn tin cho chủ nhà này. Hãy gửi tin nhắn đầu tiên để hỏi thêm thông tin về căn hộ {conv.listingTitle || ''}!
+              </Text>
+            </View>
           ) : null}
 
           {/* Messages Stream */}

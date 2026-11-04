@@ -3,6 +3,8 @@ export type Listing = {
   category: 'Beach' | 'Mountain' | 'Camping'; type: 'Entire place' | 'Private room' | 'Dormitories';
   price: number; rating: number; reviews: number; reviewItems: ListingReview[]; bedrooms: number; beds: number; baths: number; maxGuests: number; images: string[]; facilities: string[]; desc: string;
   checkInTime: string; checkOutTime: string; checkInPolicy: string;
+  hostEmail?: string; // Email chủ nhà phụ trách listing (từ DB)
+  hostName?: string; // Tên chủ nhà phụ trách listing (từ DB)
 };
 
 export type ListingReview = { name: string; stars: number; text: string; avatar: number };
