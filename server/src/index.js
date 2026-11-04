@@ -99,6 +99,42 @@ connectDB()
       require('./models/Conversation').init(),
       require('./models/Message').init(),
     ]);
+
+    // Đồng bộ tài khoản Host thật và gắn vào tất cả các Listing (chạy êm)
+    try {
+      const seedAllHostsAndListings = require('./seedAllHostsAndListings');
+      await seedAllHostsAndListings();
+    } catch {}
+
+    // Hỗ trợ xóa sạch lịch sử chat nếu cờ CLEAR_CHAT_ON_START được bật
+    if (process.env.CLEAR_CHAT_ON_START === 'true') {
+      try {
+        const Conversation = require('./models/Conversation');
+        const Message = require('./models/Message');
+        await Conversation.deleteMany({});
+        await Message.deleteMany({});
+      } catch {}
+    }
+
+    // Dọn dẹp conversation trùng (cùng cặp host-renter) khi server khởi động (chạy êm)
+    try {
+      const Conversation = require('./models/Conversation');
+      const Message = require('./models/Message');
+      const all = await Conversation.find({}).sort({ createdAt: 1 }).lean();
+      const groupMap = new Map();
+      for (const c of all) {
+        const key = [c.host.toString(), c.renter.toString()].sort().join('|');
+        if (!groupMap.has(key)) groupMap.set(key, []);
+        groupMap.get(key).push(c);
+      }
+      for (const group of groupMap.values()) {
+        if (group.length <= 1) continue;
+        const toDelete = group.slice(1).map((c) => c._id);
+        await Message.deleteMany({ conversation: { $in: toDelete } });
+        await Conversation.deleteMany({ _id: { $in: toDelete } });
+      }
+    } catch {}
+
     server.listen(PORT, '0.0.0.0', () => console.log(`🚀 API & Realtime Socket chạy tại http://localhost:${PORT}`));
   })
   .catch((err) => {

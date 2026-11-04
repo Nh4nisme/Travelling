@@ -11,7 +11,7 @@ export interface InboxContextType {
   unreadCount: number;
   typingMap: Record<string, boolean>;
   isHostUser: boolean;
-  refreshConversations: () => Promise<void>;
+  refreshConversations: () => Promise<Conversation[]>;
   getConversation: (id: string) => Conversation | undefined;
   fetchMessages: (convId: string) => Promise<ChatMessage[]>;
   sendMessage: (convId: string, text: string, image?: string) => Promise<void>;
@@ -45,19 +45,22 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
   const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
 
   // 1. Tải danh sách hội thoại THỰC TẾ từ Database MongoDB Atlas
-  const refreshConversations = useCallback(async () => {
+  const refreshConversations = useCallback(async (): Promise<Conversation[]> => {
     try {
       setLoading(true);
       const token = await tokenStorage.get();
       if (!token) {
         setConversations([]);
-        return;
+        return [];
       }
       const data = await chatService.getConversations(token);
-      setConversations(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setConversations(list);
+      return list;
     } catch (err) {
       console.warn('Lỗi tải conversations từ MongoDB:', err);
       setConversations([]);
+      return [];
     } finally {
       setLoading(false);
     }
