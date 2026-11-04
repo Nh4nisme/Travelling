@@ -77,6 +77,7 @@ app.use('/api/listings', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 app.use('/api/bookings', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 app.use('/api/support', rateLimit({ windowMs: 15 * 60 * 1000, max: 30 }));
 app.use('/api/chat', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+app.use('/api/payments', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, socket: true }));
 app.use('/api/auth', require('./routes/auth'));
@@ -84,6 +85,7 @@ app.use('/api/listings', require('./routes/listings'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/payments', require('./routes/payments'));
 
 app.use((err, _req, res, _next) => {
   console.error('API request failed:', err.message);
@@ -98,6 +100,7 @@ connectDB()
       require('./models/BookedNight').init(),
       require('./models/Conversation').init(),
       require('./models/Message').init(),
+      require('./models/PaymentMethod').init(),
     ]);
 
     // Đồng bộ tài khoản Host thật và gắn vào tất cả các Listing (chạy êm)
