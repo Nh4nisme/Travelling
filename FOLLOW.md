@@ -449,3 +449,23 @@ Tài liệu này dùng để theo dõi chi tiết từng bước thực hiện, 
 - Bước 25: Bổ sung translations vào `constants/translations.ts`
 - Bước 26-31: Update từng screen theo thứ tự ưu tiên
 - Bước 32: Testing toàn diện Dark Mode + i18n cho toàn bộ Profile module
+
+---
+
+### Bước 27: Sửa lỗi UI nút xóa trong Payment Methods
+- **Trạng thái:** ✅ Hoàn thành
+- **Ngày:** 2026-11-05
+- **Vấn đề:** Nút "Set as Default" dài, nút Delete nhỏ → không cân xứng
+- **Giải pháp:** 
+  - Thêm minWidth, minHeight cho deleteBtn
+  - Chuẩn hóa padding và borderRadius cho cả 2 nút
+  - Đổi icon checkmark đơn lẻ thành badge có text "Default"
+  - Dùng `colors.danger` và `colors.dangerSoft` thay vì hardcode
+- **File thay đổi:** `PaymentsScreen.tsx` (lines 295-322, 591-613)
+- **Commit:** `425940b` - "fix(profile): improve Payment Methods button styling consistency"
+
+**Update 2:** Tinh chỉnh thêm kích thước
+- Chuẩn hóa `minHeight: 36px` cho tất cả nút (actionBtn, deleteBtn, defaultBadge)
+- Đồng bộ `paddingVertical: 8px` cho tất cả các nút
+- Điều chỉnh `paddingHorizontal` để cân đối visual (10-12px tùy nội dung)
+- Nút Delete và Default Badge giờ có kích thước hoàn toàn đồng nhất về chiều cao

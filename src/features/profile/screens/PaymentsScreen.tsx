@@ -301,9 +301,11 @@ export function PaymentsScreen() {
       borderColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
+      minHeight: 36,
     },
     deleteBtn: {
-      padding: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 8,
       borderRadius: 8,
       backgroundColor: colors.dangerSoft,
       borderWidth: 1,
@@ -316,12 +318,13 @@ export function PaymentsScreen() {
     defaultBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
       borderRadius: 8,
       backgroundColor: colors.primaryLight,
       borderWidth: 1,
       borderColor: colors.primary,
+      minHeight: 36,
     },
     pciPill: {
       flexDirection: 'row',
