@@ -5,7 +5,8 @@ import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { HelpSearchBar } from '../components/HelpSearchBar';
 import { FaqAccordionItem } from '../components/FaqAccordionItem';
@@ -23,6 +24,8 @@ const FILTERS: { id: CategoryFilter; label: string }[] = [
 export function FaqScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const params = useRoute<RouteProp<RootStackParamList, 'Faq'>>().params;
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [query, setQuery] = useState(params?.query ?? '');
   const [category, setCategory] = useState<CategoryFilter>(params?.category ?? 'all');
@@ -41,10 +44,10 @@ export function FaqScreen() {
 
   return (
     <Screen>
-      <Header title="FAQ" />
+      <Header title={t.helpCenter.faq} />
 
       <View style={{ paddingHorizontal: 16 }}>
-        <HelpSearchBar value={query} onChangeText={setQuery} placeholder="Search FAQs" />
+        <HelpSearchBar value={query} onChangeText={setQuery} placeholder={t.helpCenter.searchFaqs} />
       </View>
 
       <View style={{ paddingVertical: 12 }}>
@@ -62,11 +65,11 @@ export function FaqScreen() {
                   paddingVertical: 6,
                   borderRadius: 20,
                   borderWidth: 1,
-                  borderColor: active ? c.p : c.b,
-                  backgroundColor: active ? c.p : '#fff',
+                  borderColor: active ? colors.primary : colors.border,
+                  backgroundColor: active ? colors.primary : colors.card,
                 }}
               >
-                <Text style={{ fontSize: 13, color: active ? '#fff' : c.t, fontWeight: active ? '700' : '500' }}>{filter.label}</Text>
+                <Text style={{ fontSize: 13, color: active ? '#fff' : colors.text, fontWeight: active ? '700' : '500' }}>{filter.label}</Text>
               </Pressable>
             );
           })}
@@ -89,17 +92,17 @@ export function FaqScreen() {
         )}
         ListEmptyComponent={
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-            <Ionicons name="search-outline" size={48} color={c.b} />
-            <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '600', color: c.t, textAlign: 'center' }}>
-              {query.trim() ? `No results for "${query.trim()}"` : 'No questions in this topic yet'}
+            <Ionicons name="search-outline" size={48} color={colors.border} />
+            <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center' }}>
+              {query.trim() ? `${t.helpCenter.noResultsFor} "${query.trim()}"` : t.helpCenter.noQuestionsYet}
             </Text>
-            <Text style={[S.muted, { marginTop: 4, textAlign: 'center' }]}>Try different keywords or another topic.</Text>
+            <Text style={{ color: colors.muted, marginTop: 4, textAlign: 'center' }}>{t.helpCenter.tryKeywords}</Text>
           </View>
         }
         ListFooterComponent={
           <View style={{ marginTop: 24, alignItems: 'center' }}>
-            <Text style={[S.muted, { marginBottom: 12 }]}>Can't find what you're looking for?</Text>
-            <Btn outline title="Contact Support" icon="chatbubble-outline" onPress={goToContact} style={{ alignSelf: 'stretch' }} />
+            <Text style={{ color: colors.muted, marginBottom: 12 }}>{t.helpCenter.cantFind}</Text>
+            <Btn outline title={t.helpCenter.contactSupport} icon="chatbubble-outline" onPress={goToContact} style={{ alignSelf: 'stretch' }} />
           </View>
         }
       />

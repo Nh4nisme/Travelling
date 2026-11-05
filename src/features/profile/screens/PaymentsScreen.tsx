@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,13 +13,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useApp } from '@/store/AppContext';
 import type { Booking } from '@/store/types';
 import { paymentService, type PaymentMethodItem } from '@/services/paymentService';
 
 export function PaymentsScreen() {
   const { bookings, user } = useApp();
+  const { colors } = useTheme();
+  const { t, isVietnamese } = useLanguage();
   const [activeTab, setActiveTab] = useState<'history' | 'methods'>('history');
 
   // Danh sách phương thức thanh toán thật từ MongoDB Atlas
@@ -140,9 +143,14 @@ export function PaymentsScreen() {
       setCvv('');
       setIsDefault(false);
       await loadPaymentMethods();
-      Alert.alert('Thành công', 'Đã lưu phương thức thanh toán an toàn theo tiêu chuẩn PCI-DSS!');
+      Alert.alert(
+        isVietnamese ? 'Thành công' : 'Success',
+        isVietnamese 
+          ? 'Đã lưu phương thức thanh toán an toàn theo tiêu chuẩn PCI-DSS!' 
+          : t.payments.cardSaved
+      );
     } catch (err: any) {
-      setCardError(err?.message || 'Không thể lưu thẻ. Vui lòng kiểm tra lại thông tin.');
+      setCardError(err?.message || (isVietnamese ? 'Không thể lưu thẻ. Vui lòng kiểm tra lại thông tin.' : 'Unable to save card. Please check your information.'));
     } finally {
       setSubmittingCard(false);
     }
@@ -154,26 +162,34 @@ export function PaymentsScreen() {
       await paymentService.setDefault(item.id);
       await loadPaymentMethods();
     } catch (err: any) {
-      Alert.alert('Lỗi', err?.message || 'Không thể đặt làm thẻ mặc định');
+      Alert.alert(
+        isVietnamese ? 'Lỗi' : 'Error',
+        err?.message || (isVietnamese ? 'Không thể đặt làm thẻ mặc định' : 'Unable to set as default')
+      );
     }
   };
 
   // Xóa thẻ khỏi tài khoản
   const handleDeleteCard = (item: PaymentMethodItem) => {
     Alert.alert(
-      'Xóa phương thức thanh toán',
-      `Bạn có chắc chắn muốn xóa thẻ ${item.brand} kết thúc bằng •••• ${item.last4}?`,
+      isVietnamese ? 'Xóa phương thức thanh toán' : 'Delete Payment Method',
+      isVietnamese 
+        ? `Bạn có chắc chắn muốn xóa thẻ ${item.brand} kết thúc bằng •••• ${item.last4}?`
+        : `Are you sure you want to delete ${item.brand} card ending in •••• ${item.last4}?`,
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: isVietnamese ? 'Hủy' : 'Cancel', style: 'cancel' },
         {
-          text: 'Xóa thẻ',
+          text: isVietnamese ? 'Xóa thẻ' : t.payments.deleteCard,
           style: 'destructive',
           onPress: async () => {
             try {
               await paymentService.deleteCard(item.id);
               await loadPaymentMethods();
             } catch (err: any) {
-              Alert.alert('Lỗi', err?.message || 'Không thể xóa thẻ');
+              Alert.alert(
+                isVietnamese ? 'Lỗi' : 'Error',
+                err?.message || (isVietnamese ? 'Không thể xóa thẻ' : 'Unable to delete card')
+              );
             }
           },
         },
@@ -183,16 +199,16 @@ export function PaymentsScreen() {
 
   const getStatusBadge = (b: Booking) => {
     if (b.status === 'cancelled') {
-      return { label: 'Cancelled', bg: '#fee2e2', text: '#dc2626' };
+      return { label: isVietnamese ? 'Đã hủy' : 'Cancelled', bg: '#fee2e2', text: '#dc2626' };
     }
     if (b.payment.status === 'paid') {
-      return { label: 'Paid in full', bg: '#dcfce7', text: '#16a34a' };
+      return { label: t.bookings.paidInFull, bg: '#dcfce7', text: '#16a34a' };
     }
     if (b.payment.status === 'partial') {
-      return { label: 'Partial paid', bg: '#fef3c7', text: '#d97706' };
+      return { label: t.bookings.partialPaid, bg: '#fef3c7', text: '#d97706' };
     }
     if (b.payment.status === 'refunded') {
-      return { label: 'Refunded', bg: '#f3f4f6', text: '#4b5563' };
+      return { label: isVietnamese ? 'Đã hoàn tiền' : 'Refunded', bg: '#f3f4f6', text: '#4b5563' };
     }
     return { label: b.payment.status, bg: '#e0f2fe', text: '#0284c7' };
   };
@@ -207,8 +223,234 @@ export function PaymentsScreen() {
     }
   };
 
+  // Dynamic styles using useMemo
+  const styles = useMemo(() => StyleSheet.create({
+    tabContainer: {
+      flexDirection: 'row',
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    tabBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      borderBottomWidth: 2,
+      borderBottomColor: 'transparent',
+    },
+    tabBtnActive: {
+      borderBottomColor: colors.primary,
+    },
+    tabText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.muted,
+    },
+    tabTextActive: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+    receiptCard: {
+      marginBottom: 12,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    listingThumb: {
+      width: 64,
+      height: 64,
+      borderRadius: 8,
+      backgroundColor: colors.soft,
+    },
+    badge: {
+      fontSize: 11,
+      fontWeight: '700',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 6,
+      overflow: 'hidden',
+    },
+    defaultPill: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: colors.primary,
+      backgroundColor: colors.primaryLight,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      borderRadius: 4,
+      marginLeft: 8,
+    },
+    cardBrandBadge: {
+      width: 44,
+      height: 44,
+      borderRadius: 8,
+      backgroundColor: colors.soft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    actionBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 36,
+    },
+    deleteBtn: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: colors.dangerSoft,
+      borderWidth: 1,
+      borderColor: '#fecaca',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 36,
+      minHeight: 36,
+    },
+    defaultBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      minHeight: 36,
+    },
+    pciPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      backgroundColor: '#f0fdf4',
+      borderWidth: 1,
+      borderColor: '#bbf7d0',
+      borderRadius: 12,
+    },
+    pciText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: '#16a34a',
+    },
+    quickTestBox: {
+      backgroundColor: colors.soft,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 14,
+    },
+    quickTestTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.muted,
+    },
+    testCardChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 6,
+    },
+    testCardChipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    inputGroup: {
+      marginBottom: 12,
+    },
+    inputLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 4,
+    },
+    detectedBrandText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: colors.card,
+    },
+    textInput: {
+      flex: 1,
+      fontSize: 15,
+      color: colors.text,
+    },
+    errorBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: '#fef2f2',
+      borderWidth: 1,
+      borderColor: '#fecaca',
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 10,
+    },
+    errorText: {
+      fontSize: 13,
+      color: '#ef4444',
+      flex: 1,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    modalBox: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 20,
+      maxHeight: '90%',
+    },
+    emptyContainer: {
+      alignItems: 'center',
+      paddingVertical: 32,
+      paddingHorizontal: 16,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    receiptSection: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      paddingVertical: 12,
+    },
+    priceRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+  }), [colors]);
+
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* Tab bar switch */}
       <View style={styles.tabContainer}>
         <Pressable
@@ -218,11 +460,11 @@ export function PaymentsScreen() {
           <Ionicons
             name="receipt-outline"
             size={18}
-            color={activeTab === 'history' ? c.p : c.m}
+            color={activeTab === 'history' ? colors.primary : colors.muted}
             style={{ marginRight: 6 }}
           />
           <Text style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}>
-            Invoices & Receipts ({bookings.length})
+            {t.payments.tabInvoices} ({bookings.length})
           </Text>
         </Pressable>
 
@@ -233,11 +475,11 @@ export function PaymentsScreen() {
           <Ionicons
             name="card-outline"
             size={18}
-            color={activeTab === 'methods' ? c.p : c.m}
+            color={activeTab === 'methods' ? colors.primary : colors.muted}
             style={{ marginRight: 6 }}
           />
           <Text style={[styles.tabText, activeTab === 'methods' && styles.tabTextActive]}>
-            Payment Methods ({methods.length})
+            {t.payments.tabMethods} ({methods.length})
           </Text>
         </Pressable>
       </View>
@@ -246,16 +488,22 @@ export function PaymentsScreen() {
         {activeTab === 'history' ? (
           /* TAB 1: DANH SÁCH HÓA ĐƠN & GIAO DỊCH THẬT TỪ BOOKING */
           <View>
-            <Text style={[S.muted, { marginBottom: 14 }]}>
-              Official receipts for your past and upcoming reservations.
+            <Text style={{ fontSize: 14, color: colors.muted, marginBottom: 14 }}>
+              {isVietnamese 
+                ? 'Biên lai chính thức cho các đặt phòng đã qua và sắp tới của bạn.' 
+                : 'Official receipts for your past and upcoming reservations.'}
             </Text>
 
             {bookings.length === 0 ? (
-              <View style={[S.box, styles.emptyContainer]}>
-                <Ionicons name="receipt-outline" size={48} color={c.m} style={{ opacity: 0.5 }} />
-                <Text style={[{ fontSize: 16, fontWeight: '700', color: c.t }, { marginTop: 12 }]}>No receipts yet</Text>
-                <Text style={[S.muted, { textAlign: 'center', marginTop: 6 }]}>
-                  When you book a stay, your payment receipts and invoices will be listed here.
+              <View style={styles.emptyContainer}>
+                <Ionicons name="receipt-outline" size={48} color={colors.muted} style={{ opacity: 0.5 }} />
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 12 }}>
+                  {isVietnamese ? 'Chưa có biên lai' : 'No receipts yet'}
+                </Text>
+                <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 6 }}>
+                  {isVietnamese 
+                    ? 'Khi bạn đặt phòng, biên lai thanh toán và hóa đơn sẽ được liệt kê ở đây.' 
+                    : 'When you book a stay, your payment receipts and invoices will be listed here.'}
                 </Text>
               </View>
             ) : (
@@ -264,36 +512,36 @@ export function PaymentsScreen() {
                 return (
                   <Pressable
                     key={b.id}
-                    style={[S.box, styles.receiptCard]}
+                    style={styles.receiptCard}
                     onPress={() => setSelectedReceipt(b)}
                   >
-                    <View style={S.row}>
+                    <View style={{ flexDirection: 'row' }}>
                       <Image
                         source={{ uri: b.listing.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945' }}
                         style={styles.listingThumb}
                       />
                       <View style={{ flex: 1, marginLeft: 12 }}>
-                        <View style={[S.row, { justifyContent: 'space-between' }]}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                           <Text style={[styles.badge, { backgroundColor: badge.bg, color: badge.text }]}>
                             {badge.label}
                           </Text>
-                          <Text style={{ fontWeight: '700', fontSize: 16, color: c.p }}>
+                          <Text style={{ fontWeight: '700', fontSize: 16, color: colors.primary }}>
                             ${b.payment.amountPaid.toLocaleString()}
                           </Text>
                         </View>
 
-                        <Text style={[{ fontSize: 15, fontWeight: '700', color: c.t }, { marginTop: 4 }]} numberOfLines={1}>
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 4 }} numberOfLines={1}>
                           {b.listing.title}
                         </Text>
-                        <Text style={[S.muted, { fontSize: 13 }]} numberOfLines={1}>
+                        <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
                           {b.listing.city}, {b.listing.country}
                         </Text>
 
-                        <View style={[S.row, { justifyContent: 'space-between', marginTop: 8 }]}>
-                          <Text style={{ fontSize: 12, color: c.m }}>
-                            Ref: #{b.ref || b.id.slice(-6)}
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                          <Text style={{ fontSize: 12, color: colors.muted }}>
+                            {t.payments.bookingRef}: #{b.ref || b.id.slice(-6)}
                           </Text>
-                          <Text style={{ fontSize: 12, color: c.m }}>
+                          <Text style={{ fontSize: 12, color: colors.muted }}>
                             {formatDate(b.payment.paidAt || b.createdAt)}
                           </Text>
                         </View>
@@ -307,9 +555,11 @@ export function PaymentsScreen() {
         ) : (
           /* TAB 2: QUẢN LÝ THẺ & PHƯƠNG THỨC THANH TOÁN (PCI-DSS & LUHN COMPLIANT) */
           <View>
-            <View style={[S.row, { justifyContent: 'space-between', marginBottom: 14 }]}>
-              <Text style={[S.muted, { flex: 1 }]}>
-                Cards stored securely using PCI-DSS standards with Luhn checksum validation.
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
+              <Text style={{ fontSize: 14, color: colors.muted, flex: 1 }}>
+                {isVietnamese 
+                  ? 'Thẻ được lưu trữ an toàn theo tiêu chuẩn PCI-DSS với xác thực Luhn checksum.' 
+                  : 'Cards stored securely using PCI-DSS standards with Luhn checksum validation.'}
               </Text>
               <View style={styles.pciPill}>
                 <Ionicons name="shield-checkmark" size={12} color="#16a34a" />
@@ -319,63 +569,72 @@ export function PaymentsScreen() {
 
             {loadingMethods ? (
               <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={c.p} />
-                <Text style={[S.muted, { marginTop: 10 }]}>Loading payment methods...</Text>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={{ fontSize: 14, color: colors.muted, marginTop: 10 }}>
+                  {isVietnamese ? 'Đang tải phương thức thanh toán...' : 'Loading payment methods...'}
+                </Text>
               </View>
             ) : methods.length === 0 ? (
-              <View style={[S.box, styles.emptyContainer, { marginBottom: 16 }]}>
-                <Ionicons name="card-outline" size={48} color={c.m} style={{ opacity: 0.5 }} />
-                <Text style={[{ fontSize: 16, fontWeight: '700', color: c.t }, { marginTop: 12 }]}>
-                  No payment methods saved
+              <View style={[styles.emptyContainer, { marginBottom: 16 }]}>
+                <Ionicons name="card-outline" size={48} color={colors.muted} style={{ opacity: 0.5 }} />
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 12 }}>
+                  {t.payments.emptyMethods}
                 </Text>
-                <Text style={[S.muted, { textAlign: 'center', marginTop: 6 }]}>
-                  Add a valid credit or debit card to quickly book homes and stays without re-entering details each time.
+                <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 6 }}>
+                  {isVietnamese 
+                    ? 'Thêm thẻ tín dụng hoặc ghi nợ hợp lệ để nhanh chóng đặt phòng mà không cần nhập lại thông tin mỗi lần.' 
+                    : 'Add a valid credit or debit card to quickly book homes and stays without re-entering details each time.'}
                 </Text>
               </View>
             ) : (
               methods.map((item) => (
-                <View key={item.id} style={[S.box, { marginBottom: 12 }]}>
-                  <View style={[S.row, { gap: 12 }]}>
+                <View key={item.id} style={{ backgroundColor: colors.card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.border, marginBottom: 12 }}>
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={styles.cardBrandBadge}>
                       <Ionicons
                         name="card"
                         size={24}
-                        color={item.brand === 'Visa' ? '#1A1F71' : item.brand === 'Mastercard' ? '#EB001B' : c.p}
+                        color={item.brand === 'Visa' ? '#1A1F71' : item.brand === 'Mastercard' ? '#EB001B' : colors.primary}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <View style={[S.row, { flexWrap: 'wrap' }]}>
-                        <Text style={{ fontWeight: '700', fontSize: 16 }}>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                        <Text style={{ fontWeight: '700', fontSize: 16, color: colors.text }}>
                           {item.brand} •••• {item.last4}
                         </Text>
                         {item.isDefault ? (
-                          <Text style={styles.defaultPill}>Default</Text>
+                          <Text style={styles.defaultPill}>{t.payments.default}</Text>
                         ) : null}
                       </View>
-                      <Text style={[S.muted, { marginTop: 2 }]}>
-                        {item.cardHolderName} · Exp {item.exp}
+                      <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
+                        {item.cardHolderName} · {isVietnamese ? 'HSD' : 'Exp'} {item.exp}
                       </Text>
                     </View>
 
-                    <View style={[S.row, { gap: 10 }]}>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                       {!item.isDefault ? (
                         <Pressable
                           onPress={() => handleSetDefault(item)}
-                          hitSlop={8}
                           style={styles.actionBtn}
                         >
-                          <Text style={{ fontSize: 12, color: c.p, fontWeight: '600' }}>Set Default</Text>
+                          <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>
+                            {t.payments.setAsDefault}
+                          </Text>
                         </Pressable>
                       ) : (
-                        <Ionicons name="checkmark-circle" size={22} color={c.p} />
+                        <View style={styles.defaultBadge}>
+                          <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600', marginLeft: 4 }}>
+                            {t.payments.default}
+                          </Text>
+                        </View>
                       )}
 
                       <Pressable
                         onPress={() => handleDeleteCard(item)}
-                        hitSlop={8}
                         style={styles.deleteBtn}
                       >
-                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
                       </Pressable>
                     </View>
                   </View>
@@ -384,7 +643,7 @@ export function PaymentsScreen() {
             )}
 
             <Btn
-              title="Add payment method"
+              title={isVietnamese ? 'Thêm phương thức thanh toán' : 'Add payment method'}
               icon="add-circle-outline"
               outline
               onPress={() => {
@@ -406,52 +665,56 @@ export function PaymentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <View style={[S.row, { justifyContent: 'space-between', marginBottom: 16 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
               <View>
-                <Text style={S.h2}>Add Credit / Debit Card</Text>
-                <Text style={S.muted}>Card numbers are verified using the Luhn Algorithm.</Text>
+                <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+                  {isVietnamese ? 'Thêm thẻ tín dụng / ghi nợ' : 'Add Credit / Debit Card'}
+                </Text>
+                <Text style={{ fontSize: 14, color: colors.muted }}>
+                  {isVietnamese ? 'Số thẻ được xác minh bằng thuật toán Luhn.' : 'Card numbers are verified using the Luhn Algorithm.'}
+                </Text>
               </View>
               <Pressable onPress={() => setShowAddCardModal(false)} style={{ padding: 4 }}>
-                <Ionicons name="close" size={24} color={c.t} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Quick Fill Test Cards */}
               <View style={styles.quickTestBox}>
-                <Text style={styles.quickTestTitle}>Quick Test Card (Demo):</Text>
-                <View style={[S.row, { gap: 8, marginTop: 6 }]}>
+                <Text style={styles.quickTestTitle}>{t.payments.testCard} (Demo):</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                   <Pressable
                     style={styles.testCardChip}
                     onPress={() => fillTestCard('Visa')}
                   >
                     <Ionicons name="card-outline" size={14} color="#1A1F71" />
-                    <Text style={styles.testCardChipText}>Visa (4242...)</Text>
+                    <Text style={styles.testCardChipText}>{t.payments.testVisa} (4242...)</Text>
                   </Pressable>
                   <Pressable
                     style={styles.testCardChip}
                     onPress={() => fillTestCard('Mastercard')}
                   >
                     <Ionicons name="card-outline" size={14} color="#EB001B" />
-                    <Text style={styles.testCardChipText}>Mastercard (5555...)</Text>
+                    <Text style={styles.testCardChipText}>{t.payments.testMastercard} (5555...)</Text>
                   </Pressable>
                 </View>
               </View>
 
               {/* Card Number Input with Live Brand Detection */}
               <View style={styles.inputGroup}>
-                <View style={[S.row, { justifyContent: 'space-between', marginBottom: 6 }]}>
-                  <Text style={styles.inputLabel}>Card Number</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={styles.inputLabel}>{t.payments.cardNumber}</Text>
                   {detectedBrand ? (
                     <Text style={styles.detectedBrandText}>{detectedBrand}</Text>
                   ) : null}
                 </View>
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="card-outline" size={20} color={c.m} style={{ marginRight: 8 }} />
+                  <Ionicons name="card-outline" size={20} color={colors.muted} style={{ marginRight: 8 }} />
                   <TextInput
                     style={styles.textInput}
                     placeholder="4242 4242 4242 4242"
-                    placeholderTextColor={c.m}
+                    placeholderTextColor={colors.muted}
                     keyboardType="numeric"
                     maxLength={19}
                     value={cardNumber}
@@ -462,13 +725,13 @@ export function PaymentsScreen() {
 
               {/* Cardholder Name */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Cardholder Name</Text>
+                <Text style={styles.inputLabel}>{t.payments.cardHolder}</Text>
                 <View style={styles.inputWrapper}>
-                  <Ionicons name="person-outline" size={20} color={c.m} style={{ marginRight: 8 }} />
+                  <Ionicons name="person-outline" size={20} color={colors.muted} style={{ marginRight: 8 }} />
                   <TextInput
                     style={styles.textInput}
                     placeholder="NGUYEN VAN A"
-                    placeholderTextColor={c.m}
+                    placeholderTextColor={colors.muted}
                     autoCapitalize="characters"
                     value={cardHolderName}
                     onChangeText={(t) => {
@@ -480,15 +743,15 @@ export function PaymentsScreen() {
               </View>
 
               {/* Expiry & CVV */}
-              <View style={[S.row, { gap: 12 }]}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>Expiry (MM/YY)</Text>
+                  <Text style={styles.inputLabel}>{t.payments.expiry}</Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="calendar-outline" size={20} color={c.m} style={{ marginRight: 8 }} />
+                    <Ionicons name="calendar-outline" size={20} color={colors.muted} style={{ marginRight: 8 }} />
                     <TextInput
                       style={styles.textInput}
                       placeholder="12/28"
-                      placeholderTextColor={c.m}
+                      placeholderTextColor={colors.muted}
                       keyboardType="numeric"
                       maxLength={5}
                       value={expiry}
@@ -498,13 +761,13 @@ export function PaymentsScreen() {
                 </View>
 
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={styles.inputLabel}>CVV / CVC</Text>
+                  <Text style={styles.inputLabel}>{t.payments.cvv}</Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="lock-closed-outline" size={20} color={c.m} style={{ marginRight: 8 }} />
+                    <Ionicons name="lock-closed-outline" size={20} color={colors.muted} style={{ marginRight: 8 }} />
                     <TextInput
                       style={styles.textInput}
                       placeholder="•••"
-                      placeholderTextColor={c.m}
+                      placeholderTextColor={colors.muted}
                       keyboardType="numeric"
                       secureTextEntry
                       maxLength={4}
@@ -520,16 +783,16 @@ export function PaymentsScreen() {
 
               {/* Default Card Checkbox */}
               <Pressable
-                style={[S.row, { marginVertical: 12, gap: 10 }]}
+                style={{ flexDirection: 'row', marginVertical: 12, gap: 10 }}
                 onPress={() => setIsDefault(!isDefault)}
               >
                 <Ionicons
                   name={isDefault ? 'checkbox' : 'square-outline'}
                   size={22}
-                  color={isDefault ? c.p : c.m}
+                  color={isDefault ? colors.primary : colors.muted}
                 />
-                <Text style={{ fontSize: 14, color: c.t, fontWeight: '500' }}>
-                  Set as default payment method
+                <Text style={{ fontSize: 14, color: colors.text, fontWeight: '500' }}>
+                  {t.payments.setDefault}
                 </Text>
               </Pressable>
 
@@ -543,7 +806,7 @@ export function PaymentsScreen() {
 
               {/* Submit Button */}
               <Btn
-                title={submittingCard ? 'Validating card...' : 'Save Card Securely'}
+                title={submittingCard ? t.payments.saving : (isVietnamese ? 'Lưu thẻ an toàn' : 'Save Card Securely')}
                 icon="shield-checkmark-outline"
                 disabled={submittingCard}
                 onPress={handleSaveCard}
@@ -563,15 +826,17 @@ export function PaymentsScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <View style={[S.row, { justifyContent: 'space-between', marginBottom: 16 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
               <View>
-                <Text style={S.h2}>Payment Receipt</Text>
-                <Text style={S.muted}>
-                  Ref: #{selectedReceipt?.ref || selectedReceipt?.id}
+                <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>
+                  {t.payments.receiptTitle}
+                </Text>
+                <Text style={{ fontSize: 14, color: colors.muted }}>
+                  {t.payments.bookingRef}: #{selectedReceipt?.ref || selectedReceipt?.id}
                 </Text>
               </View>
               <Pressable onPress={() => setSelectedReceipt(null)} style={{ padding: 4 }}>
-                <Ionicons name="close" size={24} color={c.t} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </Pressable>
             </View>
 
@@ -579,42 +844,44 @@ export function PaymentsScreen() {
               <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Thông tin phòng */}
                 <View style={styles.receiptSection}>
-                  <Text style={[{ fontSize: 16, fontWeight: '700', color: c.t }, { marginBottom: 4 }]}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 4 }}>
                     {selectedReceipt.listing.title}
                   </Text>
-                  <Text style={S.muted}>
+                  <Text style={{ fontSize: 14, color: colors.muted }}>
                     {selectedReceipt.listing.city}, {selectedReceipt.listing.country}
                   </Text>
-                  <Text style={{ fontSize: 13, marginTop: 4, color: c.t }}>
-                    Stay: {selectedReceipt.checkIn} → {selectedReceipt.checkOut} ({selectedReceipt.nights} nights)
+                  <Text style={{ fontSize: 13, marginTop: 4, color: colors.text }}>
+                    {isVietnamese ? 'Lưu trú' : 'Stay'}: {selectedReceipt.checkIn} → {selectedReceipt.checkOut} ({selectedReceipt.nights} {t.bookings.nights})
                   </Text>
-                  <Text style={{ fontSize: 13, color: c.m }}>
-                    Guests: {selectedReceipt.guests} guest(s)
+                  <Text style={{ fontSize: 13, color: colors.muted }}>
+                    {isVietnamese ? 'Khách' : 'Guests'}: {selectedReceipt.guests} {t.bookings.guests}
                   </Text>
                 </View>
 
                 {/* Bảng kê giá tiền */}
                 <View style={styles.receiptSection}>
-                  <Text style={[{ fontSize: 16, fontWeight: '700', color: c.t }, { marginBottom: 8 }]}>Price Breakdown</Text>
-                  <View style={[S.row, styles.priceRow]}>
-                    <Text style={S.muted}>
-                      ${selectedReceipt.price.nightly} x {selectedReceipt.nights} nights
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+                    {t.payments.priceBreakdown}
+                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={{ fontSize: 14, color: colors.muted }}>
+                      ${selectedReceipt.price.nightly} x {selectedReceipt.nights} {t.bookings.nights}
                     </Text>
-                    <Text style={{ fontWeight: '600' }}>
+                    <Text style={{ fontWeight: '600', color: colors.text }}>
                       ${selectedReceipt.price.subtotal.toLocaleString()}
                     </Text>
                   </View>
 
                   {selectedReceipt.price.fees?.map((fee, idx) => (
-                    <View key={idx} style={[S.row, styles.priceRow]}>
-                      <Text style={S.muted}>{fee.label}</Text>
-                      <Text style={{ fontWeight: '600' }}>${fee.amount.toLocaleString()}</Text>
+                    <View key={idx} style={styles.priceRow}>
+                      <Text style={{ fontSize: 14, color: colors.muted }}>{fee.label}</Text>
+                      <Text style={{ fontWeight: '600', color: colors.text }}>${fee.amount.toLocaleString()}</Text>
                     </View>
                   ))}
 
-                  <View style={[S.row, styles.priceRow, { borderTopWidth: 1, borderColor: c.soft, paddingTop: 8, marginTop: 4 }]}>
-                    <Text style={{ fontWeight: '700', fontSize: 16 }}>Total Amount</Text>
-                    <Text style={{ fontWeight: '700', fontSize: 16 }}>
+                  <View style={[styles.priceRow, { borderTopWidth: 1, borderColor: colors.border, paddingTop: 8, marginTop: 4 }]}>
+                    <Text style={{ fontWeight: '700', fontSize: 16, color: colors.text }}>{t.payments.total}</Text>
+                    <Text style={{ fontWeight: '700', fontSize: 16, color: colors.text }}>
                       ${selectedReceipt.price.total.toLocaleString()}
                     </Text>
                   </View>
@@ -622,29 +889,33 @@ export function PaymentsScreen() {
 
                 {/* Thông tin thanh toán */}
                 <View style={styles.receiptSection}>
-                  <Text style={[{ fontSize: 16, fontWeight: '700', color: c.t }, { marginBottom: 8 }]}>Payment Details</Text>
-                  <View style={[S.row, styles.priceRow]}>
-                    <Text style={S.muted}>Amount Paid</Text>
-                    <Text style={{ fontWeight: '700', color: c.p }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 8 }}>
+                    {isVietnamese ? 'Chi tiết thanh toán' : 'Payment Details'}
+                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={{ fontSize: 14, color: colors.muted }}>{t.payments.amountPaid}</Text>
+                    <Text style={{ fontWeight: '700', color: colors.primary }}>
                       ${selectedReceipt.payment.amountPaid.toLocaleString()}
                     </Text>
                   </View>
-                  <View style={[S.row, styles.priceRow]}>
-                    <Text style={S.muted}>Status</Text>
-                    <Text style={{ fontWeight: '600', textTransform: 'capitalize' }}>
+                  <View style={styles.priceRow}>
+                    <Text style={{ fontSize: 14, color: colors.muted }}>
+                      {isVietnamese ? 'Trạng thái' : 'Status'}
+                    </Text>
+                    <Text style={{ fontWeight: '600', textTransform: 'capitalize', color: colors.text }}>
                       {selectedReceipt.payment.status}
                     </Text>
                   </View>
-                  <View style={[S.row, styles.priceRow]}>
-                    <Text style={S.muted}>Payment Method</Text>
-                    <Text style={{ fontWeight: '600' }}>
-                      {selectedReceipt.payment.method || 'Credit Card'}
+                  <View style={styles.priceRow}>
+                    <Text style={{ fontSize: 14, color: colors.muted }}>{t.payments.paymentMethod}</Text>
+                    <Text style={{ fontWeight: '600', color: colors.text }}>
+                      {selectedReceipt.payment.method || (isVietnamese ? 'Thẻ tín dụng' : 'Credit Card')}
                     </Text>
                   </View>
                   {selectedReceipt.payment.paidAt ? (
-                    <View style={[S.row, styles.priceRow]}>
-                      <Text style={S.muted}>Paid On</Text>
-                      <Text style={{ fontWeight: '600' }}>
+                    <View style={styles.priceRow}>
+                      <Text style={{ fontSize: 14, color: colors.muted }}>{t.payments.paidOn}</Text>
+                      <Text style={{ fontWeight: '600', color: colors.text }}>
                         {formatDate(selectedReceipt.payment.paidAt)}
                       </Text>
                     </View>
@@ -658,195 +929,3 @@ export function PaymentsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: c.soft,
-  },
-  tabBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabBtnActive: {
-    borderBottomColor: c.p,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: c.m,
-  },
-  tabTextActive: {
-    color: c.p,
-    fontWeight: '700',
-  },
-  receiptCard: {
-    marginBottom: 12,
-  },
-  listingThumb: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
-    backgroundColor: c.soft,
-  },
-  badge: {
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  defaultPill: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: c.p,
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  cardBrandBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#eff6ff',
-  },
-  deleteBtn: {
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: '#fef2f2',
-  },
-  pciPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: '#f0fdf4',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    borderRadius: 12,
-  },
-  pciText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#16a34a',
-  },
-  quickTestBox: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 14,
-  },
-  quickTestTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: c.m,
-  },
-  testCardChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 6,
-  },
-  testCardChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: c.t,
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: c.t,
-    marginBottom: 4,
-  },
-  detectedBrandText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: c.p,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 15,
-    color: c.t,
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-  },
-  errorText: {
-    fontSize: 13,
-    color: '#ef4444',
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalBox: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '90%',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-  },
-  receiptSection: {
-    borderBottomWidth: 1,
-    borderBottomColor: c.soft,
-    paddingVertical: 12,
-  },
-  priceRow: {
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-});

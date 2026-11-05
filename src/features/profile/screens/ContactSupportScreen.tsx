@@ -3,19 +3,22 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useApp } from '@/store/AppContext';
 import { ContactOption } from '../components/ContactOption';
 import { SUPPORT_CONTACT } from '../data/helpContent';
 
-const SectionTitle = ({ children }: { children: string }) => (
-  <Text style={[S.muted, { marginTop: 24, marginBottom: 12, fontWeight: '600', letterSpacing: 0.5 }]}>{children}</Text>
+const SectionTitle = ({ children, colors }: { children: string; colors: any }) => (
+  <Text style={{ color: colors.muted, marginTop: 24, marginBottom: 12, fontWeight: '600', letterSpacing: 0.5 }}>{children}</Text>
 );
 
 export function ContactSupportScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useApp();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   // Không dùng canOpenURL (iOS yêu cầu khai báo scheme); thử mở và báo lỗi nếu thiết bị không hỗ trợ (vd. simulator).
   const openLink = async (url: string, errorTitle: string, errorMessage: string) => {
@@ -43,44 +46,44 @@ export function ContactSupportScreen() {
 
   return (
     <Screen>
-      <Header title="Contact Support" />
+      <Header title={t.helpCenter.contactSupport} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}>
-        <View style={[S.box, { alignItems: 'center', paddingVertical: 24, backgroundColor: c.soft, borderColor: c.soft }]}>
-          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: c.pl, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="headset-outline" size={28} color={c.p} />
+        <View style={{ backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.soft, borderRadius: 12, padding: 16, alignItems: 'center', paddingVertical: 24 }}>
+          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="headset-outline" size={28} color={colors.primary} />
           </View>
-          <Text style={[S.h2, { marginTop: 12 }]}>We're here to help</Text>
-          <Text style={[S.muted, { marginTop: 4, textAlign: 'center' }]}>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 12 }}>{t.helpCenter.weAreHere}</Text>
+          <Text style={{ color: colors.muted, marginTop: 4, textAlign: 'center' }}>
             Our team is available {SUPPORT_CONTACT.hours} and usually replies {SUPPORT_CONTACT.responseTime}.
           </Text>
         </View>
 
-        <SectionTitle>CHOOSE HOW TO REACH US</SectionTitle>
+        <SectionTitle colors={colors}>{t.helpCenter.chooseHow}</SectionTitle>
         <ContactOption
           icon="chatbubbles-outline"
-          title="Message us"
-          subtitle="Chat with Travelling Support in your Inbox"
+          title={t.helpCenter.messageUs}
+          subtitle={t.helpCenter.chatInInbox}
           onPress={() => navigation.navigate('Main', { screen: 'Inbox' })}
         />
-        <ContactOption icon="mail-outline" title="Email" subtitle={SUPPORT_CONTACT.email} onPress={handleEmail} />
-        <ContactOption icon="call-outline" title="Call" subtitle={`${SUPPORT_CONTACT.phoneDisplay} · ${SUPPORT_CONTACT.hours}`} onPress={handleCall} />
+        <ContactOption icon="mail-outline" title={t.helpCenter.email} subtitle={SUPPORT_CONTACT.email} onPress={handleEmail} />
+        <ContactOption icon="call-outline" title={t.helpCenter.call} subtitle={`${SUPPORT_CONTACT.phoneDisplay} · ${SUPPORT_CONTACT.hours}`} onPress={handleCall} />
 
-        <SectionTitle>BEFORE YOU GET IN TOUCH</SectionTitle>
+        <SectionTitle colors={colors}>{t.helpCenter.beforeContact}</SectionTitle>
         <View style={{ gap: 10 }}>
-          <View style={[S.row, { gap: 10, alignItems: 'flex-start' }]}>
-            <Ionicons name="receipt-outline" size={18} color={c.m} style={{ marginTop: 2 }} />
-            <Text style={{ flex: 1, color: c.t, lineHeight: 20 }}>Have your booking reference ready. You can find it in the Booking tab.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+            <Ionicons name="receipt-outline" size={18} color={colors.muted} style={{ marginTop: 2 }} />
+            <Text style={{ flex: 1, color: colors.text, lineHeight: 20 }}>{t.helpCenter.haveBookingRef}</Text>
           </View>
-          <View style={[S.row, { gap: 10, alignItems: 'flex-start' }]}>
-            <Ionicons name="help-circle-outline" size={18} color={c.m} style={{ marginTop: 2 }} />
-            <Text style={{ flex: 1, color: c.t, lineHeight: 20 }}>Many questions are answered instantly in our FAQs.</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+            <Ionicons name="help-circle-outline" size={18} color={colors.muted} style={{ marginTop: 2 }} />
+            <Text style={{ flex: 1, color: colors.text, lineHeight: 20 }}>{t.helpCenter.manyAnswered}</Text>
           </View>
         </View>
 
-        <Btn outline title="Browse FAQs" icon="help-circle-outline" onPress={() => navigation.navigate('Faq')} style={{ marginTop: 20 }} />
+        <Btn outline title={t.helpCenter.browseFaqs} icon="help-circle-outline" onPress={() => navigation.navigate('Faq')} style={{ marginTop: 20 }} />
         <Btn
           outline
-          title="Report a Problem"
+          title={t.helpCenter.reportProblem}
           icon="warning-outline"
           onPress={() => navigation.navigate('ReportProblem')}
           style={{ marginTop: 12 }}

@@ -4,7 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { MenuItem } from '../components/MenuItem';
 import { HelpSearchBar } from '../components/HelpSearchBar';
@@ -14,12 +15,14 @@ import { searchFaqs } from '../utils/searchFaqs';
 
 const MAX_INLINE_RESULTS = 5;
 
-const SectionTitle = ({ children }: { children: string }) => (
-  <Text style={[S.muted, { marginTop: 28, marginBottom: 8, fontWeight: '600', letterSpacing: 0.5 }]}>{children}</Text>
+const SectionTitle = ({ children, colors }: { children: string; colors: any }) => (
+  <Text style={{ color: colors.muted, marginTop: 28, marginBottom: 8, fontWeight: '600', letterSpacing: 0.5 }}>{children}</Text>
 );
 
 export function HelpCenterScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
 
   const trimmed = query.trim();
@@ -30,22 +33,22 @@ export function HelpCenterScreen() {
 
   return (
     <Screen>
-      <Header title="Help Center" />
+      <Header title={t.helpCenter.title} />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <Text style={S.h1}>How can we help?</Text>
-        <Text style={[S.muted, { marginTop: 4, marginBottom: 16 }]}>
-          Search our FAQs or get in touch with the Travelling team.
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text }}>{t.helpCenter.howCanWeHelp}</Text>
+        <Text style={{ color: colors.muted, marginTop: 4, marginBottom: 16 }}>
+          {t.helpCenter.subtitle}
         </Text>
 
         <HelpSearchBar
           value={query}
           onChangeText={setQuery}
           onSubmit={() => trimmed && navigation.navigate('Faq', { query: trimmed })}
-          placeholder="Search for help (e.g. refund, check-in)"
+          placeholder={t.helpCenter.searchPlaceholder}
         />
 
         {trimmed ? (
@@ -53,25 +56,25 @@ export function HelpCenterScreen() {
           <View style={{ marginTop: 8 }}>
             {results.length > 0 ? (
               <>
-                <SectionTitle>{`${results.length} RESULT${results.length > 1 ? 'S' : ''}`}</SectionTitle>
+                <SectionTitle colors={colors}>{`${results.length} ${t.helpCenter.results}`}</SectionTitle>
                 {results.slice(0, MAX_INLINE_RESULTS).map((faq) => (
                   <Pressable
                     key={faq.id}
                     onPress={() => openFaq(faq.id)}
                     accessibilityRole="button"
-                    style={[S.between, { paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderColor: c.soft }]}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderColor: colors.soft }}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 16, color: c.t, fontWeight: '600' }}>{faq.question}</Text>
-                      <Text style={[S.muted, { fontSize: 12, marginTop: 2 }]}>{getFaqCategory(faq.category)?.title}</Text>
+                      <Text style={{ fontSize: 16, color: colors.text, fontWeight: '600' }}>{faq.question}</Text>
+                      <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{getFaqCategory(faq.category)?.title}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={c.m} />
+                    <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                   </Pressable>
                 ))}
                 {results.length > MAX_INLINE_RESULTS && (
                   <Btn
                     outline
-                    title={`See all ${results.length} results`}
+                    title={`${t.helpCenter.seeAll} ${results.length} ${t.helpCenter.results}`}
                     onPress={() => navigation.navigate('Faq', { query: trimmed })}
                     style={{ marginTop: 16 }}
                   />
@@ -79,15 +82,15 @@ export function HelpCenterScreen() {
               </>
             ) : (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Ionicons name="search-outline" size={48} color={c.b} />
-                <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '600', color: c.t, textAlign: 'center' }}>
-                  No results for "{trimmed}"
+                <Ionicons name="search-outline" size={48} color={colors.border} />
+                <Text style={{ marginTop: 12, fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center' }}>
+                  {t.helpCenter.noResults} "{trimmed}"
                 </Text>
-                <Text style={[S.muted, { marginTop: 4, textAlign: 'center' }]}>
-                  Try different keywords or contact our team.
+                <Text style={{ color: colors.muted, marginTop: 4, textAlign: 'center' }}>
+                  {t.helpCenter.tryDifferent}
                 </Text>
                 <Btn
-                  title="Contact Support"
+                  title={t.helpCenter.contactSupport}
                   icon="chatbubble-outline"
                   onPress={() => navigation.navigate('ContactSupport')}
                   style={{ marginTop: 20, alignSelf: 'stretch' }}
@@ -98,10 +101,10 @@ export function HelpCenterScreen() {
         ) : (
           <>
             {/* ---- Chủ đề ---- */}
-            <View style={[S.between, { marginTop: 28, marginBottom: 12 }]}>
-              <Text style={[S.muted, { fontWeight: '600', letterSpacing: 0.5 }]}>TOPICS</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, marginBottom: 12 }}>
+              <Text style={{ color: colors.muted, fontWeight: '600', letterSpacing: 0.5 }}>{t.helpCenter.browseTopics}</Text>
               <Pressable onPress={() => navigation.navigate('Faq')} hitSlop={10} accessibilityRole="link">
-                <Text style={{ color: c.p, fontWeight: '600', fontSize: 14 }}>Browse all FAQs</Text>
+                <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>{t.helpCenter.seeAll}</Text>
               </Pressable>
             </View>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 }}>
@@ -116,29 +119,29 @@ export function HelpCenterScreen() {
             </View>
 
             {/* ---- Câu hỏi phổ biến ---- */}
-            <SectionTitle>POPULAR QUESTIONS</SectionTitle>
+            <SectionTitle colors={colors}>{t.helpCenter.popularTopics}</SectionTitle>
             {popular.map((faq) => (
               <Pressable
                 key={faq.id}
                 onPress={() => openFaq(faq.id)}
                 accessibilityRole="button"
-                style={[S.between, { paddingVertical: 16, gap: 12, borderBottomWidth: 1, borderColor: c.soft }]}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, gap: 12, borderBottomWidth: 1, borderColor: colors.soft }}
               >
-                <Text style={{ flex: 1, fontSize: 16, color: c.t }}>{faq.question}</Text>
-                <Ionicons name="chevron-forward" size={18} color={c.m} />
+                <Text style={{ flex: 1, fontSize: 16, color: colors.text }}>{faq.question}</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
               </Pressable>
             ))}
 
             {/* ---- Liên hệ ---- */}
-            <SectionTitle>STILL NEED HELP?</SectionTitle>
+            <SectionTitle colors={colors}>STILL NEED HELP?</SectionTitle>
             <MenuItem
               icon="chatbubble-outline"
-              title="Contact Support"
+              title={t.helpCenter.contactSupport}
               onPress={() => navigation.navigate('ContactSupport')}
             />
             <MenuItem
               icon="warning-outline"
-              title="Report a Problem"
+              title={t.helpCenter.reportProblem}
               onPress={() => navigation.navigate('ReportProblem')}
             />
           </>

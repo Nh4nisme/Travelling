@@ -1,6 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { FaqCategory } from '../types';
 
 interface TopicCardProps {
@@ -10,20 +11,33 @@ interface TopicCardProps {
 }
 
 export function TopicCard({ category, count, onPress }: TopicCardProps) {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
+  
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${category.title}, ${count} articles`}
-      style={({ pressed }) => [S.box, { width: '48%', gap: 10, backgroundColor: pressed ? c.soft : '#fff' }]}
+      accessibilityLabel={`${category.title}, ${count} ${count === 1 ? t.helpCenter.article : t.helpCenter.articles}`}
+      style={({ pressed }) => [
+        {
+          backgroundColor: pressed ? colors.soft : colors.card,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 12,
+          padding: 16,
+          width: '48%',
+          gap: 10
+        }
+      ]}
     >
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.pl, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={category.icon} size={20} color={c.p} />
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name={category.icon} size={20} color={colors.primary} />
       </View>
       <View>
-        <Text style={{ fontSize: 15, fontWeight: '700', color: c.t }}>{category.title}</Text>
-        <Text style={[S.muted, { fontSize: 12, marginTop: 2 }]}>
-          {count} {count === 1 ? 'article' : 'articles'}
+        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{category.title}</Text>
+        <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+          {count} {count === 1 ? t.helpCenter.article : t.helpCenter.articles}
         </Text>
       </View>
     </Pressable>
