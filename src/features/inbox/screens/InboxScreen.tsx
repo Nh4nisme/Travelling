@@ -41,10 +41,12 @@ function InboxMain({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
-  // Modal chọn người để bắt đầu cuộc trò chuyện mới
+  // Modal tìm kiếm người dùng qua SĐT / Email (bảo mật, không lộ danh sách)
   const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [contacts, setContacts] = useState<ContactUser[]>([]);
-  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [searchUserQuery, setSearchUserQuery] = useState('');
+  const [searchingUser, setSearchingUser] = useState(false);
+  const [foundUser, setFoundUser] = useState<ContactUser | null>(null);
+  const [searchUserError, setSearchUserError] = useState<string | null>(null);
   const [startingChat, setStartingChat] = useState(false);
 
   // Auto-open conversation nếu được navigate từ DetailScreen với openConversationId
@@ -80,16 +82,33 @@ function InboxMain({
     [markAsRead]
   );
 
-  const handleOpenNewChat = async () => {
+  const handleOpenNewChat = () => {
+    setSearchUserQuery('');
+    setFoundUser(null);
+    setSearchUserError(null);
     setShowNewChatModal(true);
-    setLoadingContacts(true);
+  };
+
+  const handleSearchUser = async () => {
+    const q = searchUserQuery.trim();
+    if (!q) {
+      setSearchUserError('Please enter a phone number or email.');
+      return;
+    }
+    setSearchingUser(true);
+    setSearchUserError(null);
+    setFoundUser(null);
     try {
-      const list = await chatService.getContacts();
-      setContacts(list);
-    } catch {
-      setContacts([]);
+      const u = await chatService.searchUser(q);
+      if (u) {
+        setFoundUser(u);
+      } else {
+        setSearchUserError('No user found with this phone number or email.');
+      }
+    } catch (err: any) {
+      setSearchUserError(err?.message || 'No user found with this phone number or email.');
     } finally {
-      setLoadingContacts(false);
+      setSearchingUser(false);
     }
   };
 
@@ -99,14 +118,15 @@ function InboxMain({
       const convId = await createInquiry({
         hostId: contact.id,
         hostEmail: contact.email,
-        title: 'Balian treehouse',
+        title: 'Direct Chat',
       });
       if (convId) {
         setShowNewChatModal(false);
         setSelectedConversationId(convId);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Không thể bắt đầu chat:', err);
+      setSearchUserError(err?.message || 'Could not start conversation');
     } finally {
       setStartingChat(false);
     }
@@ -364,7 +384,7 @@ function InboxMain({
         )}
       </ScrollView>
 
-      {/* Modal Bắt đầu cuộc trò chuyện mới */}
+      {/* Modal Bắt đầu cuộc trò chuyện mới qua SĐT / Email */}
       <Modal
         visible={showNewChatModal}
         transparent
@@ -373,42 +393,133 @@ function InboxMain({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <View style={[S.row, { justifyContent: 'space-between', marginBottom: 16 }]}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: c.t }}>
-                Start a Conversation
-              </Text>
-              <Pressable onPress={() => setShowNewChatModal(false)} hitSlop={8}>
+            <View style={[S.row, { justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }]}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: c.t }}>
+                  Start a Conversation
+                </Text>
+                <Text style={[S.muted, { fontSize: 13, marginTop: 4 }]}>
+                  Find someone by phone number or email
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => {
+                  setShowNewChatModal(false);
+                  setSearchUserQuery('');
+                  setFoundUser(null);
+                  setSearchUserError(null);
+                }}
+                hitSlop={8}
+              >
                 <Ionicons name="close" size={24} color={c.t} />
               </Pressable>
             </View>
 
-            {loadingContacts ? (
-              <ActivityIndicator size="small" color={c.p} style={{ marginVertical: 30 }} />
-            ) : contacts.length === 0 ? (
-              <Text style={[S.muted, { textAlign: 'center', marginVertical: 20 }]}>
-                No contacts available.
-              </Text>
-            ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {contacts.map((contact) => (
+            {/* Input tìm kiếm */}
+            <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12 }}>
+              <View style={[styles.searchBar, { flex: 1 }]}>
+                <Ionicons name="search-outline" size={18} color={c.m} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Enter phone number or email..."
+                  placeholderTextColor={c.m}
+                  value={searchUserQuery}
+                  onChangeText={(text) => {
+                    setSearchUserQuery(text);
+                    setSearchUserError(null);
+                  }}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  returnKeyType="search"
+                  onSubmitEditing={handleSearchUser}
+                />
+                {searchUserQuery.length > 0 && (
                   <Pressable
-                    key={contact.id}
-                    style={[S.row, styles.contactItem]}
-                    onPress={() => handleStartChatWith(contact)}
-                    disabled={startingChat}
+                    onPress={() => {
+                      setSearchUserQuery('');
+                      setFoundUser(null);
+                      setSearchUserError(null);
+                    }}
+                    hitSlop={8}
                   >
-                    <Image source={{ uri: avatar(20) }} style={styles.contactAvatar} />
-                    <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={{ fontSize: 15, fontWeight: '600', color: c.t }}>
-                        {contact.name}
-                      </Text>
-                      <Text style={[S.muted, { fontSize: 13 }]}>{contact.email}</Text>
-                    </View>
-                    <Ionicons name="chatbubble-outline" size={20} color={c.p} />
+                    <Ionicons name="close-circle" size={18} color={c.m} />
                   </Pressable>
-                ))}
-              </ScrollView>
-            )}
+                )}
+              </View>
+              <Pressable
+                onPress={handleSearchUser}
+                disabled={searchingUser || !searchUserQuery.trim()}
+                style={{
+                  backgroundColor: !searchUserQuery.trim() ? c.soft : c.p,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                {searchingUser ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={{ color: !searchUserQuery.trim() ? c.m : '#fff', fontWeight: '700', fontSize: 14 }}>
+                    Find
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+
+            {/* Thông báo lỗi */}
+            {searchUserError ? (
+              <View style={{ backgroundColor: '#FFEBEA', borderColor: '#FFD3D1', borderWidth: 1, padding: 12, borderRadius: 10, marginVertical: 6 }}>
+                <Text style={{ color: '#D9381E', fontSize: 13, textAlign: 'center', fontWeight: '500' }}>
+                  {searchUserError}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* Kết quả tìm kiếm tìm thấy */}
+            {foundUser ? (
+              <View style={{ marginTop: 8, padding: 14, borderRadius: 12, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB' }}>
+                <View style={[S.row, { alignItems: 'center' }]}>
+                  <Image source={{ uri: avatar(20) }} style={styles.contactAvatar} />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: c.t }}>
+                      {foundUser.name}
+                    </Text>
+                    <Text style={[S.muted, { fontSize: 13, marginTop: 2 }]}>
+                      {foundUser.email}{foundUser.phone ? ` · ${foundUser.phone}` : ''}
+                    </Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  style={{
+                    marginTop: 14,
+                    backgroundColor: c.p,
+                    borderRadius: 10,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onPress={() => handleStartChatWith(foundUser)}
+                  disabled={startingChat}
+                >
+                  {startingChat ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+                      Start Chat
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            ) : !searchUserError ? (
+              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                <Ionicons name="shield-checkmark-outline" size={36} color={c.p} style={{ opacity: 0.7, marginBottom: 8 }} />
+                <Text style={{ fontSize: 13, color: c.m, textAlign: 'center', lineHeight: 18, paddingHorizontal: 16 }}>
+                  Booked travelers and hosts connect automatically.{'\n'}To chat with another member, enter their exact phone number or email address.
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </Modal>

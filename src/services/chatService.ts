@@ -67,4 +67,13 @@ export const chatService = {
     const res = await api<{ users: ContactUser[] }>('/chat/contacts', { token });
     return res.users;
   },
+
+  async searchUser(query: string, overrideToken?: string | null): Promise<ContactUser | null> {
+    const token = overrideToken ?? (await tokenStorage.get());
+    if (!token) return null;
+    const res = await api<{ user: ContactUser }>(`/chat/search-user?query=${encodeURIComponent(query.trim())}`, {
+      token,
+    });
+    return res.user;
+  },
 };

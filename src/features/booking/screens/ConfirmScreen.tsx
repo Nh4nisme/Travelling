@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn, Header, Photo } from '@/components';
@@ -136,7 +136,6 @@ export function ConfirmScreen({ route, navigation }: any) {
             <View style={{ height: 1, backgroundColor: c.soft, marginVertical: 8 }} />
             <Line a="Total (USD)" b={money(q.price.total)} />
             <Text style={[S.muted, { marginTop: 14 }]}>Free cancellation up to 7 days before check-in (full refund). 50% refund 2–6 days before. No refund the day before; no cancellation from the check-in date.</Text>
-            <Text style={[S.muted, { marginTop: 8, fontSize: 12 }]}>Demo payment: no real card is charged in this version.</Text>
           </>
         )}
       </ScrollView>

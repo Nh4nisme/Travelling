@@ -1,4 +1,4 @@
-import type { Booking, BookingStage } from '@/store/types';
+﻿import type { Booking, BookingStage } from '@/store/types';
 import { fmtISO, fmtDateTime } from '@/utils/date';
 import { money } from '@/utils/pricing';
 
@@ -50,7 +50,6 @@ export function receiptText(b: Booking): string {
     `Total: ${money(b.price.total)}`,
     `Paid: ${money(b.payment.amountPaid)}${b.payment.balanceDue > 0 ? ` (remaining ${money(b.payment.balanceDue)} due at check-in)` : ''}`,
     `Booked on: ${fmtDateTime(b.createdAt)}`,
-    'Demo payment - no real charge was made.',
   ];
   return lines.join('\n');
 }

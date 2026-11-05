@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,7 +78,7 @@ export function BookingDetailScreen({ route, navigation }: any) {
   };
 
   const payBalance = async () => {
-    if (!(await confirmDialog('Pay remaining balance', `Pay ${money(b.payment.balanceDue)} now? (Demo payment, no real charge.)`, 'Pay now'))) return;
+    if (!(await confirmDialog('Pay remaining balance', `Pay ${money(b.payment.balanceDue)} now?`, 'Pay now'))) return;
     setBusy('pay');
     try {
       const { booking } = await bookingService.payBalance(b.id);
@@ -133,7 +133,6 @@ export function BookingDetailScreen({ route, navigation }: any) {
           <Row a="Booked on" b={fmtDateTime(b.createdAt)} />
           {!!b.payment.balancePaidAt && <Row a="Balance paid on" b={fmtDateTime(b.payment.balancePaidAt)} />}
           {!!b.cancelledAt && <Row a="Cancelled on" b={fmtDateTime(b.cancelledAt)} />}
-          <Text style={{ color: c.m, fontSize: 12, marginTop: 8 }}>Demo payment: no real card was charged.</Text>
           {canPayBalance && <Btn title={busy === 'pay' ? 'Processing…' : `Pay remaining ${money(b.payment.balanceDue)}`} onPress={payBalance} disabled={busy !== null} style={{ marginTop: 12 }} />}
         </Card>
 
