@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn, Header, Photo } from '@/components';
 import { S } from '@/constants/theme';
@@ -12,6 +12,7 @@ import { bookingService, makeIdempotencyKey } from '@/services/bookingService';
 import type { PaymentMethod, Quote } from '@/store/types';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { PaymentPinSheet } from '../components/PaymentPinSheet';
 
 type QuoteState =
   | { status: 'idle' }
@@ -29,6 +30,7 @@ export function ConfirmScreen({ route, navigation }: any) {
   const [quote, setQuote] = useState<QuoteState>({ status: 'idle' });
   const [submitting, setSubmitting] = useState(false);
   const [reload, setReload] = useState(0);
+  const [showPinModal, setShowPinModal] = useState(false);
   const attempt = useRef({ sig: '', key: '' });
 
   const { start, end, adults, children } = search;
@@ -80,54 +82,24 @@ export function ConfirmScreen({ route, navigation }: any) {
     if (!q) return;
     if (!pay) return notify(t.bookingFlow.choosePaymentOption);
 
-    // Mỗi (chỗ ở + ngày + khách + hình thức) dùng một khoá riêng
-    const sig = [l.id, startISO, endISO, adults, children, pay].join('|');
-    if (attempt.current.sig !== sig) attempt.current = { sig, key: makeIdempotencyKey() };
-
-    setSubmitting(true);
-    try {
-      const { booking } = await bookingService.create({
-        listingId: l.id,
-        checkIn: startISO,
-        checkOut: endISO,
-        adults,
-        children,
-        paymentMethod: pay,
-        idempotencyKey: attempt.current.key,
-      });
-      upsertBooking(booking);
-      navigation.replace('Success', { bookingId: booking.id });
-    } catch (e: any) {
-      if (e?.status === 401) {
-        notify(isVietnamese ? 'Hết phiên đăng nhập' : 'Session expired', isVietnamese ? 'Vui lòng đăng nhập lại.' : 'Please sign in again.');
-        await signOut();
-        navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
-      } else if (e?.code === 'DATES_UNAVAILABLE') {
-        const mine = await bookingService
-          .list()
-          .then((r) =>
-            r.bookings.find(
-              (b) =>
-                b.status === 'confirmed' &&
-                b.listing.id === l.id &&
-                b.checkIn === startISO &&
-                b.checkOut === endISO
-            )
-          )
-          .catch(() => undefined);
-        if (mine) {
-          upsertBooking(mine);
-          navigation.replace('Success', { bookingId: mine.id });
-          return;
-        }
-        notify(isVietnamese ? 'Ngày không còn trống' : 'Dates no longer available', e.message);
-        setReload((n) => n + 1);
-      } else {
-        notify(isVietnamese ? 'Đặt phòng thất bại' : 'Booking failed', e?.message ?? (isVietnamese ? 'Vui lòng thử lại.' : 'Please try again.'));
-      }
-    } finally {
-      setSubmitting(false);
+    if (!user?.paymentPinSet) {
+      Alert.alert(
+        isVietnamese ? 'Cần thiết lập mã PIN' : 'Payment PIN Required',
+        isVietnamese 
+          ? 'Vui lòng thiết lập mã PIN trong Cài đặt trước.'
+          : 'Please set up Payment PIN in Settings first.',
+        [
+          { text: isVietnamese ? 'Đóng' : 'Close', style: 'cancel' },
+          { 
+            text: isVietnamese ? 'Đi tới Cài đặt' : 'Go to Settings',
+            onPress: () => navigation.navigate('Settings')
+          }
+        ]
+      );
+      return;
     }
+
+    setShowPinModal(true);
   };
 
   const P = ({ k, title, desc }: { k: PaymentMethod; title: string; desc: string }) => (
@@ -202,7 +174,7 @@ export function ConfirmScreen({ route, navigation }: any) {
         <View style={[S.between, { marginBottom: 14 }]}>
           <View>
             <Text style={{ fontWeight: '700', color: colors.text, fontSize: 15 }}>{t.bookingFlow.dates}</Text>
-            <Text style={{ marginTop: 4, color: hasDates ? colors.text : colors.danger }}>
+            <Text style={{ marginTop: 4, fontSize: 14, color: hasDates ? colors.muted : colors.danger }}>
               {hasDates ? `${fmtISO(startISO)} - ${fmtISO(endISO)}` : t.bookingFlow.selectDates}
             </Text>
           </View>
@@ -214,7 +186,7 @@ export function ConfirmScreen({ route, navigation }: any) {
         <View style={S.between}>
           <View>
             <Text style={{ fontWeight: '700', color: colors.text, fontSize: 15 }}>{t.bookingFlow.guests}</Text>
-            <Text style={{ marginTop: 4, color: adults >= 1 ? colors.text : colors.danger }}>
+            <Text style={{ marginTop: 4, fontSize: 14, color: adults >= 1 ? colors.muted : colors.danger }}>
               {adults >= 1
                 ? `${guests} ${guests > 1 ? t.search.guests : t.search.guest}`
                 : t.bookingFlow.requireAdult}
@@ -355,6 +327,65 @@ export function ConfirmScreen({ route, navigation }: any) {
           disabled={!q || submitting || !user}
         />
       </View>
+
+      <PaymentPinSheet
+        visible={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={async (pin) => {
+          if (!q) return;
+          
+          const sig = [l.id, startISO, endISO, adults, children, pay].join('|');
+          if (attempt.current.sig !== sig) attempt.current = { sig, key: makeIdempotencyKey() };
+
+          setSubmitting(true);
+          try {
+            const { booking } = await bookingService.create({
+              listingId: l.id,
+              checkIn: startISO,
+              checkOut: endISO,
+              adults,
+              children,
+              paymentMethod: pay!,
+              paymentPin: pin,
+              idempotencyKey: attempt.current.key,
+            });
+            upsertBooking(booking);
+            navigation.replace('Success', { bookingId: booking.id });
+          } catch (e: any) {
+            if (e?.status === 401) {
+              notify(isVietnamese ? 'Hết phiên đăng nhập' : 'Session expired', isVietnamese ? 'Vui lòng đăng nhập lại.' : 'Please sign in again.');
+              await signOut();
+              navigation.reset({ index: 0, routes: [{ name: 'Auth' }] });
+            } else if (e?.code === 'PIN_INCORRECT') {
+              notify(isVietnamese ? 'Mã PIN không đúng' : 'Incorrect Payment PIN');
+            } else if (e?.code === 'DATES_UNAVAILABLE') {
+              const mine = await bookingService
+                .list()
+                .then((r) =>
+                  r.bookings.find(
+                    (b) =>
+                      b.status === 'confirmed' &&
+                      b.listing.id === l.id &&
+                      b.checkIn === startISO &&
+                      b.checkOut === endISO
+                  )
+                )
+                .catch(() => undefined);
+              if (mine) {
+                upsertBooking(mine);
+                navigation.replace('Success', { bookingId: mine.id });
+                return;
+              }
+              notify(isVietnamese ? 'Ngày không còn trống' : 'Dates no longer available', e.message);
+              setReload((n) => n + 1);
+            } else {
+              notify(isVietnamese ? 'Đặt phòng thất bại' : 'Booking failed', e?.message ?? (isVietnamese ? 'Vui lòng thử lại.' : 'Please try again.'));
+            }
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+      />
     </Screen>
   );
 }
