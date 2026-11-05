@@ -1,8 +1,7 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { View, Text, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
-import { c } from '@/constants/theme';
 import { useApp } from '@/store/AppContext';
 import { bookingService } from '@/services/bookingService';
 import { fmtDateTime, fmtISO } from '@/utils/date';
@@ -10,10 +9,14 @@ import { money } from '@/utils/pricing';
 import { notify } from '@/utils/dialog';
 import { Row, Divider } from '@/features/bookings/components/Row';
 import { methodLabel, receiptText } from '@/features/bookings/utils';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export function SuccessScreen({ route, navigation }: any) {
   const { bookingId } = route.params as { bookingId: string };
   const { bookings, upsertBooking } = useApp();
+  const { colors } = useTheme();
+  const { isVietnamese } = useLanguage();
   const b = bookings.find((x) => x.id === bookingId);
 
   // Phòng khi store chưa có (ví dụ vừa tải lại app): lấy từ server
@@ -24,33 +27,57 @@ export function SuccessScreen({ route, navigation }: any) {
 
   const share = async () => {
     if (!b) return;
-    try { await Share.share({ message: receiptText(b) }); } catch { notify('Could not share the receipt'); }
+    try { await Share.share({ message: receiptText(b) }); } catch { notify(isVietnamese ? 'Không thể chia sẻ biên lai' : 'Could not share the receipt'); }
   };
 
-  if (!b) return <Screen style={{ backgroundColor: '#F7F8FA', alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={c.p} /></Screen>;
+  if (!b) return (
+    <Screen style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator color={colors.primary} />
+    </Screen>
+  );
 
   const viewBooking = () => navigation.reset({ index: 1, routes: [{ name: 'Main', params: { screen: 'Bookings' } }, { name: 'BookingDetail', params: { id: b.id } }] });
 
   return (
-    <Screen style={{ backgroundColor: '#F7F8FA' }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, justifyContent: 'center' }}>
-        <View style={{ alignSelf: 'center', width: 110, height: 110, borderRadius: 55, backgroundColor: '#4ADE80', alignItems: 'center', justifyContent: 'center', marginBottom: -50, zIndex: 1 }}><Ionicons name="checkmark" size={64} color="#fff" /></View>
-        <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 20, paddingTop: 70 }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4 }}>Booking confirmed!</Text>
-          <Text style={{ textAlign: 'center', color: c.m, marginBottom: 16 }}>{b.listing.title}</Text>
-          <Row a="Ref number" b={b.ref} bold />
-          <Row a="Booked on" b={fmtDateTime(b.createdAt)} />
-          <Row a="Check-in" b={fmtISO(b.checkIn)} sub={`From ${b.listing.checkInTime}`} />
-          <Row a="Check-out" b={fmtISO(b.checkOut)} sub={`Until ${b.listing.checkOutTime}`} />
-          <Row a="Guests" b={`${b.guests} · ${b.nights} night${b.nights > 1 ? 's' : ''}`} />
-          <Row a="Payment" b={methodLabel(b)} />
+    <Screen>
+      <ScrollView
+        style={{ backgroundColor: colors.bg }}
+        contentContainerStyle={{ flexGrow: 1, padding: 16, justifyContent: 'center', backgroundColor: colors.bg }}
+      >
+        {/* Checkmark badge */}
+        <View style={{ alignSelf: 'center', width: 110, height: 110, borderRadius: 55, backgroundColor: '#4ADE80', alignItems: 'center', justifyContent: 'center', marginBottom: -50, zIndex: 1 }}>
+          <Ionicons name="checkmark" size={64} color="#fff" />
+        </View>
+
+        {/* Receipt card */}
+        <View style={{ backgroundColor: colors.card, borderRadius: 14, padding: 20, paddingTop: 70, borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 4, color: colors.text }}>
+            {isVietnamese ? 'Đặt phòng thành công!' : 'Booking confirmed!'}
+          </Text>
+          <Text style={{ textAlign: 'center', color: colors.muted, marginBottom: 16 }}>{b.listing.title}</Text>
+          <Row a={isVietnamese ? 'Mã tham chiếu' : 'Ref number'} b={b.ref} bold />
+          <Row a={isVietnamese ? 'Ngày đặt' : 'Booked on'} b={fmtDateTime(b.createdAt)} />
+          <Row a={isVietnamese ? 'Nhận phòng' : 'Check-in'} b={fmtISO(b.checkIn)} sub={`${isVietnamese ? 'Từ' : 'From'} ${b.listing.checkInTime}`} />
+          <Row a={isVietnamese ? 'Trả phòng' : 'Check-out'} b={fmtISO(b.checkOut)} sub={`${isVietnamese ? 'Trước' : 'Until'} ${b.listing.checkOutTime}`} />
+          <Row a={isVietnamese ? 'Khách' : 'Guests'} b={`${b.guests} · ${b.nights} ${isVietnamese ? 'đêm' : `night${b.nights > 1 ? 's' : ''}`}`} />
+          <Row a={isVietnamese ? 'Thanh toán' : 'Payment'} b={methodLabel(b)} />
           <Divider />
-          <Row a="Paid now" b={money(b.payment.amountPaid)} bold />
-          {b.payment.balanceDue > 0 && <Row a="Remaining" b={money(b.payment.balanceDue)} color="#C27A00" sub="Pay before check-in from your booking details" />}
-          <Btn outline icon="share-outline" title="Share receipt" onPress={share} style={{ marginTop: 16 }} />
+          <Row a={isVietnamese ? 'Đã thanh toán' : 'Paid now'} b={money(b.payment.amountPaid)} bold />
+          {b.payment.balanceDue > 0 && (
+            <Row
+              a={isVietnamese ? 'Còn lại' : 'Remaining'}
+              b={money(b.payment.balanceDue)}
+              color={colors.star}
+              sub={isVietnamese ? 'Thanh toán trước khi nhận phòng trong chi tiết đặt phòng' : 'Pay before check-in from your booking details'}
+            />
+          )}
+          <Btn outline icon="share-outline" title={isVietnamese ? 'Chia sẻ biên lai' : 'Share receipt'} onPress={share} style={{ marginTop: 16 }} />
         </View>
       </ScrollView>
-      <View style={{ padding: 16 }}><Btn title="View booking" onPress={viewBooking} /></View>
+
+      <View style={{ padding: 16, backgroundColor: colors.bg }}>
+        <Btn title={isVietnamese ? 'Xem đặt phòng' : 'View booking'} onPress={viewBooking} />
+      </View>
     </Screen>
   );
 }
