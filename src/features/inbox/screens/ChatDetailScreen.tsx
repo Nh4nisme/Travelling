@@ -14,29 +14,13 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Photo } from '@/components';
-import { c, S, W } from '@/constants/theme';
+import { S, W } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
-import { RENTER_CONVERSATIONS } from '../mockData';
 import { useInbox, InboxProvider, InboxContext } from '../context/InboxContext';
 import { socketService } from '@/services/socketService';
 import { useApp } from '@/store/AppContext';
-
-const RENTER_SUGGESTIONS = [
-  '🕑 What is the exact check-in time?',
-  '📶 What is the wifi network & password?',
-  '🚗 Is parking space available?',
-  '🐾 Are pets allowed?',
-  '🍳 Can I cook in the kitchen?',
-  '💰 Do you offer any discount?',
-];
-
-const HOST_SUGGESTIONS = [
-  '🕑 Standard check-in is at 14:00. Welcome!',
-  '📶 Wifi: Travelling_Guest, Pass: welcome2026',
-  '🚗 Free private parking is available on premises',
-  '🐾 Small pets under 10kg are warmly welcome',
-  '🍳 Kitchen is fully equipped for cooking',
-];
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 const SAMPLE_ATTACHMENT = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800';
 
@@ -55,9 +39,18 @@ function ChatDetailInner({
 }: ChatDetailScreenProps) {
   const insets = useSafeAreaInsets();
   const { user } = useApp();
+  const { colors, isDark } = useTheme();
+  const { t, isVietnamese } = useLanguage();
   const convId = propConvId ?? route?.params?.conversationId ?? 'conv-1';
-  const { conversations, sendMessage, typingMap, markAsRead, isHostUser, fetchMessages, refreshConversations } =
-    useInbox();
+  const {
+    conversations,
+    sendMessage,
+    typingMap,
+    markAsRead,
+    isHostUser,
+    fetchMessages,
+    refreshConversations,
+  } = useInbox();
 
   const conv = conversations.find((item) => item.id === convId);
 
@@ -77,8 +70,10 @@ function ChatDetailInner({
   const messageList = useMemo(() => conv?.messages || [], [conv?.messages]);
 
   const suggestions = useMemo(() => {
-    return isHostUser ? HOST_SUGGESTIONS : RENTER_SUGGESTIONS;
-  }, [isHostUser]);
+    return isHostUser
+      ? t.inbox.chat.hostSuggestions
+      : t.inbox.chat.renterSuggestions;
+  }, [isHostUser, t]);
 
   // 1. Tham gia phòng Socket.io của hội thoại này và tải tin nhắn từ Database
   useEffect(() => {
@@ -119,11 +114,32 @@ function ChatDetailInner({
 
   if (!conv) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={c.p} />
-        <Text style={[S.muted, { marginTop: 14, fontSize: 14 }]}>Connecting to conversation...</Text>
-        <Pressable onPress={handleBack} style={{ marginTop: 20, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: c.soft }}>
-          <Text style={{ color: c.p, fontWeight: '600' }}>Cancel</Text>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.bg,
+            paddingTop: insets.top,
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 14, fontSize: 14, color: colors.muted }}>
+          {t.common.connecting}
+        </Text>
+        <Pressable
+          onPress={handleBack}
+          style={{
+            marginTop: 20,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+            backgroundColor: colors.soft,
+          }}
+        >
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t.common.cancel}</Text>
         </Pressable>
       </View>
     );
@@ -161,48 +177,74 @@ function ChatDetailInner({
     await sendMessage(
       conv.id,
       isHostUser
-        ? 'Here are the room check-in photos:'
+        ? isVietnamese
+          ? 'Đây là ảnh thực tế căn phòng:'
+          : 'Here are the room check-in photos:'
+        : isVietnamese
+        ? 'Tôi gửi ảnh tham khảo căn hộ:'
         : 'Here is the photo of our room inquiry:',
       SAMPLE_ATTACHMENT
     );
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Top Header - Chống tai thỏ / Notch / Dynamic Island */}
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.bg, paddingTop: insets.top }]}>
+      {/* Top Header */}
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.card,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
         <Pressable onPress={handleBack} hitSlop={10} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={c.t} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
 
         <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.headerAvatar} />
 
         <View style={{ flex: 1 }}>
           <View style={[S.row, { gap: 6 }]}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: c.t }} numberOfLines={1}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }} numberOfLines={1}>
               {conv.hostName}
             </Text>
             {conv.role === 'Superhost' ? (
-              <View style={styles.superhostBadge}>
+              <View
+                style={[
+                  styles.superhostBadge,
+                  isDark && { backgroundColor: '#3D2800', borderColor: '#9E6400' },
+                ]}
+              >
                 <Ionicons name="medal" size={11} color="#C47D00" />
                 <Text style={styles.superhostText}>Superhost</Text>
               </View>
             ) : null}
             {conv.role === 'Verified Guest' ? (
-              <View style={styles.guestBadge}>
-                <Ionicons name="checkmark-circle" size={11} color={c.p} />
-                <Text style={styles.guestBadgeText}>Guest</Text>
+              <View
+                style={[
+                  styles.guestBadge,
+                  isDark && { backgroundColor: '#0E224A', borderColor: '#1E56C9' },
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={11} color={colors.primary} />
+                <Text
+                  style={[styles.guestBadgeText, isDark && { color: '#93C5FD' }]}
+                >
+                  Guest
+                </Text>
               </View>
             ) : null}
           </View>
-          <Text style={[S.muted, { fontSize: 12 }]}>
+          <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
             {isPartnerTyping
-              ? '✍️ Typing a reply...'
+              ? `✍️ ${t.inbox.chat.typing}`
               : conv.partnerPhone
               ? `Phone: ${conv.partnerPhone}`
               : isHostUser
-              ? 'Direct guest message'
-              : 'Typically replies in a few minutes'}
+              ? t.inbox.chat.directMessage
+              : t.inbox.chat.typicallyReplies}
           </Text>
         </View>
 
@@ -215,7 +257,7 @@ function ChatDetailInner({
           }}
           style={styles.infoBtn}
         >
-          <Ionicons name="information-circle-outline" size={24} color={c.m} />
+          <Ionicons name="information-circle-outline" size={24} color={colors.muted} />
         </Pressable>
       </View>
 
@@ -237,54 +279,73 @@ function ChatDetailInner({
                   navigation.navigate('Detail', { id: conv.listingId });
                 }
               }}
-              style={styles.listingCard}
+              style={[
+                styles.listingCard,
+                { backgroundColor: colors.card, borderColor: colors.border },
+              ]}
             >
               {conv.listingImage ? (
                 <Photo uri={conv.listingImage} style={styles.listingThumb} />
               ) : (
-                <View style={[styles.listingThumb, { backgroundColor: c.soft }]} />
+                <View style={[styles.listingThumb, { backgroundColor: colors.soft }]} />
               )}
               <View style={{ flex: 1, justifyContent: 'center' }}>
-                <Text style={{ fontWeight: '700', fontSize: 14, color: c.t }} numberOfLines={1}>
+                <Text style={{ fontWeight: '700', fontSize: 14, color: colors.text }} numberOfLines={1}>
                   {conv.listingTitle}
                 </Text>
                 {Boolean(conv.dates) ? (
-                  <Text style={[S.muted, { fontSize: 12, marginTop: 2 }]}>{conv.dates}</Text>
+                  <Text style={{ fontSize: 12, marginTop: 2, color: colors.muted }}>
+                    {conv.dates}
+                  </Text>
                 ) : null}
                 {Boolean(conv.listingPrice) ? (
                   <Text style={{ fontSize: 13, marginTop: 4 }}>
-                    <Text style={{ fontWeight: '700', color: c.p }}>${conv.listingPrice}</Text>
-                    <Text style={S.muted}> / night</Text>
+                    <Text style={{ fontWeight: '700', color: colors.primary }}>
+                      ${conv.listingPrice}
+                    </Text>
+                    <Text style={{ color: colors.muted }}> /{t.listing.night}</Text>
                   </Text>
                 ) : null}
               </View>
-              <Ionicons name="chevron-forward" size={18} color={c.m} />
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
           ) : null}
 
           {/* Date separator */}
           <View style={styles.dateSeparator}>
-            <View style={styles.dateLine} />
-            <Text style={styles.dateText}>Realtime Database Message · MongoDB Atlas</Text>
-            <View style={styles.dateLine} />
+            <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dateText, { color: colors.muted }]}>
+              {t.inbox.chat.realtimeNotice}
+            </Text>
+            <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
           </View>
 
           {/* Indicator khi đang tải tin nhắn */}
           {loadingMessages && messageList.length === 0 ? (
-            <ActivityIndicator size="small" color={c.p} style={{ marginVertical: 20 }} />
+            <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 20 }} />
           ) : null}
 
           {/* Chưa từng chat: hiển thị empty state */}
           {!loadingMessages && messageList.length === 0 ? (
             <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 40, paddingHorizontal: 24 }}>
-              <View style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: c.soft, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                <Ionicons name="chatbubbles-outline" size={26} color={c.p} />
+              <View
+                style={{
+                  width: 54,
+                  height: 54,
+                  borderRadius: 27,
+                  backgroundColor: colors.soft,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 12,
+                }}
+              >
+                <Ionicons name="chatbubbles-outline" size={26} color={colors.primary} />
               </View>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: c.t, textAlign: 'center' }}>
-                Chưa có lịch sử trò chuyện với {conv.hostName}
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
+                {t.inbox.chat.emptyHistory} {conv.hostName}
               </Text>
-              <Text style={[S.muted, { textAlign: 'center', marginTop: 6, fontSize: 13 }]}>
-                Bạn chưa từng nhắn tin cho chủ nhà này. Hãy gửi tin nhắn đầu tiên để hỏi thêm thông tin về căn hộ {conv.listingTitle || ''}!
+              <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 6, fontSize: 13, lineHeight: 18 }}>
+                {t.inbox.chat.emptyHint}
               </Text>
             </View>
           ) : null}
@@ -306,22 +367,19 @@ function ChatDetailInner({
                 <View
                   style={[
                     styles.bubble,
-                    isSelf ? styles.bubbleRenter : styles.bubbleHost,
+                    isSelf
+                      ? [styles.bubbleRenter, { backgroundColor: colors.primary }]
+                      : [styles.bubbleHost, { backgroundColor: colors.soft }],
                   ]}
                 >
-                  {/* Nếu tin nhắn có hình ảnh */}
                   {Boolean(m.image) ? (
-                    <Image
-                      source={{ uri: m.image }}
-                      style={styles.messageImage}
-                      resizeMode="cover"
-                    />
+                    <Image source={{ uri: m.image }} style={styles.messageImage} resizeMode="cover" />
                   ) : null}
                   {Boolean(m.text) ? (
                     <Text
                       style={[
                         styles.msgText,
-                        isSelf ? { color: '#fff' } : { color: c.t },
+                        isSelf ? { color: '#fff' } : { color: colors.text },
                       ]}
                     >
                       {m.text}
@@ -332,7 +390,7 @@ function ChatDetailInner({
                       styles.msgTime,
                       isSelf
                         ? { color: 'rgba(255,255,255,0.75)', textAlign: 'right' }
-                        : { color: c.m },
+                        : { color: colors.muted },
                     ]}
                   >
                     {m.time}
@@ -346,16 +404,18 @@ function ChatDetailInner({
           {isPartnerTyping ? (
             <View style={[styles.msgRow, { justifyContent: 'flex-start' }]}>
               <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
-              <View style={[styles.bubble, styles.bubbleHost, styles.typingBubble]}>
-                <Ionicons name="ellipsis-horizontal" size={20} color={c.p} />
-                <Text style={styles.typingText}>{conv.hostName} is typing...</Text>
+              <View style={[styles.bubble, styles.bubbleHost, { backgroundColor: colors.soft }, styles.typingBubble]}>
+                <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+                <Text style={[styles.typingText, { color: colors.muted }]}>
+                  {conv.hostName} {t.inbox.chat.typing}
+                </Text>
               </View>
             </View>
           ) : null}
         </ScrollView>
 
         {/* Quick Suggestion Chips */}
-        <View style={styles.suggestionsContainer}>
+        <View style={[styles.suggestionsContainer, { borderTopColor: colors.border }]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -365,19 +425,23 @@ function ChatDetailInner({
               <Pressable
                 key={idx}
                 onPress={() => void handleSelectSuggestion(s)}
-                style={styles.suggestionChip}
+                style={[styles.suggestionChip, { backgroundColor: colors.soft }]}
               >
-                <Text style={styles.suggestionText}>{s}</Text>
+                <Text style={[styles.suggestionText, { color: colors.text }]}>{s}</Text>
               </Pressable>
             ))}
           </ScrollView>
         </View>
 
-        {/* Bottom Chat Input Bar - Chống vướng thanh gạt Home Indicator */}
+        {/* Bottom Chat Input Bar */}
         <View
           style={[
             styles.inputBar,
-            { paddingBottom: Math.max(insets.bottom, 12) },
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 12),
+            },
           ]}
         >
           <Pressable
@@ -385,15 +449,15 @@ function ChatDetailInner({
             hitSlop={8}
             onPress={() => void handleSendAttachment()}
           >
-            <Ionicons name="image-outline" size={24} color={c.m} />
+            <Ionicons name="image-outline" size={24} color={colors.muted} />
           </Pressable>
 
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, { backgroundColor: colors.soft, color: colors.text }]}
             value={inputText}
             onChangeText={handleTextChange}
-            placeholder={`Message ${conv.hostName}...`}
-            placeholderTextColor={c.m}
+            placeholder={isVietnamese ? `Nhắn cho ${conv.hostName}...` : `Message ${conv.hostName}...`}
+            placeholderTextColor={colors.muted}
             multiline
           />
 
@@ -402,13 +466,13 @@ function ChatDetailInner({
             disabled={!inputText.trim()}
             style={[
               styles.sendBtn,
-              { backgroundColor: inputText.trim() ? c.p : c.soft },
+              { backgroundColor: inputText.trim() ? colors.primary : colors.soft },
             ]}
           >
             <Ionicons
               name="send"
               size={18}
-              color={inputText.trim() ? '#fff' : c.m}
+              color={inputText.trim() ? '#fff' : colors.muted}
             />
           </Pressable>
         </View>
@@ -417,7 +481,6 @@ function ChatDetailInner({
   );
 }
 
-// Bọc an toàn không vi phạm quy tắc Hooks
 export function ChatDetailScreen(props: ChatDetailScreenProps) {
   const context = useContext(InboxContext);
   if (!context) {
@@ -433,7 +496,6 @@ export function ChatDetailScreen(props: ChatDetailScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -441,7 +503,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderColor: c.soft,
     gap: 12,
   },
   backBtn: {
@@ -451,7 +512,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: c.soft,
   },
   superhostBadge: {
     flexDirection: 'row',
@@ -492,11 +552,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: c.b,
     borderRadius: 12,
     padding: 10,
     gap: 12,
-    backgroundColor: '#fff',
     marginBottom: 16,
   },
   listingThumb: {
@@ -513,11 +571,9 @@ const styles = StyleSheet.create({
   dateLine: {
     flex: 1,
     height: 1,
-    backgroundColor: c.soft,
   },
   dateText: {
     fontSize: 11,
-    color: c.m,
     fontWeight: '500',
   },
   msgRow: {
@@ -530,7 +586,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: c.soft,
     marginBottom: 4,
   },
   bubble: {
@@ -540,11 +595,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   bubbleHost: {
-    backgroundColor: c.soft,
     borderBottomLeftRadius: 4,
   },
   bubbleRenter: {
-    backgroundColor: c.p,
     borderBottomRightRadius: 4,
   },
   messageImage: {
@@ -570,23 +623,19 @@ const styles = StyleSheet.create({
   },
   typingText: {
     fontSize: 12,
-    color: c.m,
     fontStyle: 'italic',
   },
   suggestionsContainer: {
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderColor: c.soft,
   },
   suggestionChip: {
-    backgroundColor: c.soft,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 16,
   },
   suggestionText: {
     fontSize: 12,
-    color: c.t,
     fontWeight: '500',
   },
   inputBar: {
@@ -595,21 +644,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderColor: c.soft,
     gap: 10,
-    backgroundColor: '#fff',
   },
   attachBtn: {
     padding: 6,
   },
   textInput: {
     flex: 1,
-    backgroundColor: c.soft,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 8,
     fontSize: 15,
-    color: c.t,
     maxHeight: 90,
   },
   sendBtn: {

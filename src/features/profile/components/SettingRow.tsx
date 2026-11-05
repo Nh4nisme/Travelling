@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 interface SettingRowProps {
   label: string;
@@ -12,15 +12,17 @@ interface SettingRowProps {
 }
 
 export function SettingRow({ label, type, value, onPress, onToggle, isToggled }: SettingRowProps) {
+  const { colors } = useTheme();
+
   const renderRightElement = () => {
     switch (type) {
       case 'navigate':
-        return <Ionicons name="chevron-forward" size={18} color={c.m} />;
+        return <Ionicons name="chevron-forward" size={18} color={colors.muted} />;
       case 'select':
         return (
-          <View style={[S.row, { gap: 4 }]}>
-            {value && <Text style={[S.muted]}>{value}</Text>}
-            <Ionicons name="chevron-forward" size={18} color={c.m} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            {value && <Text style={{ color: colors.muted, fontSize: 14 }}>{value}</Text>}
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </View>
         );
       case 'toggle':
@@ -28,8 +30,8 @@ export function SettingRow({ label, type, value, onPress, onToggle, isToggled }:
           <Switch
             value={isToggled ?? false}
             onValueChange={onToggle}
-            trackColor={{ false: c.b, true: c.pl }}
-            thumbColor={isToggled ? c.p : '#f4f3f4'}
+            trackColor={{ false: colors.border, true: colors.primaryLight }}
+            thumbColor={isToggled ? colors.primary : '#f4f3f4'}
           />
         );
     }
@@ -38,9 +40,16 @@ export function SettingRow({ label, type, value, onPress, onToggle, isToggled }:
   return (
     <Pressable
       onPress={type !== 'toggle' ? onPress : undefined}
-      style={[S.between, { paddingVertical: 16, borderBottomWidth: 1, borderColor: c.soft }]}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderColor: colors.soft,
+      }}
     >
-      <Text style={{ fontSize: 16, color: c.t }}>{label}</Text>
+      <Text style={{ fontSize: 16, color: colors.text, fontWeight: '500' }}>{label}</Text>
       {renderRightElement()}
     </Pressable>
   );
