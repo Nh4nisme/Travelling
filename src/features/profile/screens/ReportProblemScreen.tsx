@@ -4,7 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useApp } from '@/store/AppContext';
 import { supportService } from '@/services/supportService';
@@ -16,13 +17,15 @@ const MAX_LENGTH = 1000;
 /** Những loại báo cáo cho phép chọn đặt phòng liên quan. */
 const BOOKING_RELATED: ReportCategoryId[] = ['booking', 'payment', 'listing'];
 
-const SectionTitle = ({ children }: { children: string }) => (
-  <Text style={[S.muted, { marginTop: 24, marginBottom: 12, fontWeight: '600', letterSpacing: 0.5 }]}>{children}</Text>
+const SectionTitle = ({ children, colors }: { children: string; colors: any }) => (
+  <Text style={{ color: colors.muted, marginTop: 24, marginBottom: 12, fontWeight: '600', letterSpacing: 0.5 }}>{children}</Text>
 );
 
 export function ReportProblemScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, bookings, listings } = useApp();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [category, setCategory] = useState<ReportCategoryId | null>(null);
   const [bookingRef, setBookingRef] = useState<string | null>(null);
@@ -34,11 +37,11 @@ export function ReportProblemScreen() {
   if (!user) {
     return (
       <Screen>
-        <Header title="Report a Problem" />
+        <Header title={t.helpCenter.reportTitle} />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <Ionicons name="lock-closed-outline" size={48} color={c.b} />
-          <Text style={[S.muted, { marginTop: 12, textAlign: 'center' }]}>Please sign in to report a problem.</Text>
-          <Btn title="Sign in" onPress={() => navigation.navigate('Auth')} style={{ marginTop: 20, alignSelf: 'stretch' }} />
+          <Ionicons name="lock-closed-outline" size={48} color={colors.border} />
+          <Text style={{ color: colors.muted, marginTop: 12, textAlign: 'center' }}>{t.helpCenter.signInToReport}</Text>
+          <Btn title={t.profile.signIn} onPress={() => navigation.navigate('Auth')} style={{ marginTop: 20, alignSelf: 'stretch' }} />
         </View>
       </Screen>
     );
@@ -48,18 +51,18 @@ export function ReportProblemScreen() {
   if (receipt) {
     return (
       <Screen>
-        <Header title="Report a Problem" />
+        <Header title={t.helpCenter.reportTitle} />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Ionicons name="checkmark-circle" size={72} color="#22A559" />
-          <Text style={[S.h1, { marginTop: 16, textAlign: 'center' }]}>Report submitted</Text>
-          <Text style={[S.muted, { marginTop: 8, textAlign: 'center', lineHeight: 20 }]}>
-            Thanks for letting us know. Our team will reply to {user.email} {SUPPORT_CONTACT.responseTime}.
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text, marginTop: 16, textAlign: 'center' }}>{t.helpCenter.reportSubmitted}</Text>
+          <Text style={{ color: colors.muted, marginTop: 8, textAlign: 'center', lineHeight: 20 }}>
+            {t.helpCenter.thanksLetting} {user.email} {t.helpCenter.withinHour}.
           </Text>
-          <View style={[S.box, { marginTop: 24, alignItems: 'center', alignSelf: 'stretch', backgroundColor: c.soft, borderColor: c.soft }]}>
-            <Text style={S.muted}>Reference number</Text>
-            <Text selectable style={{ marginTop: 4, fontSize: 20, fontWeight: '700', color: c.t, letterSpacing: 1 }}>{receipt.reference}</Text>
+          <View style={{ backgroundColor: colors.soft, borderWidth: 1, borderColor: colors.soft, borderRadius: 12, padding: 16, marginTop: 24, alignItems: 'center', alignSelf: 'stretch' }}>
+            <Text style={{ color: colors.muted }}>{t.helpCenter.referenceNumber}</Text>
+            <Text selectable style={{ marginTop: 4, fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: 1 }}>{receipt.reference}</Text>
           </View>
-          <Btn title="Back to Help Center" onPress={() => navigation.goBack()} style={{ marginTop: 28, alignSelf: 'stretch' }} />
+          <Btn title={t.helpCenter.backToHelp} onPress={() => navigation.goBack()} style={{ marginTop: 28, alignSelf: 'stretch' }} />
         </View>
       </Screen>
     );
@@ -89,12 +92,12 @@ export function ReportProblemScreen() {
 
   return (
     <Screen>
-      <Header title="Report a Problem" />
+      <Header title={t.helpCenter.reportTitle} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-          <Text style={[S.muted, { marginTop: 4 }]}>Tell us what went wrong and we'll look into it.</Text>
+          <Text style={{ color: colors.muted, marginTop: 4 }}>{t.helpCenter.tellUsWrong}</Text>
 
-          <SectionTitle>WHAT'S THE PROBLEM ABOUT?</SectionTitle>
+          <SectionTitle colors={colors}>{t.helpCenter.whatProblem}</SectionTitle>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {REPORT_CATEGORIES.map((item) => {
               const active = category === item.id;
@@ -104,21 +107,20 @@ export function ReportProblemScreen() {
                   onPress={() => setCategory(item.id)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
-                  style={[
-                    S.row,
-                    {
-                      gap: 6,
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: active ? c.p : c.b,
-                      backgroundColor: active ? c.pl : '#fff',
-                    },
-                  ]}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    paddingHorizontal: 14,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: active ? colors.primary : colors.border,
+                    backgroundColor: active ? colors.primaryLight : colors.card,
+                  }}
                 >
-                  <Ionicons name={item.icon} size={16} color={active ? c.p : c.m} />
-                  <Text style={{ fontSize: 14, color: c.t, fontWeight: active ? '700' : '500' }}>{item.label}</Text>
+                  <Ionicons name={item.icon} size={16} color={active ? colors.primary : colors.muted} />
+                  <Text style={{ fontSize: 14, color: colors.text, fontWeight: active ? '700' : '500' }}>{item.label}</Text>
                 </Pressable>
               );
             })}
@@ -126,7 +128,7 @@ export function ReportProblemScreen() {
 
           {showBookingPicker && (
             <>
-              <SectionTitle>RELATED BOOKING (OPTIONAL)</SectionTitle>
+              <SectionTitle colors={colors}>{t.helpCenter.relatedBooking}</SectionTitle>
               {bookings.map((booking) => {
                 const listing = listings.find((l) => l.id === (booking.listing?.id ?? (booking as any).listingId));
                 const selected = bookingRef === booking.ref;
@@ -136,11 +138,11 @@ export function ReportProblemScreen() {
                     onPress={() => setBookingRef(selected ? null : booking.ref)}
                     accessibilityRole="radio"
                     accessibilityState={{ selected }}
-                    style={[S.between, { paddingVertical: 12, gap: 12 }]}
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, gap: 12 }}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '600', color: c.t }} numberOfLines={1}>{listing?.title ?? 'Booking'}</Text>
-                      <Text style={[S.muted, { fontSize: 13 }]}>Ref {booking.ref}</Text>
+                      <Text style={{ fontWeight: '600', color: colors.text }} numberOfLines={1}>{listing?.title ?? 'Booking'}</Text>
+                      <Text style={{ color: colors.muted, fontSize: 13 }}>Ref {booking.ref}</Text>
                     </View>
                     <View
                       style={{
@@ -148,12 +150,12 @@ export function ReportProblemScreen() {
                         height: 24,
                         borderRadius: 12,
                         borderWidth: 1.5,
-                        borderColor: selected ? c.p : c.m,
+                        borderColor: selected ? colors.primary : colors.muted,
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
-                      {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: c.p }} />}
+                      {selected && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary }} />}
                     </View>
                   </Pressable>
                 );
@@ -161,35 +163,35 @@ export function ReportProblemScreen() {
             </>
           )}
 
-          <SectionTitle>DESCRIBE WHAT HAPPENED</SectionTitle>
+          <SectionTitle colors={colors}>{t.helpCenter.describeWhat}</SectionTitle>
           <TextInput
             value={description}
             onChangeText={setDescription}
-            placeholder="Include as much detail as you can: what you expected, what happened, and when."
-            placeholderTextColor={c.m}
+            placeholder={t.helpCenter.describePlaceholder}
+            placeholderTextColor={colors.muted}
             multiline
             maxLength={MAX_LENGTH}
             textAlignVertical="top"
-            style={[S.input, { minHeight: 140 }]}
+            style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, fontSize: 16, color: colors.text, minHeight: 140 }}
           />
-          <View style={[S.between, { marginTop: 6 }]}>
-            <Text style={[S.muted, { fontSize: 12 }]}>
-              {trimmedLength < MIN_LENGTH ? `At least ${MIN_LENGTH} characters` : ' '}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+            <Text style={{ color: colors.muted, fontSize: 12 }}>
+              {trimmedLength < MIN_LENGTH ? t.helpCenter.atLeast : ' '}
             </Text>
-            <Text style={[S.muted, { fontSize: 12 }]}>{description.length}/{MAX_LENGTH}</Text>
+            <Text style={{ color: colors.muted, fontSize: 12 }}>{description.length}/{MAX_LENGTH}</Text>
           </View>
 
-          <Text style={[S.muted, { marginTop: 16, fontSize: 13 }]}>We'll reply to {user.email}.</Text>
+          <Text style={{ color: colors.muted, marginTop: 16, fontSize: 13 }}>{t.helpCenter.weWillReply} {user.email}.</Text>
 
           {error && <Text style={{ color: '#D94A55', fontSize: 14, marginTop: 12 }}>{error}</Text>}
 
           <Btn
-            title={submitting ? 'Submitting...' : 'Submit report'}
+            title={submitting ? t.helpCenter.submitting : t.helpCenter.submitReport}
             onPress={handleSubmit}
             disabled={!canSubmit}
             style={{ marginTop: 20 }}
           />
-          {submitting && <ActivityIndicator size="small" color={c.p} style={{ marginTop: 12 }} />}
+          {submitting && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />}
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
