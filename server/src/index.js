@@ -1,4 +1,4 @@
-require('./config/loadEnv');
+﻿require('./config/loadEnv');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -21,17 +21,14 @@ app.set('io', io);
 
 // Quản lý các sự kiện Socket.io Realtime
 io.on('connection', (socket) => {
-  console.log('⚡ Client connected to socket:', socket.id);
 
   socket.on('error', (err) => {
-    console.warn(`Socket ${socket.id} error:`, err?.message);
   });
 
   // Người dùng tham gia vào phòng chat của 1 hội thoại cụ thể
   socket.on('join_conversation', (conversationId) => {
     if (conversationId) {
       socket.join(conversationId);
-      console.log(`Socket ${socket.id} joined conversation: ${conversationId}`);
     }
   });
 
@@ -39,7 +36,6 @@ io.on('connection', (socket) => {
   socket.on('leave_conversation', (conversationId) => {
     if (conversationId) {
       socket.leave(conversationId);
-      console.log(`Socket ${socket.id} left conversation: ${conversationId}`);
     }
   });
 
@@ -58,7 +54,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', (reason) => {
-    console.log(`Client ${socket.id} disconnected: ${reason}`);
   });
 });
 

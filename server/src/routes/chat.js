@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const auth = require('../middleware/auth');
@@ -180,6 +180,8 @@ router.post('/conversations/:id/messages', auth, async (req, res) => {
     if (io) {
       // 1. Gửi tin nhắn tức thì vào phòng chat (room)
       io.to(convId).emit('message:received', messagePayload);
+      // Global broadcast: đảm bảo thiết bị vật lý nhận được realtime dù chưa join room
+      io.emit('message:received', messagePayload);
       // 2. Cập nhật preview tin nhắn cuối cùng trên màn hình danh sách Inbox
       io.emit('conversation:updated', {
         id: convId,
@@ -294,23 +296,57 @@ router.post('/inquire', auth, async (req, res) => {
   }
 });
 
-// 5. Lấy danh sách thành viên trong hệ thống để bắt đầu cuộc trò chuyện
-router.get('/contacts', auth, async (req, res) => {
+// 5. Tìm kiếm người dùng bằng Số điện thoại hoặc Email (bảo mật, không lộ toàn bộ danh bạ)
+router.get('/search-user', auth, async (req, res) => {
   try {
     const currentUserId = req.user._id;
-    const users = await User.find({ _id: { $ne: currentUserId } }).select('name email phone');
+    const { query } = req.query;
+
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      return res.status(400).json({ message: 'Vui lòng nhập số điện thoại hoặc email' });
+    }
+
+    const cleanQuery = query.trim().toLowerCase();
+
+    // Không cho tự tìm chính mình
+    const currentUser = await User.findById(currentUserId);
+    if (
+      (currentUser?.email && currentUser.email.toLowerCase() === cleanQuery) ||
+      (currentUser?.phone && currentUser.phone.trim() === cleanQuery)
+    ) {
+      return res.status(400).json({ message: 'Bạn không thể tự thêm chính mình' });
+    }
+
+    // Tìm kiếm chính xác email hoặc số điện thoại
+    const user = await User.findOne({
+      _id: { $ne: currentUserId },
+      $or: [
+        { email: cleanQuery },
+        { phone: cleanQuery },
+      ],
+    }).select('name email phone');
+
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng với số điện thoại hoặc email này' });
+    }
+
     res.json({
-      users: users.map((u) => ({
-        id: u._id.toString(),
-        name: u.name,
-        email: u.email,
-        phone: u.phone,
-      })),
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',
+      },
     });
   } catch (error) {
-    console.error('Lỗi lấy contacts:', error.message);
-    res.status(500).json({ message: 'Không thể tải danh sách liên hệ' });
+    console.error('Lỗi tìm kiếm user:', error.message);
+    res.status(500).json({ message: 'Không thể tìm kiếm người dùng' });
   }
+});
+
+// Endpoint contacts cũ: trả về rỗng để bảo mật thông tin người dùng
+router.get('/contacts', auth, async (_req, res) => {
+  res.json({ users: [] });
 });
 
 // 6. Xóa sạch 100% lịch sử chat (cho testing / reset dữ liệu)

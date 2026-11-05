@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { View, Text, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
@@ -47,7 +47,6 @@ export function SuccessScreen({ route, navigation }: any) {
           <Divider />
           <Row a="Paid now" b={money(b.payment.amountPaid)} bold />
           {b.payment.balanceDue > 0 && <Row a="Remaining" b={money(b.payment.balanceDue)} color="#C27A00" sub="Pay before check-in from your booking details" />}
-          <Text style={{ color: c.m, fontSize: 12, marginTop: 12 }}>Demo payment: no real card was charged.</Text>
           <Btn outline icon="share-outline" title="Share receipt" onPress={share} style={{ marginTop: 16 }} />
         </View>
       </ScrollView>

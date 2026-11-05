@@ -19,18 +19,43 @@
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Pool", "Outdoor space", "Internet access"],
-    "desc": "Looking for the perfect place to relax and unwind? This stunning villa is the ultimate getaway. Located on a quiet street just minutes from the beach, this beautiful home offers everything you need for a luxurious and comfortable stay.",
+    "facilities": [
+      "Kitchen",
+      "Pool",
+      "Outdoor space",
+      "Internet access"
+    ],
+    "desc": "Experience Omaha from this beautifully restored historic loft apartment in the lively Old Market district. Featuring exposed brick walls, timber beams, and curated contemporary art, this space balances historic character with modern luxury.\n\nThe spacious living space includes a comfortable seating area, an acoustic vinyl record player, and expansive windows overlooking the cobblestone streets. Cook gourmet meals in the chef's kitchen outfitted with high-end gas range, artisan spices, and dining seating for four.\n\nThe bedroom offers a restorative retreat with a king-size plush mattress, sound machine, and en-suite walk-in rain shower. Conveniently located within walking distance of Omaha's best craft breweries, farm-to-table eateries, the riverfront park, and CHI Health Center.",
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
-    "checkInPolicy": "Please confirm your check-in instructions with the host before arrival.",
+    "checkInPolicy": "• Keyless entry with a secure digital lockbox located beside the main lobby entrance.\n• Earliest check-in is at 3:00 PM; latest check-out is at 11:00 AM.\n• Guests must be at least 21 years of age to book.\n• Please remove outdoor shoes at the entryway to protect the historic hardwood floors.\n• Pets considered upon prior approval with an additional pet cleaning fee.",
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
     "reviewItems": [
-      { "name": "John King", "stars": 4, "text": "We loved staying in this charming home! It had all the amenities we needed, and the historic...", "avatar": 11 },
-      { "name": "Jennifer Harris", "stars": 3, "text": "While the location of this home was convenient, we were disappointed with the cleanliness and overall...", "avatar": 47 },
-      { "name": "John Edwards", "stars": 5, "text": "This home was perfect for our family vacation! The kids loved the pool and the game room...", "avatar": 33 },
-      { "name": "Elizabeth Lopez", "stars": 5, "text": "The photos don't do this home justice - it's absolutely stunning in person...", "avatar": 5 }
+      {
+        "name": "John King",
+        "stars": 4,
+        "text": "We loved staying in this charming home! It had all the amenities we needed, and the historic...",
+        "avatar": 11
+      },
+      {
+        "name": "Jennifer Harris",
+        "stars": 3,
+        "text": "While the location of this home was convenient, we were disappointed with the cleanliness and overall...",
+        "avatar": 47
+      },
+      {
+        "name": "John Edwards",
+        "stars": 5,
+        "text": "This home was perfect for our family vacation! The kids loved the pool and the game room...",
+        "avatar": 33
+      },
+      {
+        "name": "Elizabeth Lopez",
+        "stars": 5,
+        "text": "The photos don't do this home justice - it's absolutely stunning in person...",
+        "avatar": 5
+      }
     ]
   },
   {
@@ -53,11 +78,15 @@
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Gym", "Internet access"],
-    "desc": "A comfortable city apartment with a fully equipped kitchen, modern amenities, and easy access to local attractions.",
+    "facilities": [
+      "Kitchen",
+      "Gym",
+      "Internet access"
+    ],
+    "desc": "Welcome to our modern, sunlit apartment located in the vibrant heart of San Jose. Featuring high ceilings, hardwood flooring, and floor-to-ceiling windows, this urban oasis offers the perfect blend of style and comfort for both leisure and business travelers.\n\nThe open-concept living area features a plush designer sofa, a 55-inch Smart TV with streaming services, and a dedicated ergonomic workstation with ultra-fast 500 Mbps Wi-Fi. The fully equipped gourmet kitchen includes stainless steel appliances, quartz countertops, a Nespresso coffee machine, and all essential cookware.\n\nRelax in the peaceful master bedroom with a premium queen-size memory foam mattress, blackout shades, and crisp hotel-grade linens. Step outside onto the private balcony to enjoy your morning coffee with sweeping skyline views. You are just steps away from world-class dining, bustling tech hubs, Santana Row, and public transit.",
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
-    "checkInPolicy": "The host will share arrival instructions before your stay.",
+    "checkInPolicy": "• Self check-in via smart keypad lock. Your 6-digit access code will be sent 24 hours prior to arrival.\n• Government-issued photo ID is required to be submitted via chat prior to check-in.\n• Quiet hours are observed between 10:00 PM and 8:00 AM out of respect for neighbors.\n• Strictly no smoking, vaping, or unauthorized parties on the premises.\n• Luggage drop-off before 3:00 PM is available upon request subject to cleaning schedule.",
     "hostEmail": "alex.miller@gmail.com",
     "hostName": "Alex Miller",
     "reviewItems": []
@@ -82,11 +111,14 @@
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Internet access"],
-    "desc": "A welcoming private room with thoughtful essentials and a convenient location for exploring Milwaukee.",
+    "facilities": [
+      "Kitchen",
+      "Internet access"
+    ],
+    "desc": "Bright, spacious loft apartment in Milwaukee's Historic Third Ward. Features 12-foot timber ceilings, cream city brick walls, and modern industrial aesthetic.\n\nIncludes ultra-fast Wi-Fi, fully equipped kitchen with island breakfast bar, in-unit washer and dryer, and secure garage parking. Walking distance to the Milwaukee Public Market, art galleries, and Lake Michigan waterfront parks.\n\nThe king-bed suite provides whisper-quiet relaxation with luxury bedding and en-suite bath.",
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
-    "checkInPolicy": "Please coordinate your arrival time with the host.",
+    "checkInPolicy": "• Smart lock keypad entry; code activated at 3:00 PM on arrival date.\n• Photo ID verification required prior to code issuance.\n• One complimentary covered garage parking spot included with your reservation.\n• Non-smoking building. No parties or excessive noise.\n• Late check-out available for an additional fee upon request.",
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
     "reviewItems": []
@@ -111,11 +143,16 @@
       "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Pool", "Outdoor space", "Internet access"],
-    "desc": "Looking for the perfect place to relax and unwind? This stunning villa is the ultimate getaway. Located on a quiet street just minutes from the beach, this beautiful home offers everything you need for a luxurious and comfortable stay.",
+    "facilities": [
+      "Kitchen",
+      "Pool",
+      "Outdoor space",
+      "Internet access"
+    ],
+    "desc": "Immerse yourself in nature at the iconic Balian Treehouse, located just a 3-minute stroll from the secluded volcanic black sand beach of Balian. Perched among lush coconut palms, this handcrafted tropical sanctuary offers total privacy and tranquil ocean breezes.\n\nThe open-air upper lounge looks out over tropical gardens and the private plunge pool, offering the ideal spot for sunrise yoga, reading, or sunset cocktails. Downstairs, you will find a bespoke teak kitchen, comfortable indoor living area, and an outdoor rain shower surrounded by exotic plants.\n\nFall asleep to the sound of breaking ocean waves in the second-floor master bedroom with panoramic tree canopy views and mosquito-netted king bed. Daily housekeeping and fresh tropical fruit basket are included with every stay.",
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
-    "checkInPolicy": "The host will provide check-in details before your arrival.",
+    "checkInPolicy": "• Personal in-person greeting by our villa manager, Made, upon arrival at Balian village.\n• Check-in time is between 2:00 PM and 8:00 PM. Please advise your arrival time in advance.\n• Scooters and surfboards are available for rent directly on the property.\n• We operate on eco-friendly solar hot water and practice sustainable waste management.\n• Eco-friendly mosquito repellent is provided; please keep nets closed in the evening.",
     "hostEmail": "jinny@gmail.com",
     "hostName": "Jinny Oslin",
     "reviewItems": []
@@ -140,11 +177,15 @@
       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Outdoor space", "Internet access"],
-    "desc": "A warm alpine chalet with mountain views, a generous living area, and space to unwind after a day outdoors in Chamonix.",
+    "facilities": [
+      "Kitchen",
+      "Outdoor space",
+      "Internet access"
+    ],
+    "desc": "Nestled against the majestic Swiss Alps, this authentic timber chalet offers an unforgettable mountain getaway in all seasons. Enjoy breathtaking panoramic views of snow-capped peaks right from the wrap-around sundeck.\n\nThe interior boasts traditional Alpine craftsmanship with knotty pine walls, a roaring wood-burning stone fireplace, and a cozy sheepskin-lined lounge. The kitchen is fully equipped for preparing traditional fondue or raclette dinners after a day on the slopes.\n\nAfter skiing or hiking, unwind in your private outdoor cedar hot tub under the starlit mountain sky. Located just 5 minutes from the ski lift and hiking trailheads, with a private heated ski storage room and boot dryers included.",
     "checkInTime": "16:00",
     "checkOutTime": "10:00",
-    "checkInPolicy": "Please contact the host to arrange your arrival.",
+    "checkInPolicy": "• Digital lock code provided 48 hours prior to arrival with detailed winter driving directions.\n• All-wheel drive or snow chains are required during winter months (December to April).\n• Firewood is provided free of charge for the living room fireplace.\n• Check-in begins at 4:00 PM; check-out is strictly by 10:00 AM to allow thorough turnover.\n• Please ensure all outdoor ski gear is placed in the designated heated boot room.",
     "hostEmail": "pierre.chalet@gmail.com",
     "hostName": "Pierre Dubois",
     "reviewItems": []
@@ -169,11 +210,14 @@
       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Kitchen", "Internet access"],
-    "desc": "A peaceful cabin stay in the Dolomites, surrounded by dramatic scenery and fresh mountain air.",
+    "facilities": [
+      "Kitchen",
+      "Internet access"
+    ],
+    "desc": "Escape to this secluded high-altitude cabin nestled within a UNESCO World Heritage nature reserve in the Italian Dolomites. Surrounded by towering limestone spires and fragrant larch forests, this is a sanctuary for nature enthusiasts, photographers, and hikers.\n\nBuilt with local reclaimed stone and larch wood, the cabin features custom minimalist Scandinavian furnishings, panoramic picture windows, and an indoor cast-iron wood stove that warms the entire space. The compact kitchen is stocked with local olive oil, Italian espresso, and cast-iron cookware.\n\nWake up to pink sunrise alpenglow illuminating the peaks, step right onto world-renowned alpine hiking trails, and savor peaceful evenings with zero light pollution for world-class stargazing.",
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
-    "checkInPolicy": "The host will share access instructions before check-in.",
+    "checkInPolicy": "• Meet-and-greet check-in at the valley base station or self-check-in with lockbox code.\n• The cabin is accessible via a gravel forestry road; suitable vehicles are recommended.\n• Tap water is pristine natural spring water, filtered and certified safe to drink.\n• Respect wildlife: please secure all trash in the bear-proof outdoor containers.\n• Quiet hours begin at 9:00 PM to preserve the peaceful wilderness atmosphere.",
     "hostEmail": "marco.dolomites@gmail.com",
     "hostName": "Marco Rossi",
     "reviewItems": []
@@ -198,11 +242,13 @@
       "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Outdoor space"],
-    "desc": "A simple forest campsite near Da Lat for travelers looking to enjoy the outdoors and cool highland air.",
+    "facilities": [
+      "Outdoor space"
+    ],
+    "desc": "Luxury glamping experience nestled deep in the misty pine forests of Da Lat. Features a spacious 30sqm canvas bell tent furnished with a plush queen bed, heated blankets, handcrafted bamboo furnishings, and warm fairy lights.\n\nStep out onto your private wooden terrace overlooking rolling valleys and flower gardens. Includes complimentary breakfast and camp-fire barbecue kit.\n\nEnjoy crisp highland air, evening acoustic music around the central fire pit, and starry night skies.",
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
-    "checkInPolicy": "Check in at the campsite reception on arrival.",
+    "checkInPolicy": "• Reception check-in at the Forest Basecamp between 2:00 PM and 7:00 PM.\n• Temperatures drop significantly at night; extra warm clothing is strongly advised.\n• Bonfire is lit at 7:00 PM every evening weather permitting.\n• Camp quiet hours are from 10:00 PM to 6:00 AM.\n• Eco-conscious camp: single-use plastics are discouraged.",
     "hostEmail": "minhduc.dalat@gmail.com",
     "hostName": "Minh Đức",
     "reviewItems": []
@@ -227,11 +273,14 @@
       "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=70"
     ],
-    "facilities": ["Outdoor space", "Kitchen"],
-    "desc": "A lakeside camping retreat near Banff, ideal for a quiet escape among Canada's mountain landscapes.",
+    "facilities": [
+      "Outdoor space",
+      "Kitchen"
+    ],
+    "desc": "Wake up directly on the water's edge at this serene lakeside campsite. Experience luxury outdoor living with a safari-style canvas tent, memory foam queen mattress, private wooden deck with hammocks, and unobstructed sunrise views over the tranquil lake.\n\nIncludes kayak and paddleboard access, fishing rods, and an outdoor fire pit with complimentary firewood.\n\nSurrounded by natural wetlands and birdlife, offering an authentic, undisturbed waterside sanctuary.",
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
-    "checkInPolicy": "Please check in with the campground host when you arrive.",
+    "checkInPolicy": "• Self-check-in instructions and campsite map sent via SMS/Chat prior to arrival.\n• Check-in from 2:00 PM; check-out by 11:00 AM.\n• Life vests are mandatory when using kayaks and paddleboards (provided at dock).\n• Open campfires permitted only within designated steel fire pits.\n• Please leave the lakeside clean and pack out all food waste.",
     "hostEmail": "david.banff@gmail.com",
     "hostName": "David Tremblay",
     "reviewItems": []
