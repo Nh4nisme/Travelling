@@ -118,4 +118,85 @@ router.post('/favorites/:id', auth, async (req, res) => {
   }
 });
 
+// Set/Update Payment PIN
+router.post('/payment-pin', auth, async (req, res) => {
+  try {
+    const { currentPin, newPin } = req.body;
+    
+    // Validate new PIN (6 digits)
+    if (!/^\d{6}$/.test(newPin)) {
+      return res.status(400).json({ 
+        message: 'Payment PIN must be exactly 6 digits' 
+      });
+    }
+    
+    const user = await User.findById(req.user._id).select('+paymentPin');
+    
+    // Nếu đã có PIN, phải verify current PIN trước
+    if (user.paymentPinSet) {
+      if (!currentPin) {
+        return res.status(400).json({ 
+          message: 'Current PIN is required' 
+        });
+      }
+      
+      const isValid = await user.comparePaymentPin(currentPin);
+      if (!isValid) {
+        return res.status(401).json({ 
+          message: 'Current PIN is incorrect' 
+        });
+      }
+    }
+    
+    // Set new PIN
+    user.paymentPin = newPin;
+    await user.save();
+    
+    res.json({ 
+      message: 'Payment PIN updated successfully',
+      user: user.toPublic()
+    });
+  } catch (error) {
+    console.error('Lỗi cập nhật Payment PIN:', error.message);
+    res.status(500).json({ message: 'Failed to update Payment PIN' });
+  }
+});
+
+// Verify Payment PIN
+router.post('/verify-payment-pin', auth, async (req, res) => {
+  try {
+    const { pin } = req.body;
+    
+    if (!pin || !/^\d{6}$/.test(pin)) {
+      return res.status(400).json({ 
+        message: 'Invalid PIN format' 
+      });
+    }
+    
+    const user = await User.findById(req.user._id).select('+paymentPin +paymentPinSet');
+    
+    if (!user.paymentPinSet) {
+      return res.status(400).json({ 
+        message: 'Payment PIN not set. Please set up your PIN first.' 
+      });
+    }
+    
+    const isValid = await user.comparePaymentPin(pin);
+    
+    if (!isValid) {
+      return res.status(401).json({ 
+        message: 'Incorrect Payment PIN' 
+      });
+    }
+    
+    res.json({ 
+      valid: true,
+      message: 'Payment PIN verified successfully' 
+    });
+  } catch (error) {
+    console.error('Lỗi verify Payment PIN:', error.message);
+    res.status(500).json({ message: 'Failed to verify Payment PIN' });
+  }
+});
+
 module.exports = router;

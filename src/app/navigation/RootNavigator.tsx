@@ -6,7 +6,7 @@ import { SearchScreen, ResultsScreen, FiltersScreen } from '@/features/search';
 import { DetailScreen, FacilitiesScreen, ReviewsScreen, DescriptionScreen } from '@/features/listing';
 import { BookingDatesScreen, ConfirmScreen, SuccessScreen } from '@/features/booking';
 import { BookingDetailScreen } from '@/features/bookings';
-import { PersonalInfoScreen, PaymentsScreen, NotificationsScreen, HelpCenterScreen, FaqScreen, ContactSupportScreen, ReportProblemScreen, SettingsScreen } from '@/features/profile';
+import { PersonalInfoScreen, PaymentsScreen, NotificationsScreen, HelpCenterScreen, FaqScreen, ContactSupportScreen, ReportProblemScreen, SettingsScreen, PaymentPinScreen } from '@/features/profile';
 import { MainTabs } from './MainTabs';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -16,7 +16,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { colors, isDark } = useTheme();
-  const { t } = useLanguage();
+  const { t, isVietnamese } = useLanguage();
 
   const navigationTheme = useMemo(() => {
     const base = isDark ? DarkTheme : DefaultTheme;
@@ -84,6 +84,11 @@ export function RootNavigator() {
           name="Settings"
           component={SettingsScreen}
           options={{ ...defaultHeaderOptions, title: t.settings.title }}
+        />
+        <Stack.Screen
+          name="PaymentPin"
+          component={PaymentPinScreen}
+          options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

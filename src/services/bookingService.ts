@@ -19,7 +19,7 @@ export const bookingService = {
   /** Báo giá + kiểm tra ngày còn trống. Giá do SERVER tính, app chỉ hiển thị. */
   quote: (stay: StayInput) => authed<{ quote: Quote }>('/bookings/quote', { method: 'POST', body: stay }),
 
-  create: (stay: StayInput & { paymentMethod: PaymentMethod; idempotencyKey: string }) =>
+  create: (stay: StayInput & { paymentMethod: PaymentMethod; paymentPin: string; idempotencyKey: string }) =>
     authed<{ booking: Booking }>('/bookings', { method: 'POST', body: stay }),
 
   list: () => authed<{ bookings: Booking[] }>('/bookings'),

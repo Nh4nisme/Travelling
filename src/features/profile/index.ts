@@ -17,6 +17,7 @@ export * from './screens/FaqScreen';
 export * from './screens/ContactSupportScreen';
 export * from './screens/ReportProblemScreen';
 export * from './screens/SettingsScreen';
+export * from './screens/PaymentPinScreen';
 
 // Types
 export * from './types';

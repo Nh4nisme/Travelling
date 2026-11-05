@@ -6,9 +6,9 @@ import { useTheme, type ThemeMode } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import type { Language } from '@/constants/translations';
 
-export function SettingsScreen() {
+export function SettingsScreen({ navigation }: any) {
   const { colors, themeMode, setThemeMode } = useTheme();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, isVietnamese } = useLanguage();
 
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showLangModal, setShowLangModal] = useState(false);
@@ -82,6 +82,11 @@ export function SettingsScreen() {
             { backgroundColor: colors.card, borderColor: colors.border },
           ]}
         >
+          <SettingRow
+            label={isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN'}
+            type="navigate"
+            onPress={() => navigation.navigate('PaymentPin')}
+          />
           <SettingRow
             label={t.settings.privacySecurity}
             type="navigate"
