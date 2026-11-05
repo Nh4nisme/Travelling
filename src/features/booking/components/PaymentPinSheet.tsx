@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Modal, Pressable, ActivityIndicator, StyleSheet, Animated, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+  Animated,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { PaymentPinInput } from '@/components/PaymentPinInput';
 import { useTheme } from '@/context/ThemeContext';
@@ -8,6 +18,7 @@ import { userService } from '@/services/userService';
 import { tokenStorage } from '@/services/tokenStorage';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
 
 interface PaymentPinSheetProps {
   visible: boolean;
@@ -17,15 +28,17 @@ interface PaymentPinSheetProps {
 
 export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheetProps) {
   const { colors } = useTheme();
-  const { t, isVietnamese } = useLanguage();
-  
+  const { isVietnamese } = useLanguage();
+
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
-  
+
+  // ✅ Hook luôn được gọi vô điều kiện - không vi phạm Rules of Hooks
   const animationRef = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  
+
   useEffect(() => {
+    if (isWeb) return; // animation chỉ cần trên native
     if (visible) {
       Animated.spring(animationRef, {
         toValue: 0,
@@ -41,20 +54,27 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
       }).start();
     }
   }, [visible]);
-  
+
+  const handleClose = () => {
+    setPin('');
+    setError('');
+    onClose();
+  };
+
+  const handleBackdropPress = () => {
+    if (!verifying) handleClose();
+  };
+
   const handlePinComplete = async (completedPin: string) => {
     setError('');
     setVerifying(true);
-    
     try {
       const token = await tokenStorage.get();
       if (!token) throw new Error('Not authenticated');
-      
       await userService.verifyPaymentPin(completedPin, token);
-      
       onSuccess(completedPin);
       setPin('');
-      onClose();
+      handleClose();
     } catch (err: any) {
       setError(err?.message || (isVietnamese ? 'Mã PIN không đúng' : 'Incorrect PIN'));
       setPin('');
@@ -62,91 +82,73 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
       setVerifying(false);
     }
   };
-  
-  const handleClose = () => {
-    setPin('');
-    setError('');
-    onClose();
-  };
-  
-  const handleBackdropPress = () => {
-    if (!verifying) {
-      handleClose();
-    }
-  };
-  
+
+  const sheetContent = (
+    <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+      {/* Handle bar - chỉ hiện trên native */}
+      {!isWeb && (
+        <View style={styles.handleContainer}>
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+        </View>
+      )}
+
+      <View style={styles.header}>
+        <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
+          <Ionicons name="lock-closed" size={28} color={colors.primary} />
+        </View>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {isVietnamese ? 'Xác nhận thanh toán' : 'Confirm Payment'}
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>
+          {isVietnamese ? 'Vui lòng nhập mã PIN 6 số' : 'Please enter your 6-digit PIN'}
+        </Text>
+      </View>
+
+      <View style={styles.pinContainer}>
+        <PaymentPinInput
+          value={pin}
+          onChangeText={setPin}
+          onComplete={handlePinComplete}
+          error={error}
+          disabled={verifying}
+        />
+      </View>
+
+      {verifying && (
+        <View style={styles.verifying}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={[styles.verifyingText, { color: colors.muted }]}>
+            {isVietnamese ? 'Đang xác thực...' : 'Verifying...'}
+          </Text>
+        </View>
+      )}
+
+      <Pressable onPress={handleClose} disabled={verifying} style={styles.cancelBtn}>
+        <Text style={[styles.cancelText, { color: colors.primary, opacity: verifying ? 0.5 : 1 }]}>
+          {isVietnamese ? 'Hủy' : 'Cancel'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  if (isWeb) {
+    return (
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+        <Pressable style={styles.webBackdrop} onPress={handleBackdropPress}>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            {sheetContent}
+          </Pressable>
+        </Pressable>
+      </Modal>
+    );
+  }
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-    >
-      <Pressable 
-        style={styles.backdrop} 
-        onPress={handleBackdropPress}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-        >
-          <Animated.View 
-            style={[
-              styles.sheet,
-              { 
-                backgroundColor: colors.card,
-                transform: [{ translateY: animationRef }],
-              }
-            ]}
-          >
-            {/* Handle bar */}
-            <View style={styles.handleContainer}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
-            
-            <View style={styles.header}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-                <Ionicons name="lock-closed" size={28} color={colors.primary} />
-              </View>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {isVietnamese ? 'Xác nhận thanh toán' : 'Confirm Payment'}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.muted }]}>
-                {isVietnamese 
-                  ? 'Vui lòng nhập mã PIN 6 số'
-                  : 'Please enter your 6-digit PIN'}
-              </Text>
-            </View>
-            
-            <View style={styles.pinContainer}>
-              <PaymentPinInput
-                value={pin}
-                onChangeText={setPin}
-                onComplete={handlePinComplete}
-                error={error}
-                disabled={verifying}
-              />
-            </View>
-            
-            {verifying && (
-              <View style={styles.verifying}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={[styles.verifyingText, { color: colors.muted }]}>
-                  {isVietnamese ? 'Đang xác thực...' : 'Verifying...'}
-                </Text>
-              </View>
-            )}
-            
-            <View style={styles.actions}>
-              <Pressable
-                onPress={handleClose}
-                disabled={verifying}
-                style={styles.cancelBtn}
-              >
-                <Text style={[styles.cancelText, { color: colors.primary, opacity: verifying ? 0.5 : 1 }]}>
-                  {isVietnamese ? 'Hủy' : 'Cancel'}
-                </Text>
-              </Pressable>
-            </View>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
+      <Pressable style={styles.nativeBackdrop} onPress={handleBackdropPress}>
+        <Pressable onPress={(e) => e.stopPropagation()}>
+          <Animated.View style={{ transform: [{ translateY: animationRef }] }}>
+            {sheetContent}
           </Animated.View>
         </Pressable>
       </Pressable>
@@ -155,7 +157,13 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  webBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nativeBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
@@ -164,8 +172,17 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingBottom: 40,
-    paddingTop: 20,
+    paddingTop: 12,
     width: '100%',
+    // Web: override shape thành rounded box
+    ...(isWeb && {
+      borderRadius: 20,
+      width: undefined,
+      minWidth: 320,
+      maxWidth: 400,
+      paddingTop: 24,
+      paddingHorizontal: 8,
+    }),
   },
   handleContainer: {
     alignItems: 'center',
@@ -214,13 +231,8 @@ const styles = StyleSheet.create({
   verifyingText: {
     fontSize: 14,
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    gap: 12,
-  },
   cancelBtn: {
+    alignSelf: 'center',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,

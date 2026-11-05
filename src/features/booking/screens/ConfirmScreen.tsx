@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
+﻿import { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn, Header, Photo } from '@/components';
 import { S } from '@/constants/theme';
@@ -12,7 +12,7 @@ import { bookingService, makeIdempotencyKey } from '@/services/bookingService';
 import type { PaymentMethod, Quote } from '@/store/types';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { PaymentPinSheet } from '../components/PaymentPinSheet';
+import { PaymentPinModal } from '../components/PaymentPinModal';
 
 type QuoteState =
   | { status: 'idle' }
@@ -82,23 +82,6 @@ export function ConfirmScreen({ route, navigation }: any) {
     if (!q) return;
     if (!pay) return notify(t.bookingFlow.choosePaymentOption);
 
-    if (!user?.paymentPinSet) {
-      Alert.alert(
-        isVietnamese ? 'Cần thiết lập mã PIN' : 'Payment PIN Required',
-        isVietnamese 
-          ? 'Vui lòng thiết lập mã PIN trong Cài đặt trước.'
-          : 'Please set up Payment PIN in Settings first.',
-        [
-          { text: isVietnamese ? 'Đóng' : 'Close', style: 'cancel' },
-          { 
-            text: isVietnamese ? 'Đi tới Cài đặt' : 'Go to Settings',
-            onPress: () => navigation.navigate('Settings')
-          }
-        ]
-      );
-      return;
-    }
-
     setShowPinModal(true);
   };
 
@@ -138,8 +121,8 @@ export function ConfirmScreen({ route, navigation }: any) {
       <Header title={t.bookingFlow.confirmAndPay} />
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <ScrollView
-          style={{ backgroundColor: colors.bg }}
-          contentContainerStyle={{ padding: 16, backgroundColor: colors.bg }}
+          style={{ flex: 1, backgroundColor: colors.bg }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 100, backgroundColor: colors.bg }}
         >
         {/* Listing preview card */}
         <View
@@ -333,7 +316,7 @@ export function ConfirmScreen({ route, navigation }: any) {
         />
       </View>
 
-      <PaymentPinSheet
+      <PaymentPinModal
         visible={showPinModal}
         onClose={() => setShowPinModal(false)}
         onSuccess={async (pin) => {
