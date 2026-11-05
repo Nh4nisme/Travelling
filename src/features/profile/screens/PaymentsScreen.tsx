@@ -293,15 +293,35 @@ export function PaymentsScreen() {
       justifyContent: 'center',
     },
     actionBtn: {
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 6,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
       backgroundColor: colors.primaryLight,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     deleteBtn: {
-      padding: 6,
-      borderRadius: 6,
-      backgroundColor: '#fef2f2',
+      padding: 8,
+      borderRadius: 8,
+      backgroundColor: colors.dangerSoft,
+      borderWidth: 1,
+      borderColor: '#fecaca',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 36,
+      minHeight: 36,
+    },
+    defaultBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1,
+      borderColor: colors.primary,
     },
     pciPill: {
       flexDirection: 'row',
@@ -588,27 +608,30 @@ export function PaymentsScreen() {
                       </Text>
                     </View>
 
-                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
                       {!item.isDefault ? (
                         <Pressable
                           onPress={() => handleSetDefault(item)}
-                          hitSlop={8}
                           style={styles.actionBtn}
                         >
-                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>
+                          <Text style={{ fontSize: 13, color: colors.primary, fontWeight: '600' }}>
                             {t.payments.setAsDefault}
                           </Text>
                         </Pressable>
                       ) : (
-                        <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
+                        <View style={styles.defaultBadge}>
+                          <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                          <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600', marginLeft: 4 }}>
+                            {t.payments.default}
+                          </Text>
+                        </View>
                       )}
 
                       <Pressable
                         onPress={() => handleDeleteCard(item)}
-                        hitSlop={8}
                         style={styles.deleteBtn}
                       >
-                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
                       </Pressable>
                     </View>
                   </View>
