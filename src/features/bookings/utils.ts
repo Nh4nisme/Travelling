@@ -1,4 +1,4 @@
-﻿import type { Booking, BookingStage } from '@/store/types';
+import type { Booking, BookingStage } from '@/store/types';
 import { fmtISO, fmtDateTime } from '@/utils/date';
 import { money } from '@/utils/pricing';
 
@@ -8,8 +8,12 @@ export const tabOf = (b: Booking): BookingTab =>
   b.stage === 'cancelled' ? 'cancelled' : b.stage === 'completed' ? 'past' : 'upcoming';
 
 export const STAGE_LABEL: Record<BookingStage, string> = {
-  upcoming: 'Upcoming', ongoing: 'Staying now', completed: 'Completed', cancelled: 'Cancelled',
+  upcoming: 'Upcoming',
+  ongoing: 'Staying now',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 };
+
 export const STAGE_COLOR: Record<BookingStage, { fg: string; bg: string }> = {
   upcoming: { fg: '#0A7F8F', bg: '#DDF7FA' },
   ongoing: { fg: '#1B7F43', bg: '#DDF6E6' },
@@ -17,17 +21,30 @@ export const STAGE_COLOR: Record<BookingStage, { fg: string; bg: string }> = {
   cancelled: { fg: '#B3323D', bg: '#FDE7E9' },
 };
 
-export function paymentSummary(b: Booking): { label: string; color: string } {
+export function paymentSummary(b: Booking, isVietnamese?: boolean): { label: string; color: string } {
   switch (b.payment.status) {
-    case 'paid': return { label: 'Paid in full', color: '#22A559' };
-    case 'partial': return { label: `Deposit paid · ${money(b.payment.balanceDue)} due at check-in`, color: '#C27A00' };
-    case 'refunded': return { label: 'Refunded', color: '#5B6170' };
-    case 'partially_refunded': return { label: 'Partially refunded', color: '#5B6170' };
-    default: return { label: 'No refund', color: '#5B6170' };
+    case 'paid':
+      return { label: isVietnamese ? 'Đã thanh toán đủ' : 'Paid in full', color: '#22A559' };
+    case 'partial':
+      return {
+        label: isVietnamese
+          ? `Đã cọc · còn ${money(b.payment.balanceDue)} khi nhận phòng`
+          : `Deposit paid · ${money(b.payment.balanceDue)} due at check-in`,
+        color: '#C27A00',
+      };
+    case 'refunded':
+      return { label: isVietnamese ? 'Đã hoàn tiền' : 'Refunded', color: '#5B6170' };
+    case 'partially_refunded':
+      return { label: isVietnamese ? 'Hoàn tiền một phần' : 'Partially refunded', color: '#5B6170' };
+    default:
+      return { label: isVietnamese ? 'Không hoàn tiền' : 'No refund', color: '#5B6170' };
   }
 }
 
-export const methodLabel = (b: Booking) => (b.payment.method === 'full' ? 'Pay in full' : 'Deposit (pay the rest later)');
+export const methodLabel = (b: Booking, isVietnamese?: boolean) =>
+  b.payment.method === 'full'
+    ? (isVietnamese ? 'Thanh toán toàn bộ' : 'Pay in full')
+    : (isVietnamese ? 'Đặt cọc (trả phần còn lại sau)' : 'Deposit (pay the rest later)');
 
 /** Sắp xếp theo từng tab: sắp tới -> gần nhất trước; đã qua / đã huỷ -> mới nhất trước. */
 export function sortForTab(list: Booking[], tab: BookingTab): Booking[] {

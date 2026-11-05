@@ -1,14 +1,17 @@
-import { View, Text, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert } from 'react-native';
 import { Screen, Btn } from '@/components';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { MenuItem } from '../components/MenuItem';
 import { useApp } from '@/store/AppContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export function ProfileScreen({ navigation }: any) {
   const { user, signOut, favs, bookings } = useApp();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const handleMenuItemPress = (screenName: string) => {
-    // Trung tâm trợ giúp luôn truy cập được, kể cả khi chưa đăng nhập
     if (screenName === 'Help center') {
       navigation.navigate('HelpCenter');
       return;
@@ -54,36 +57,36 @@ export function ProfileScreen({ navigation }: any) {
         <View style={{ marginTop: 8 }}>
           <MenuItem
             icon="person-outline"
-            title="Personal info"
+            title={t.profile.personalInfo}
             onPress={() => handleMenuItemPress('Personal info')}
           />
           <MenuItem
             icon="card-outline"
-            title="Payments"
+            title={t.profile.payments}
             onPress={() => handleMenuItemPress('Payments')}
           />
           <MenuItem
             icon="notifications-outline"
-            title="Notifications"
+            title={t.profile.notifications}
             onPress={() => handleMenuItemPress('Notifications')}
           />
           <MenuItem
             icon="help-circle-outline"
-            title="Help center"
+            title={t.profile.helpCenter}
             onPress={() => handleMenuItemPress('Help center')}
           />
           <MenuItem
             icon="settings-outline"
-            title="Settings"
+            title={t.profile.settings}
             onPress={() => handleMenuItemPress('Settings')}
           />
         </View>
 
         <Btn
           outline
-          color="#D94A55"
-          title={user ? "Log out" : "Sign in"}
-          style={{ marginTop: 28 }}
+          color={colors.danger}
+          title={user ? t.profile.logOut : t.profile.signIn}
+          style={{ marginTop: 28, borderColor: colors.border }}
           onPress={user ? handleLogout : () => navigation.navigate('Auth')}
         />
       </ScrollView>

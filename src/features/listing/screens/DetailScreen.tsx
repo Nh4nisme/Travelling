@@ -1,17 +1,31 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  FlatList,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Btn, Stars, Photo, Heart, Screen } from '@/components';
-import { c, S, W } from '@/constants/theme';
+import { S, W, c } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
 import { ICON, Section, useListing, ListingState } from '@/features/listing/components/shared';
 import { useApp } from '@/store/AppContext';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { confirmDialog } from '@/utils/dialog';
 import { chatService } from '@/services/chatService';
 
 export function DetailScreen({ route, navigation }: any) {
   const l = useListing(route.params.id);
   const { user, search, listingsLoading, listingsError, refreshListings } = useApp();
+  const { colors, isDark } = useTheme();
+  const { t, isVietnamese } = useLanguage();
+
   const [idx, setIdx] = useState(0);
   const [contactingHost, setContactingHost] = useState(false);
 
@@ -20,17 +34,27 @@ export function DetailScreen({ route, navigation }: any) {
   const [showAllPolicies, setShowAllPolicies] = useState(false);
   const [showAllDesc, setShowAllDesc] = useState(false);
 
-  if (!l) return <Screen><ListingState loading={listingsLoading} error={listingsError} onRetry={() => void refreshListings()} /></Screen>;
+  if (!l)
+    return (
+      <Screen>
+        <ListingState
+          loading={listingsLoading}
+          error={listingsError}
+          onRetry={() => void refreshListings()}
+        />
+      </Screen>
+    );
   const reviews = l.reviewItems ?? [];
 
   const isOwner = Boolean(
     user?.email && l.hostEmail && user.email.toLowerCase() === l.hostEmail.toLowerCase()
   );
 
-  // Chưa đăng nhập -> mời đăng nhập; chưa chọn ngày -> sang màn chọn ngày (có lịch đã đặt); đã có ngày -> xác nhận luôn
+  // Chưa đăng nhập -> mời đăng nhập; chưa chọn ngày -> sang màn chọn ngày; đã có ngày -> xác nhận luôn
   const onBook = async () => {
     if (!user) {
-      if (await confirmDialog('Sign in required', 'Please sign in to book this place.', 'Sign in')) navigation.navigate('Auth');
+      if (await confirmDialog('Sign in required', 'Please sign in to book this place.', 'Sign in'))
+        navigation.navigate('Auth');
       return;
     }
     const hasDates = !!search.start && !!search.end && +search.end > +search.start;
@@ -40,14 +64,15 @@ export function DetailScreen({ route, navigation }: any) {
   // Liên hệ chủ nhà -> tạo/mở conversation rồi navigate sang Inbox tab
   const onContactHost = async () => {
     if (!user) {
-      if (await confirmDialog('Sign in required', 'Please sign in to contact the host.', 'Sign in')) navigation.navigate('Auth');
+      if (await confirmDialog('Sign in required', 'Please sign in to contact the host.', 'Sign in'))
+        navigation.navigate('Auth');
       return;
     }
 
     if (isOwner) {
       Alert.alert(
         'Your Listing',
-        `You are the host of "${l.title}". To test contacting the host as a traveler, please sign in with a guest account (e.g. nguyensonn2k5@gmail.com).`
+        `You are the host of "${l.title}". To test contacting the host as a traveler, please sign in with a guest account.`
       );
       return;
     }
@@ -55,7 +80,7 @@ export function DetailScreen({ route, navigation }: any) {
     setContactingHost(true);
     try {
       const convId = await chatService.createInquiry({
-        hostEmail: l.hostEmail, // Lấy từ DB
+        hostEmail: l.hostEmail,
         listingId: l.id,
         listingTitle: l.title,
         listingImage: l.images?.[0],
@@ -75,7 +100,7 @@ export function DetailScreen({ route, navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView>
         <View>
           <FlatList
@@ -96,12 +121,12 @@ export function DetailScreen({ route, navigation }: any) {
               width: 36,
               height: 36,
               borderRadius: 18,
-              backgroundColor: 'rgba(255,255,255,.85)',
+              backgroundColor: isDark ? 'rgba(30,30,30,.85)' : 'rgba(255,255,255,.85)',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Ionicons name="chevron-back" size={22} />
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
           <Heart id={l.id} style={{ position: 'absolute', top: 46, right: 16 }} />
           <View
@@ -115,27 +140,45 @@ export function DetailScreen({ route, navigation }: any) {
               paddingVertical: 4,
             }}
           >
-            <Text style={{ color: '#fff' }}>🖼 {idx + 1}/{l.images.length}</Text>
+            <Text style={{ color: '#fff' }}>
+              🖼 {idx + 1}/{l.images.length}
+            </Text>
           </View>
         </View>
 
         <View style={{ padding: 16 }}>
-          <Text style={S.h1}>{l.title}</Text>
+          <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text }}>{l.title}</Text>
           <View style={[S.between, { marginTop: 8 }]}>
             <View style={[S.row, { gap: 4 }]}>
-              <Ionicons name="location" size={16} color={c.p} />
-              <Text style={S.muted}>{l.city}, {l.country}</Text>
+              <Ionicons name="location" size={16} color={colors.primary} />
+              <Text style={{ color: colors.muted }}>
+                {l.city}, {l.country}
+              </Text>
             </View>
             <Pressable onPress={() => navigation.navigate('Description', { id: l.id })}>
-              <Text style={{ color: c.p, textDecorationLine: 'underline' }}>View map</Text>
+              <Text style={{ color: colors.primary, textDecorationLine: 'underline' }}>
+                {t.listing.openMap}
+              </Text>
             </Pressable>
           </View>
           <Pressable
             onPress={() => navigation.navigate('Reviews', { id: l.id })}
-            style={[S.between, { backgroundColor: c.soft, borderRadius: 8, padding: 12, marginTop: 14 }]}
+            style={[
+              S.between,
+              {
+                backgroundColor: colors.soft,
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 14,
+              },
+            ]}
           >
-            <Text><Ionicons name="star" color={c.star} /> {l.rating.toFixed(1)}/5</Text>
-            <Text style={S.muted}>{l.reviews} reviews  ›</Text>
+            <Text style={{ color: colors.text }}>
+              <Ionicons name="star" color={c.star} /> {l.rating.toFixed(1)}/5
+            </Text>
+            <Text style={{ color: colors.muted }}>
+              {l.reviews} {t.listing.reviews.toLowerCase()} ›
+            </Text>
           </Pressable>
         </View>
 
@@ -147,20 +190,24 @@ export function DetailScreen({ route, navigation }: any) {
               marginBottom: 8,
               padding: 14,
               borderRadius: 12,
-              backgroundColor: '#fff',
+              backgroundColor: colors.card,
               borderWidth: 1,
-              borderColor: c.soft,
+              borderColor: colors.border,
             }}
           >
             <View style={[S.between, { alignItems: 'center' }]}>
               <View style={[S.row, { gap: 10, alignItems: 'center' }]}>
                 <Image
                   source={{ uri: avatar((l as any).hostAvatar ?? 12) }}
-                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.soft }}
+                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.soft }}
                 />
                 <View>
-                  <Text style={{ fontWeight: '700', fontSize: 15, color: c.t }}>Hosted by {l.hostName}</Text>
-                  <Text style={[S.muted, { fontSize: 12, marginTop: 2 }]}>{l.hostEmail}</Text>
+                  <Text style={{ fontWeight: '700', fontSize: 15, color: colors.text }}>
+                    {isVietnamese ? 'Chủ nhà: ' : 'Hosted by '}{l.hostName}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
+                    {l.hostEmail}
+                  </Text>
                 </View>
               </View>
               <Pressable
@@ -171,13 +218,19 @@ export function DetailScreen({ route, navigation }: any) {
                   borderRadius: 10,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: isOwner ? '#FFF7E6' : '#fff',
+                  backgroundColor: isOwner ? (isDark ? '#3D2800' : '#FFF7E6') : colors.card,
                   borderWidth: 1.5,
-                  borderColor: isOwner ? '#FFE0A3' : c.p,
+                  borderColor: isOwner ? (isDark ? '#9E6400' : '#FFE0A3') : colors.primary,
                 }}
               >
-                <Text style={{ fontSize: 13, fontWeight: '700', color: isOwner ? '#9E6400' : c.p }}>
-                  {isOwner ? 'Your listing' : 'Contact host'}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '700',
+                    color: isOwner ? (isDark ? '#FFE0A3' : '#9E6400') : colors.primary,
+                  }}
+                >
+                  {isOwner ? t.listing.yourListing : t.listing.contactHost}
                 </Text>
               </Pressable>
             </View>
@@ -185,95 +238,139 @@ export function DetailScreen({ route, navigation }: any) {
         ) : null}
 
         {/* Facilities & Services */}
-        <Section title="Facilities & services">
-          <Text style={[S.muted, { marginBottom: 10 }]}>
-            {l.maxGuests} guests   {l.bedrooms} bedrooms   {l.beds} beds   {l.baths} baths
+        <Section title={t.listing.facilities}>
+          <Text style={{ color: colors.muted, marginBottom: 10 }}>
+            {l.maxGuests} {t.listing.guests} · {l.bedrooms} {t.listing.bedrooms} · {l.beds} {t.listing.beds} · {l.baths} {t.listing.baths}
           </Text>
           {(showAllFacilities ? l.facilities : l.facilities.slice(0, 4)).map((f) => (
             <View key={f} style={[S.row, { gap: 12, marginVertical: 6 }]}>
-              <Ionicons name={ICON[f] ?? 'checkmark-circle-outline'} size={20} color={c.p} />
-              <Text style={{ fontSize: 16, color: c.t }}>{f}</Text>
+              <Ionicons name={ICON[f] ?? 'checkmark-circle-outline'} size={20} color={colors.primary} />
+              <Text style={{ fontSize: 16, color: colors.text }}>{f}</Text>
             </View>
           ))}
           {l.facilities.length > 4 && (
             <Btn
               outline
-              title={showAllFacilities ? 'Show less  ▴' : `Show all ${l.facilities.length} amenities`}
+              title={
+                showAllFacilities
+                  ? `${t.listing.showLess}  ▴`
+                  : `${t.listing.showAll} ${l.facilities.length} ${isVietnamese ? 'tiện ích' : 'amenities'}`
+              }
               onPress={() => setShowAllFacilities((prev) => !prev)}
-              style={{ marginTop: 12, height: 40, paddingVertical: 0, borderRadius: 8 }}
+              style={{
+                marginTop: 12,
+                height: 40,
+                paddingVertical: 0,
+                borderRadius: 8,
+                borderColor: colors.border,
+              }}
             />
           )}
         </Section>
 
         {/* Reviews */}
         <Section
-          title="Reviews"
+          title={t.listing.reviews}
           right={
             <Pressable onPress={() => navigation.navigate('Reviews', { id: l.id })}>
-              <Text style={S.muted}>See all ›</Text>
+              <Text style={{ color: colors.muted }}>{isVietnamese ? 'Xem tất cả ›' : 'See all ›'}</Text>
             </Pressable>
           }
         >
-          <Text style={{ fontSize: 34, fontWeight: '700' }}>
-            {l.rating.toFixed(1)}<Text style={{ fontSize: 16, color: c.m }}>/5</Text>
+          <Text style={{ fontSize: 34, fontWeight: '700', color: colors.text }}>
+            {l.rating.toFixed(1)}
+            <Text style={{ fontSize: 16, color: colors.muted }}>/5</Text>
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
             {reviews.map((r) => (
-              <View key={r.name} style={[S.box, { width: W * 0.72, marginRight: 12 }]}>
+              <View
+                key={r.name}
+                style={{
+                  width: W * 0.72,
+                  marginRight: 12,
+                  backgroundColor: colors.card,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 12,
+                }}
+              >
                 <View style={S.between}>
                   <View style={[S.row, { gap: 8 }]}>
-                    <Image source={{ uri: avatar(r.avatar) }} style={{ width: 36, height: 36, borderRadius: 18 }} />
-                    <Text style={{ fontWeight: '700' }}>{r.name}</Text>
+                    <Image
+                      source={{ uri: avatar(r.avatar) }}
+                      style={{ width: 36, height: 36, borderRadius: 18 }}
+                    />
+                    <Text style={{ fontWeight: '700', color: colors.text }}>{r.name}</Text>
                   </View>
                   <Stars n={r.stars} />
                 </View>
-                <Text numberOfLines={2} style={[S.muted, { marginTop: 10 }]}>{r.text}</Text>
+                <Text numberOfLines={2} style={{ color: colors.muted, marginTop: 10, fontSize: 14 }}>
+                  {r.text}
+                </Text>
               </View>
             ))}
           </ScrollView>
         </Section>
 
         {/* Policies */}
-        <Section title="Policies">
-          <View style={{ backgroundColor: c.soft, padding: 12, borderRadius: 8 }}>
-            <Text style={{ fontWeight: '700', marginBottom: 8 }}>House rules</Text>
-            <Text style={S.muted}>🕑 Earliest check-in time: {l.checkInTime}</Text>
-            <Text style={[S.muted, { marginTop: 6 }]}>🕑 Latest check-out time: {l.checkOutTime}</Text>
+        <Section title={t.listing.policies}>
+          <View style={{ backgroundColor: colors.soft, padding: 12, borderRadius: 8 }}>
+            <Text style={{ fontWeight: '700', marginBottom: 8, color: colors.text }}>
+              {isVietnamese ? 'Quy định chỗ nghỉ' : 'House rules'}
+            </Text>
+            <Text style={{ color: colors.muted }}>
+              {isVietnamese ? '🕑 Giờ nhận phòng sớm nhất: ' : '🕑 Earliest check-in time: '}{l.checkInTime}
+            </Text>
+            <Text style={{ color: colors.muted, marginTop: 6 }}>
+              {isVietnamese ? '🕑 Giờ trả phòng muộn nhất: ' : '🕑 Latest check-out time: '}{l.checkOutTime}
+            </Text>
           </View>
-          <Text style={{ fontWeight: '700', marginTop: 14, marginBottom: 6 }}>Check-in policies</Text>
-          <Text
-            numberOfLines={showAllPolicies ? undefined : 2}
-            style={[S.muted, { lineHeight: 22 }]}
-          >
+          <Text style={{ fontWeight: '700', marginTop: 14, marginBottom: 6, color: colors.text }}>
+            {isVietnamese ? 'Chính sách nhận phòng' : 'Check-in policies'}
+          </Text>
+          <Text numberOfLines={showAllPolicies ? undefined : 2} style={{ color: colors.muted, lineHeight: 22 }}>
             {l.checkInPolicy}
           </Text>
           <Btn
             outline
-            title={showAllPolicies ? 'Show less  ▴' : 'View more  ›'}
+            title={showAllPolicies ? `${t.listing.showLess}  ▴` : `${t.listing.viewMore}  ›`}
             onPress={() => setShowAllPolicies((prev) => !prev)}
-            style={{ marginTop: 10, height: 40, paddingVertical: 0, borderRadius: 8 }}
+            style={{
+              marginTop: 10,
+              height: 40,
+              paddingVertical: 0,
+              borderRadius: 8,
+              borderColor: colors.border,
+            }}
           />
         </Section>
 
         {/* Description */}
-        <Section title="Description">
+        <Section title={t.listing.description}>
           <Photo uri={l.images[0]} style={{ height: 160, borderRadius: 8 }} />
           <Text
             numberOfLines={showAllDesc ? undefined : 3}
-            style={[S.muted, { marginTop: 12, lineHeight: 22 }]}
+            style={{ color: colors.muted, marginTop: 12, lineHeight: 22 }}
           >
             {l.desc}
           </Text>
           <Btn
             outline
-            title={showAllDesc ? 'Show less  ▴' : 'View more  ›'}
+            title={showAllDesc ? `${t.listing.showLess}  ▴` : `${t.listing.viewMore}  ›`}
             onPress={() => setShowAllDesc((prev) => !prev)}
-            style={{ marginTop: 10, height: 40, paddingVertical: 0, borderRadius: 8 }}
+            style={{
+              marginTop: 10,
+              height: 40,
+              paddingVertical: 0,
+              borderRadius: 8,
+              borderColor: colors.border,
+            }}
           />
         </Section>
       </ScrollView>
 
-      {/* Bottom action bar: Contact Host + Book Now (Kích thước gọn 42px, tự co giãn, không bị tràn màn hình) */}
+      {/* Bottom action bar */}
       <View
         style={[
           S.between,
@@ -282,19 +379,22 @@ export function DetailScreen({ route, navigation }: any) {
             paddingTop: 10,
             paddingBottom: 24,
             borderTopWidth: 1,
-            borderColor: c.soft,
+            borderColor: colors.border,
+            backgroundColor: colors.card,
             gap: 6,
             alignItems: 'center',
           },
         ]}
       >
         <View style={{ flexShrink: 0 }}>
-          <Text style={S.muted}>
-            From: <Text style={{ fontWeight: '700', color: c.t, fontSize: 16 }}>${l.price}</Text>/night
+          <Text style={{ color: colors.muted, fontSize: 13 }}>
+            {t.listing.from}:{' '}
+            <Text style={{ fontWeight: '700', color: colors.text, fontSize: 16 }}>${l.price}</Text>/
+            {t.listing.night}
           </Text>
         </View>
         <View style={[S.row, { gap: 6, alignItems: 'center', flexShrink: 1 }]}>
-          {/* Nút liên hệ chủ nhà / Your listing */}
+          {/* Nút liên hệ chủ nhà */}
           <Pressable
             onPress={() => void onContactHost()}
             disabled={contactingHost}
@@ -307,27 +407,43 @@ export function DetailScreen({ route, navigation }: any) {
               paddingHorizontal: 11,
               borderRadius: 10,
               borderWidth: 1.5,
-              borderColor: isOwner ? '#FFE0A3' : c.p,
-              backgroundColor: isOwner ? '#FFF7E6' : contactingHost ? c.soft : '#fff',
+              borderColor: isOwner ? (isDark ? '#9E6400' : '#FFE0A3') : colors.primary,
+              backgroundColor: isOwner
+                ? isDark
+                  ? '#3D2800'
+                  : '#FFF7E6'
+                : contactingHost
+                ? colors.soft
+                : colors.card,
             }}
           >
             {contactingHost ? (
-              <ActivityIndicator size="small" color={c.p} />
+              <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <Ionicons
                 name={isOwner ? 'home-outline' : 'chatbubble-outline'}
                 size={16}
-                color={isOwner ? '#9E6400' : c.p}
+                color={isOwner ? (isDark ? '#FFE0A3' : '#9E6400') : colors.primary}
               />
             )}
-            <Text style={{ color: isOwner ? '#9E6400' : c.p, fontWeight: '700', fontSize: 13 }}>
-              {isOwner ? 'Your listing' : contactingHost ? 'Connecting...' : 'Contact host'}
+            <Text
+              style={{
+                color: isOwner ? (isDark ? '#FFE0A3' : '#9E6400') : colors.primary,
+                fontWeight: '700',
+                fontSize: 13,
+              }}
+            >
+              {isOwner
+                ? t.listing.yourListing
+                : contactingHost
+                ? t.common.connecting
+                : t.listing.contactHost}
             </Text>
           </Pressable>
 
-          {/* Nút Book now (chiều cao 42px, paddingHorizontal: 16 vừa vặn) */}
+          {/* Nút Book now */}
           <Btn
-            title="Book now"
+            title={t.listing.bookNow}
             onPress={() => void onBook()}
             style={{ height: 42, paddingVertical: 0, paddingHorizontal: 16, borderRadius: 10 }}
           />

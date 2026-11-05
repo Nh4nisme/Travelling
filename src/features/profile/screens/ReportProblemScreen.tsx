@@ -128,7 +128,7 @@ export function ReportProblemScreen() {
             <>
               <SectionTitle>RELATED BOOKING (OPTIONAL)</SectionTitle>
               {bookings.map((booking) => {
-                const listing = listings.find((l) => l.id === booking.listingId);
+                const listing = listings.find((l) => l.id === (booking.listing?.id ?? (booking as any).listingId));
                 const selected = bookingRef === booking.ref;
                 return (
                   <Pressable

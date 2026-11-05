@@ -13,19 +13,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
-import { c, S } from '@/constants/theme';
+import { S } from '@/constants/theme';
 import { avatar } from '@/data/reviews';
 import { ChatDetailScreen } from './ChatDetailScreen';
-import { InboxProvider, useInbox } from '../context/InboxContext';
+import { useInbox } from '../context/InboxContext';
 import { chatService, type ContactUser } from '@/services/chatService';
+import { useTheme } from '@/context/ThemeContext';
+import { useLanguage } from '@/context/LanguageContext';
 import type { ConversationStatus, Conversation } from '../types';
-
-const TABS: { id: ConversationStatus; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'confirmed', label: 'Bookings' },
-  { id: 'inquiry', label: 'Inquiries' },
-  { id: 'support', label: 'Support' },
-];
 
 function InboxMain({
   openConversationId,
@@ -37,6 +32,18 @@ function InboxMain({
   const navigation = useNavigation<any>();
   const { conversations, markAsRead, unreadCount, isHostUser, createInquiry, refreshConversations } =
     useInbox();
+  const { colors, isDark } = useTheme();
+  const { t, isVietnamese } = useLanguage();
+
+  const getDisplayStatusLabel = (label: string) => {
+    if (!isVietnamese) return label;
+    return label
+      .replace(/^Inquiry/i, 'Tư vấn')
+      .replace(/^Reserved/i, 'Đã đặt')
+      .replace(/^Past stay/i, 'Chuyến đi trước')
+      .replace(/^Official Support/i, 'Hỗ trợ chính thức');
+  };
+
   const [activeTab, setActiveTab] = useState<ConversationStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -48,6 +55,16 @@ function InboxMain({
   const [foundUser, setFoundUser] = useState<ContactUser | null>(null);
   const [searchUserError, setSearchUserError] = useState<string | null>(null);
   const [startingChat, setStartingChat] = useState(false);
+
+  const tabs: { id: ConversationStatus; label: string }[] = useMemo(
+    () => [
+      { id: 'all', label: t.inbox.tabs.all },
+      { id: 'confirmed', label: t.inbox.tabs.bookings },
+      { id: 'inquiry', label: t.inbox.tabs.inquiries },
+      { id: 'support', label: t.inbox.tabs.support },
+    ],
+    [t]
+  );
 
   // Auto-open conversation nếu được navigate từ DetailScreen với openConversationId
   useEffect(() => {
@@ -132,36 +149,30 @@ function InboxMain({
     }
   };
 
-  const handleDirectChatHost = async () => {
-    setStartingChat(true);
-    try {
-      const convId = await createInquiry({
-        hostEmail: 'jinny@gmail.com',
-        title: 'Balian treehouse',
-      });
-      if (convId) {
-        setSelectedConversationId(convId);
+  const getStatusBadgeStyle = useCallback(
+    (status: Conversation['status']) => {
+      switch (status) {
+        case 'confirmed':
+          return isDark
+            ? { bg: '#0A3338', border: '#00838F', text: '#80DEEA' }
+            : { bg: '#E6FCFF', border: '#B5F5FC', text: '#00838F' };
+        case 'inquiry':
+          return isDark
+            ? { bg: '#3D2800', border: '#9E6400', text: '#FFE0A3' }
+            : { bg: '#FFF7E6', border: '#FFE0A3', text: '#9E6400' };
+        case 'past':
+          return isDark
+            ? { bg: '#23272F', border: '#4B5563', text: '#9CA3AF' }
+            : { bg: '#F3F4F6', border: '#DADDE4', text: '#8A8F9C' };
+        case 'support':
+        default:
+          return isDark
+            ? { bg: '#0E224A', border: '#1E56C9', text: '#93C5FD' }
+            : { bg: '#EFF4FE', border: '#C5D8FD', text: '#1E56C9' };
       }
-    } catch (err) {
-      console.error('Lỗi kết nối chủ nhà:', err);
-    } finally {
-      setStartingChat(false);
-    }
-  };
-
-  const getStatusBadgeStyle = useCallback((status: Conversation['status']) => {
-    switch (status) {
-      case 'confirmed':
-        return { bg: '#E6FCFF', border: '#B5F5FC', text: '#00838F' };
-      case 'inquiry':
-        return { bg: '#FFF7E6', border: '#FFE0A3', text: '#9E6400' };
-      case 'past':
-        return { bg: '#F3F4F6', border: '#DADDE4', text: '#8A8F9C' };
-      case 'support':
-      default:
-        return { bg: '#EFF4FE', border: '#C5D8FD', text: '#1E56C9' };
-    }
-  }, []);
+    },
+    [isDark]
+  );
 
   if (selectedConversationId) {
     return (
@@ -170,9 +181,7 @@ function InboxMain({
         navigation={navigation}
         onBack={() => {
           setSelectedConversationId(null);
-          try {
-            navigation.setParams({ openConversationId: undefined, t: undefined });
-          } catch {}
+          void refreshConversations();
         }}
       />
     );
@@ -184,7 +193,9 @@ function InboxMain({
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
         <View style={[S.row, { justifyContent: 'space-between' }]}>
           <View style={[S.row, { gap: 8 }]}>
-            <Text style={S.h1}>{isHostUser ? 'Host Inbox' : 'Inbox'}</Text>
+            <Text style={{ fontSize: 24, fontWeight: '700', color: colors.text }}>
+              {isHostUser ? t.inbox.hostInbox : t.inbox.title}
+            </Text>
             {isHostUser ? (
               <View style={styles.hostRoleBadge}>
                 <Ionicons name="home" size={12} color="#9E6400" />
@@ -196,57 +207,55 @@ function InboxMain({
           <View style={[S.row, { gap: 10 }]}>
             {unreadCount > 0 ? (
               <View style={styles.headerUnreadBadge}>
-                <Text style={styles.headerUnreadText}>{unreadCount} unread</Text>
+                <Text style={styles.headerUnreadText}>
+                  {unreadCount} {t.inbox.unread}
+                </Text>
               </View>
             ) : null}
             <Pressable
-              style={styles.newChatBtn}
+              style={[styles.newChatBtn, { backgroundColor: colors.soft }]}
               onPress={handleOpenNewChat}
               hitSlop={8}
             >
-              <Ionicons name="create-outline" size={22} color={c.p} />
+              <Ionicons name="create-outline" size={22} color={colors.primary} />
             </Pressable>
           </View>
         </View>
-        <Text style={[S.muted, { marginTop: 4 }]}>
-          {isHostUser
-            ? 'Guest inquiries & reservations for Balian Treehouse'
-            : 'Messages with Hosts and 24/7 Support'}
+        <Text style={{ color: colors.muted, marginTop: 4, fontSize: 14 }}>
+          {isHostUser ? t.inbox.hostSubtitle : t.inbox.subtitle}
         </Text>
       </View>
 
       {/* Search Input Bar */}
       <View style={styles.searchBarContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={c.m} style={{ marginRight: 8 }} />
+        <View style={[styles.searchBar, { backgroundColor: colors.soft }]}>
+          <Ionicons name="search" size={18} color={colors.muted} style={{ marginRight: 8 }} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder={
-              isHostUser
-                ? 'Search guest name, property or message...'
-                : 'Search host, property or message...'
+              isHostUser ? t.inbox.searchGuestPlaceholder : t.inbox.searchPlaceholder
             }
-            placeholderTextColor={c.m}
+            placeholderTextColor={colors.muted}
             clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 ? (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
-              <Ionicons name="close-circle" size={18} color={c.m} />
+              <Ionicons name="close-circle" size={18} color={colors.muted} />
             </Pressable>
           ) : null}
         </View>
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { borderColor: colors.border }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
         >
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const active = activeTab === tab.id;
             const count = conversations.filter(
               (item) => tab.id === 'all' || item.status === tab.id
@@ -258,12 +267,14 @@ function InboxMain({
                 onPress={() => setActiveTab(tab.id)}
                 style={[
                   styles.tabChip,
-                  active && { backgroundColor: c.p, borderColor: c.p },
+                  { backgroundColor: colors.soft, borderColor: colors.border },
+                  active && { backgroundColor: colors.primary, borderColor: colors.primary },
                 ]}
               >
                 <Text
                   style={[
                     styles.tabChipText,
+                    { color: colors.muted },
                     active && { color: '#fff', fontWeight: '700' },
                   ]}
                 >
@@ -279,11 +290,19 @@ function InboxMain({
       <ScrollView showsVerticalScrollIndicator={false}>
         {filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={52} color={c.b} />
-            <Text style={[{ fontSize: 18, fontWeight: '700', color: c.t }, { marginTop: 16, textAlign: 'center' }]}>
-              No messages found
+            <Ionicons name="chatbubbles-outline" size={52} color={colors.border} />
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: '700',
+                color: colors.text,
+                marginTop: 16,
+                textAlign: 'center',
+              }}
+            >
+              {t.inbox.noMessages}
             </Text>
-            <Text style={[S.muted, { marginTop: 6, textAlign: 'center' }]}>
+            <Text style={{ color: colors.muted, marginTop: 6, textAlign: 'center', fontSize: 14 }}>
               {searchQuery
                 ? `No conversation matches "${searchQuery}"`
                 : isHostUser
@@ -294,7 +313,7 @@ function InboxMain({
             {!isHostUser ? (
               <View style={[S.row, { gap: 10, marginTop: 20 }]}>
                 <Btn
-                  title="Explore places"
+                  title={t.tabs.search}
                   icon="search-outline"
                   onPress={() => navigation.navigate('Search')}
                 />
@@ -316,7 +335,8 @@ function InboxMain({
                 onPress={() => handleSelectConv(item.id)}
                 style={({ pressed }) => [
                   styles.convItem,
-                  pressed && { backgroundColor: c.soft },
+                  { borderBottomColor: colors.border },
+                  pressed && { backgroundColor: colors.soft },
                 ]}
               >
                 {/* Avatar with unread badge */}
@@ -331,7 +351,11 @@ function InboxMain({
                   <View style={S.between}>
                     <View style={[S.row, { gap: 6, flex: 1, paddingRight: 8 }]}>
                       <Text
-                        style={[styles.hostName, item.unread && { fontWeight: '800' }]}
+                        style={[
+                          styles.hostName,
+                          { color: colors.text },
+                          item.unread && { fontWeight: '800' },
+                        ]}
                         numberOfLines={1}
                       >
                         {item.hostName}
@@ -340,10 +364,12 @@ function InboxMain({
                         <Ionicons name="medal" size={13} color="#C47D00" />
                       ) : null}
                       {item.role === 'Verified Guest' ? (
-                        <Ionicons name="checkmark-circle" size={13} color={c.p} />
+                        <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
                       ) : null}
                     </View>
-                    <Text style={[S.muted, { fontSize: 12 }]}>{item.lastMessageTime}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12 }}>
+                      {item.lastMessageTime}
+                    </Text>
                   </View>
 
                   {/* Row 2: Status tag / listing title */}
@@ -355,29 +381,29 @@ function InboxMain({
                       ]}
                     >
                       <Text style={[styles.statusText, { color: badgeStyle.text }]}>
-                        {item.statusLabel}
+                        {getDisplayStatusLabel(item.statusLabel)}
                       </Text>
                     </View>
+
+                    {item.listingPrice ? (
+                      <Text style={{ color: colors.muted, fontSize: 12 }}>
+                        ${item.listingPrice}/{t.listing.night}
+                      </Text>
+                    ) : null}
                   </View>
 
-                  {/* Row 3: Message preview */}
+                  {/* Row 3: Last Message snippet */}
                   <Text
                     style={[
                       styles.lastMessage,
-                      item.unread ? { color: c.t, fontWeight: '700' } : { color: c.m },
+                      { color: item.unread ? colors.text : colors.muted },
+                      item.unread && { fontWeight: '700' },
                     ]}
                     numberOfLines={1}
                   >
                     {item.lastMessage}
                   </Text>
                 </View>
-
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={c.m}
-                  style={{ alignSelf: 'center', marginLeft: 4 }}
-                />
               </Pressable>
             );
           })
@@ -392,14 +418,19 @@ function InboxMain({
         onRequestClose={() => setShowNewChatModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <View style={[S.row, { justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }]}>
+          <View style={[styles.modalBox, { backgroundColor: colors.dialogBg }]}>
+            <View
+              style={[
+                S.row,
+                { justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+              ]}
+            >
               <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: c.t }}>
-                  Start a Conversation
+                <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>
+                  {t.inbox.startConversation}
                 </Text>
-                <Text style={[S.muted, { fontSize: 13, marginTop: 4 }]}>
-                  Find someone by phone number or email
+                <Text style={{ color: colors.muted, fontSize: 13, marginTop: 4 }}>
+                  {t.inbox.findHelp}
                 </Text>
               </View>
               <Pressable
@@ -411,18 +442,23 @@ function InboxMain({
                 }}
                 hitSlop={8}
               >
-                <Ionicons name="close" size={24} color={c.t} />
+                <Ionicons name="close" size={24} color={colors.text} />
               </Pressable>
             </View>
 
             {/* Input tìm kiếm */}
             <View style={{ flexDirection: 'row', gap: 8, marginVertical: 12 }}>
-              <View style={[styles.searchBar, { flex: 1 }]}>
-                <Ionicons name="search-outline" size={18} color={c.m} style={{ marginRight: 8 }} />
+              <View style={[styles.searchBar, { flex: 1, backgroundColor: colors.soft }]}>
+                <Ionicons
+                  name="search-outline"
+                  size={18}
+                  color={colors.muted}
+                  style={{ marginRight: 8 }}
+                />
                 <TextInput
-                  style={styles.searchInput}
-                  placeholder="Enter phone number or email..."
-                  placeholderTextColor={c.m}
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder={t.inbox.enterQuery}
+                  placeholderTextColor={colors.muted}
                   value={searchUserQuery}
                   onChangeText={(text) => {
                     setSearchUserQuery(text);
@@ -442,7 +478,7 @@ function InboxMain({
                     }}
                     hitSlop={8}
                   >
-                    <Ionicons name="close-circle" size={18} color={c.m} />
+                    <Ionicons name="close-circle" size={18} color={colors.muted} />
                   </Pressable>
                 )}
               </View>
@@ -450,7 +486,7 @@ function InboxMain({
                 onPress={handleSearchUser}
                 disabled={searchingUser || !searchUserQuery.trim()}
                 style={{
-                  backgroundColor: !searchUserQuery.trim() ? c.soft : c.p,
+                  backgroundColor: !searchUserQuery.trim() ? colors.soft : colors.primary,
                   borderRadius: 12,
                   paddingHorizontal: 16,
                   justifyContent: 'center',
@@ -460,8 +496,14 @@ function InboxMain({
                 {searchingUser ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={{ color: !searchUserQuery.trim() ? c.m : '#fff', fontWeight: '700', fontSize: 14 }}>
-                    Find
+                  <Text
+                    style={{
+                      color: !searchUserQuery.trim() ? colors.muted : '#fff',
+                      fontWeight: '700',
+                      fontSize: 14,
+                    }}
+                  >
+                    {t.common.find}
                   </Text>
                 )}
               </Pressable>
@@ -469,8 +511,24 @@ function InboxMain({
 
             {/* Thông báo lỗi */}
             {searchUserError ? (
-              <View style={{ backgroundColor: '#FFEBEA', borderColor: '#FFD3D1', borderWidth: 1, padding: 12, borderRadius: 10, marginVertical: 6 }}>
-                <Text style={{ color: '#D9381E', fontSize: 13, textAlign: 'center', fontWeight: '500' }}>
+              <View
+                style={{
+                  backgroundColor: colors.dangerSoft,
+                  borderColor: colors.danger,
+                  borderWidth: 1,
+                  padding: 12,
+                  borderRadius: 10,
+                  marginVertical: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.danger,
+                    fontSize: 13,
+                    textAlign: 'center',
+                    fontWeight: '500',
+                  }}
+                >
                   {searchUserError}
                 </Text>
               </View>
@@ -478,15 +536,25 @@ function InboxMain({
 
             {/* Kết quả tìm kiếm tìm thấy */}
             {foundUser ? (
-              <View style={{ marginTop: 8, padding: 14, borderRadius: 12, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB' }}>
+              <View
+                style={{
+                  marginTop: 8,
+                  padding: 14,
+                  borderRadius: 12,
+                  backgroundColor: colors.soft,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
                 <View style={[S.row, { alignItems: 'center' }]}>
                   <Image source={{ uri: avatar(20) }} style={styles.contactAvatar} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: c.t }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
                       {foundUser.name}
                     </Text>
-                    <Text style={[S.muted, { fontSize: 13, marginTop: 2 }]}>
-                      {foundUser.email}{foundUser.phone ? ` · ${foundUser.phone}` : ''}
+                    <Text style={{ color: colors.muted, fontSize: 13, marginTop: 2 }}>
+                      {foundUser.email}
+                      {foundUser.phone ? ` · ${foundUser.phone}` : ''}
                     </Text>
                   </View>
                 </View>
@@ -494,7 +562,7 @@ function InboxMain({
                 <Pressable
                   style={{
                     marginTop: 14,
-                    backgroundColor: c.p,
+                    backgroundColor: colors.primary,
                     borderRadius: 10,
                     paddingVertical: 12,
                     alignItems: 'center',
@@ -507,16 +575,29 @@ function InboxMain({
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-                      Start Chat
+                      {isVietnamese ? 'Bắt đầu trò chuyện' : 'Start Chat'}
                     </Text>
                   )}
                 </Pressable>
               </View>
             ) : !searchUserError ? (
               <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                <Ionicons name="shield-checkmark-outline" size={36} color={c.p} style={{ opacity: 0.7, marginBottom: 8 }} />
-                <Text style={{ fontSize: 13, color: c.m, textAlign: 'center', lineHeight: 18, paddingHorizontal: 16 }}>
-                  Booked travelers and hosts connect automatically.{'\n'}To chat with another member, enter their exact phone number or email address.
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={36}
+                  color={colors.primary}
+                  style={{ opacity: 0.7, marginBottom: 8 }}
+                />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: colors.muted,
+                    textAlign: 'center',
+                    lineHeight: 18,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  {t.inbox.autoConnectNote}
                 </Text>
               </View>
             ) : null}
@@ -528,7 +609,6 @@ function InboxMain({
 }
 
 export function InboxScreen({ route }: any) {
-  // Lấy openConversationId và t từ route params (truyền từ DetailScreen khi bấm Contact Host)
   const openConversationId: string | undefined = route?.params?.openConversationId;
   const navTimestamp: number | undefined = route?.params?.t;
   return <InboxMain openConversationId={openConversationId} navTimestamp={navTimestamp} />;
@@ -569,7 +649,6 @@ const styles = StyleSheet.create({
   newChatBtn: {
     padding: 6,
     borderRadius: 8,
-    backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -580,7 +659,6 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: c.soft,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -588,26 +666,20 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    color: c.t,
     padding: 0,
   },
   tabsContainer: {
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderColor: c.soft,
   },
   tabChip: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: c.soft,
     borderWidth: 1,
-    borderColor: c.soft,
   },
   tabChipText: {
     fontSize: 13,
-    color: c.t,
-    fontWeight: '500',
   },
   convItem: {
     flexDirection: 'row',
@@ -615,13 +687,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: c.soft,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: c.soft,
   },
   unreadDot: {
     position: 'absolute',
@@ -637,7 +707,6 @@ const styles = StyleSheet.create({
   hostName: {
     fontSize: 15,
     fontWeight: '600',
-    color: c.t,
   },
   statusBadge: {
     paddingHorizontal: 6,
@@ -665,7 +734,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalBox: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -674,13 +742,11 @@ const styles = StyleSheet.create({
   contactItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: c.soft,
     alignItems: 'center',
   },
   contactAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: c.soft,
   },
 });
