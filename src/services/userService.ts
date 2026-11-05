@@ -11,4 +11,20 @@ export const userService = {
     api<UpdateUserResponse>('/auth/me', { method: 'PATCH', body: payload, token }),
   toggleFavorite: (listingId: string, token: string) =>
     api<{ favorites: string[] }>(`/auth/favorites/${listingId}`, { method: 'POST', token }),
+  
+  // Set/Update Payment PIN
+  setPaymentPin: (currentPin: string | null, newPin: string, token: string) =>
+    api<{ message: string; user: User }>('/auth/payment-pin', {
+      method: 'POST',
+      body: { currentPin, newPin },
+      token,
+    }),
+  
+  // Verify Payment PIN
+  verifyPaymentPin: (pin: string, token: string) =>
+    api<{ valid: boolean; message: string }>('/auth/verify-payment-pin', {
+      method: 'POST',
+      body: { pin },
+      token,
+    }),
 };

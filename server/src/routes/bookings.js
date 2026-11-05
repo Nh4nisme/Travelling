@@ -4,6 +4,7 @@ const auth = require('../middleware/auth');
 const Listing = require('../models/Listing');
 const Booking = require('../models/Booking');
 const BookedNight = require('../models/BookedNight');
+const User = require('../models/User');
 const rules = require('../services/bookingRules');
 
 const { httpError, isDuplicateKey } = rules;
@@ -74,17 +75,45 @@ router.post('/quote', wrap(async (req, res) => {
 // POST /api/bookings  - tạo booking
 router.post('/', wrap(async (req, res) => {
   const body = req.body || {};
+  const { paymentPin, ...bookingData } = body;
   const today = rules.todayUTC();
-  const key = rules.normalizeKey(body.idempotencyKey);
+  
+  // Verify Payment PIN TRƯỚC KHI tạo booking
+  const user = await User.findById(req.user._id).select('+paymentPin +paymentPinSet');
+  
+  if (!user.paymentPinSet) {
+    return res.status(400).json({ 
+      message: 'Payment PIN not set. Please set up your PIN in Settings first.',
+      code: 'PIN_NOT_SET'
+    });
+  }
+  
+  if (!paymentPin) {
+    return res.status(400).json({ 
+      message: 'Payment PIN is required',
+      code: 'PIN_REQUIRED'
+    });
+  }
+  
+  const isValidPin = await user.comparePaymentPin(paymentPin);
+  if (!isValidPin) {
+    return res.status(401).json({ 
+      message: 'Incorrect Payment PIN',
+      code: 'PIN_INCORRECT'
+    });
+  }
+  
+  // PIN đúng → Tiếp tục tạo booking
+  const key = rules.normalizeKey(bookingData.idempotencyKey);
   const findByKey = () => (key ? Booking.findOne({ user: req.user._id, idempotencyKey: key }) : null);
 
   const replay = await findByKey();
   if (replay) return res.status(200).json({ booking: replay.toPublic(today) });
 
-  const listing = await loadListing(body.listingId);
-  const stay = rules.parseStay(body, listing, today);
+  const listing = await loadListing(bookingData.listingId);
+  const stay = rules.parseStay(bookingData, listing, today);
   const price = rules.priceStay(listing.price, stay.nights);
-  const payment = rules.paymentFor(body.paymentMethod, price.total);
+  const payment = rules.paymentFor(bookingData.paymentMethod, price.total);
 
   const booking = new Booking({
     ref: rules.generateRef(),
