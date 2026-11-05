@@ -138,8 +138,8 @@ export function ConfirmScreen({ route, navigation }: any) {
       <Header title={t.bookingFlow.confirmAndPay} />
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         <ScrollView
-          style={{ backgroundColor: colors.bg }}
-          contentContainerStyle={{ padding: 16, backgroundColor: colors.bg }}
+          style={{ flex: 1, backgroundColor: colors.bg }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 100, backgroundColor: colors.bg }}
         >
         {/* Listing preview card */}
         <View
