@@ -15,13 +15,11 @@ function resolveHost(): string {
   const hostUri = Constants.expoConfig?.hostUri; // vd "192.168.1.5:8081"
   if (hostUri) {
     const ip = hostUri.split(':')[0];
-    console.log('[env.ts] Auto-detected IP from Metro:', ip);
     return ip;
   }
   
   // Fallback cho emulator/simulator
   const fallback = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-  console.log('[env.ts] Using fallback host:', fallback);
   return fallback;
 }
 
@@ -34,6 +32,3 @@ export const ENV = {
   apiUrl: process.env.EXPO_PUBLIC_API_URL ?? `${baseUrl}/api`,
   socketUrl: process.env.EXPO_PUBLIC_SOCKET_URL ?? baseUrl,
 };
-
-console.log('[env.ts] API URL:', ENV.apiUrl);
-console.log('[env.ts] Socket URL:', ENV.socketUrl);
