@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { PaymentPinInput } from '@/components/PaymentPinInput';
+import { PaymentPinInput, type PaymentPinInputRef } from '@/components/PaymentPinInput';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { userService } from '@/services/userService';
@@ -33,19 +33,23 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const pinInputRef = useRef<PaymentPinInputRef>(null);
 
-  // ✅ Hook luôn được gọi vô điều kiện - không vi phạm Rules of Hooks
+  // Hook luôn được gọi vô điều kiện - không vi phạm Rules of Hooks
   const animationRef = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
-    if (isWeb) return; // animation chỉ cần trên native
+    if (isWeb) return;
     if (visible) {
       Animated.spring(animationRef, {
         toValue: 0,
         useNativeDriver: true,
         friction: 8,
         tension: 100,
-      }).start();
+      }).start(() => {
+        // Tự động focus sau khi animation trượt lên hoàn tất
+        pinInputRef.current?.focus();
+      });
     } else {
       Animated.timing(animationRef, {
         toValue: SCREEN_HEIGHT,
@@ -78,6 +82,7 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
     } catch (err: any) {
       setError(err?.message || (isVietnamese ? 'Mã PIN không đúng' : 'Incorrect PIN'));
       setPin('');
+      pinInputRef.current?.focus();
     } finally {
       setVerifying(false);
     }
@@ -106,11 +111,13 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
 
       <View style={styles.pinContainer}>
         <PaymentPinInput
+          ref={pinInputRef}
           value={pin}
           onChangeText={setPin}
           onComplete={handlePinComplete}
           error={error}
           disabled={verifying}
+          autoFocus={true}
         />
       </View>
 
@@ -144,9 +151,19 @@ export function PaymentPinSheet({ visible, onClose, onSuccess }: PaymentPinSheet
   }
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={handleClose}
+      onShow={() => {
+        setTimeout(() => {
+          pinInputRef.current?.focus();
+        }, 150);
+      }}
+    >
       <Pressable style={styles.nativeBackdrop} onPress={handleBackdropPress}>
-        <Pressable onPress={(e) => e.stopPropagation()}>
+        <Pressable onPress={(e) => e.stopPropagation()} style={{ width: '100%' }}>
           <Animated.View style={{ transform: [{ translateY: animationRef }] }}>
             {sheetContent}
           </Animated.View>
@@ -162,6 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 16,
   },
   nativeBackdrop: {
     flex: 1,
@@ -174,6 +192,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 12,
     width: '100%',
+    alignItems: 'center',
     // Web: override shape thành rounded box
     ...(isWeb && {
       borderRadius: 20,
@@ -181,7 +200,7 @@ const styles = StyleSheet.create({
       minWidth: 320,
       maxWidth: 400,
       paddingTop: 24,
-      paddingHorizontal: 8,
+      paddingHorizontal: 16,
     }),
   },
   handleContainer: {
@@ -195,8 +214,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
     paddingHorizontal: 20,
+    width: '100%',
   },
   iconContainer: {
     width: 60,
@@ -218,8 +238,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   pinContainer: {
-    marginHorizontal: 20,
-    marginBottom: 24,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   verifying: {
     flexDirection: 'row',
