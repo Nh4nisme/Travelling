@@ -3,7 +3,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SplashScreen, AuthScreen } from '@/features/auth';
 import { SearchScreen, ResultsScreen, FiltersScreen } from '@/features/search';
-import { DetailScreen, FacilitiesScreen, ReviewsScreen, DescriptionScreen } from '@/features/listing';
+import { DetailScreen, FacilitiesScreen, ReviewsScreen, DescriptionScreen, MapScreen } from '@/features/listing';
 import { BookingDatesScreen, ConfirmScreen, SuccessScreen } from '@/features/booking';
 import { BookingDetailScreen } from '@/features/bookings';
 import {
@@ -65,6 +65,7 @@ export function RootNavigator() {
         <Stack.Screen name="Facilities" component={FacilitiesScreen} />
         <Stack.Screen name="Reviews" component={ReviewsScreen} />
         <Stack.Screen name="Description" component={DescriptionScreen} />
+        <Stack.Screen name="Map" component={MapScreen} />
         <Stack.Screen name="BookingDates" component={BookingDatesScreen} />
         <Stack.Screen name="Confirm" component={ConfirmScreen} />
         <Stack.Screen name="Success" component={SuccessScreen} options={{ gestureEnabled: false }} />

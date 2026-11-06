@@ -155,10 +155,21 @@ export function DetailScreen({ route, navigation }: any) {
                 {l.city}, {l.country}
               </Text>
             </View>
-            <Pressable onPress={() => navigation.navigate('Description', { id: l.id })}>
-              <Text style={{ color: colors.primary, textDecorationLine: 'underline' }}>
-                {t.listing.openMap}
-              </Text>
+            <Pressable onPress={() => navigation.navigate('Map', { id: l.id })}>
+              <View style={{
+                backgroundColor: colors.primaryLight,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <Ionicons name="map-outline" size={14} color={colors.primary} />
+                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '600' }}>
+                  {t.listing.openMap}
+                </Text>
+              </View>
             </Pressable>
           </View>
           <Pressable
