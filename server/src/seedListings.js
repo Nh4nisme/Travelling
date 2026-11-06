@@ -19,8 +19,9 @@ async function seedListings() {
 }
 
 seedListings()
-  .catch(() => {
-    console.error('Listing seed failed. Verify MONGODB_URI, Atlas network access, and database credentials.');
+  .catch((error) => {
+    console.error('Listing seed failed:', error);
+    console.error('Verify MONGODB_URI, Atlas network access, and database credentials.');
     process.exitCode = 1;
   })
   .finally(async () => {

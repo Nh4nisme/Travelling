@@ -29,6 +29,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
     "checkInPolicy": "• Keyless entry with a secure digital lockbox located beside the main lobby entrance.\n• Earliest check-in is at 3:00 PM; latest check-out is at 11:00 AM.\n• Guests must be at least 21 years of age to book.\n• Please remove outdoor shoes at the entryway to protect the historic hardwood floors.\n• Pets considered upon prior approval with an additional pet cleaning fee.",
+    "latitude": 41.2565,
+    "longitude": -95.9345,
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
     "reviewItems": [
@@ -87,6 +89,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "• Self check-in via smart keypad lock. Your 6-digit access code will be sent 24 hours prior to arrival.\n• Government-issued photo ID is required to be submitted via chat prior to check-in.\n• Quiet hours are observed between 10:00 PM and 8:00 AM out of respect for neighbors.\n• Strictly no smoking, vaping, or unauthorized parties on the premises.\n• Luggage drop-off before 3:00 PM is available upon request subject to cleaning schedule.",
+    "latitude": 37.3382,
+    "longitude": -121.8863,
     "hostEmail": "alex.miller@gmail.com",
     "hostName": "Alex Miller",
     "reviewItems": []
@@ -119,6 +123,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "• Smart lock keypad entry; code activated at 3:00 PM on arrival date.\n• Photo ID verification required prior to code issuance.\n• One complimentary covered garage parking spot included with your reservation.\n• Non-smoking building. No parties or excessive noise.\n• Late check-out available for an additional fee upon request.",
+    "latitude": 43.0389,
+    "longitude": -87.9065,
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
     "reviewItems": []
@@ -153,6 +159,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "12:00",
     "checkInPolicy": "• Personal in-person greeting by our villa manager, Made, upon arrival at Balian village.\n• Check-in time is between 2:00 PM and 8:00 PM. Please advise your arrival time in advance.\n• Scooters and surfboards are available for rent directly on the property.\n• We operate on eco-friendly solar hot water and practice sustainable waste management.\n• Eco-friendly mosquito repellent is provided; please keep nets closed in the evening.",
+    "latitude": -8.4095,
+    "longitude": 115.1889,
     "hostEmail": "jinny@gmail.com",
     "hostName": "Jinny Oslin",
     "reviewItems": []
@@ -186,6 +194,8 @@
     "checkInTime": "16:00",
     "checkOutTime": "10:00",
     "checkInPolicy": "• Digital lock code provided 48 hours prior to arrival with detailed winter driving directions.\n• All-wheel drive or snow chains are required during winter months (December to April).\n• Firewood is provided free of charge for the living room fireplace.\n• Check-in begins at 4:00 PM; check-out is strictly by 10:00 AM to allow thorough turnover.\n• Please ensure all outdoor ski gear is placed in the designated heated boot room.",
+    "latitude": 45.9237,
+    "longitude": 6.8694,
     "hostEmail": "pierre.chalet@gmail.com",
     "hostName": "Pierre Dubois",
     "reviewItems": []
@@ -218,6 +228,8 @@
     "checkInTime": "15:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "• Meet-and-greet check-in at the valley base station or self-check-in with lockbox code.\n• The cabin is accessible via a gravel forestry road; suitable vehicles are recommended.\n• Tap water is pristine natural spring water, filtered and certified safe to drink.\n• Respect wildlife: please secure all trash in the bear-proof outdoor containers.\n• Quiet hours begin at 9:00 PM to preserve the peaceful wilderness atmosphere.",
+    "latitude": 46.5369,
+    "longitude": 12.1357,
     "hostEmail": "marco.dolomites@gmail.com",
     "hostName": "Marco Rossi",
     "reviewItems": []
@@ -249,6 +261,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "• Reception check-in at the Forest Basecamp between 2:00 PM and 7:00 PM.\n• Temperatures drop significantly at night; extra warm clothing is strongly advised.\n• Bonfire is lit at 7:00 PM every evening weather permitting.\n• Camp quiet hours are from 10:00 PM to 6:00 AM.\n• Eco-conscious camp: single-use plastics are discouraged.",
+    "latitude": 11.9404,
+    "longitude": 108.4583,
     "hostEmail": "minhduc.dalat@gmail.com",
     "hostName": "Minh Đức",
     "reviewItems": []
@@ -281,6 +295,8 @@
     "checkInTime": "14:00",
     "checkOutTime": "11:00",
     "checkInPolicy": "• Self-check-in instructions and campsite map sent via SMS/Chat prior to arrival.\n• Check-in from 2:00 PM; check-out by 11:00 AM.\n• Life vests are mandatory when using kayaks and paddleboards (provided at dock).\n• Open campfires permitted only within designated steel fire pits.\n• Please leave the lakeside clean and pack out all food waste.",
+    "latitude": 51.1784,
+    "longitude": -115.5708,
     "hostEmail": "david.banff@gmail.com",
     "hostName": "David Tremblay",
     "reviewItems": []

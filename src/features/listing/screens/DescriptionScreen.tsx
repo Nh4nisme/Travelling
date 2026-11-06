@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Header, Photo } from '@/components';
 import { S } from '@/constants/theme';
@@ -7,7 +7,7 @@ import { useApp } from '@/store/AppContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 
-export function DescriptionScreen({ route }: any) {
+export function DescriptionScreen({ route, navigation }: any) {
   const l = useListing(route.params?.id ?? '');
   const { listingsLoading, listingsError, refreshListings } = useApp();
   const { colors } = useTheme();
@@ -36,9 +36,22 @@ export function DescriptionScreen({ route }: any) {
               {l.city}, {l.country}
             </Text>
           </View>
-          <Text style={{ color: colors.primary, textDecorationLine: 'underline', fontWeight: '500' }}>
-            {t.listing.openMap}
-          </Text>
+          <Pressable onPress={() => navigation.navigate('Map', { id: l.id })}>
+            <View style={{
+              backgroundColor: colors.primaryLight,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              borderRadius: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            }}>
+              <Ionicons name="map" size={20} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>
+                {t.listing.openMap}
+              </Text>
+            </View>
+          </Pressable>
         </View>
 
         {l.facilities.map((facility) => (
