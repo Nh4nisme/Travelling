@@ -6,7 +6,18 @@ import { SearchScreen, ResultsScreen, FiltersScreen } from '@/features/search';
 import { DetailScreen, FacilitiesScreen, ReviewsScreen, DescriptionScreen } from '@/features/listing';
 import { BookingDatesScreen, ConfirmScreen, SuccessScreen } from '@/features/booking';
 import { BookingDetailScreen } from '@/features/bookings';
-import { PersonalInfoScreen, PaymentsScreen, NotificationsScreen, HelpCenterScreen, FaqScreen, ContactSupportScreen, ReportProblemScreen, SettingsScreen, PaymentPinScreen } from '@/features/profile';
+import {
+  PersonalInfoScreen,
+  PaymentsScreen,
+  NotificationsScreen,
+  HelpCenterScreen,
+  FaqScreen,
+  ContactSupportScreen,
+  ReportProblemScreen,
+  SettingsScreen,
+  PaymentPinScreen,
+  ChangePasswordScreen,
+} from '@/features/profile';
 import { MainTabs } from './MainTabs';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -89,6 +100,11 @@ export function RootNavigator() {
           name="PaymentPin"
           component={PaymentPinScreen}
           options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN' }}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Đổi mật khẩu' : 'Change Password' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
