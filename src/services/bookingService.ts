@@ -26,6 +26,29 @@ export const bookingService = {
   get: (id: string) => authed<{ booking: Booking }>(`/bookings/${encodeURIComponent(id)}`),
   cancel: (id: string) => authed<{ booking: Booking }>(`/bookings/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
   payBalance: (id: string) => authed<{ booking: Booking }>(`/bookings/${encodeURIComponent(id)}/pay-balance`, { method: 'POST' }),
+
+  async addReview(
+    listingId: string,
+    stars: number,
+    text: string,
+    token: string
+  ): Promise<{ message: string; review: any; listing: any }> {
+    return api<{ message: string; review: any; listing: any }>(
+      `/listings/${listingId}/reviews`,
+      {
+        method: 'POST',
+        body: { stars, text },
+        token,
+      }
+    );
+  },
+  
+  async getReviews(listingId: string, token: string): Promise<{ reviews: any[]; rating: number; reviewsCount: number }> {
+    return api<{ reviews: any[]; rating: number; reviewsCount: number }>(
+      `/listings/${listingId}/reviews`,
+      { token }
+    );
+  },
 };
 
 /** Khoá chống bấm đúp: cùng khoá => server chỉ tạo 1 booking. */

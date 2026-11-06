@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
@@ -28,6 +28,23 @@ export function SuccessScreen({ route, navigation }: any) {
   const share = async () => {
     if (!b) return;
     try { await Share.share({ message: receiptText(b) }); } catch { notify(isVietnamese ? 'Không thể chia sẻ biên lai' : 'Could not share the receipt'); }
+  };
+
+  const canReview = useMemo(() => {
+    if (!b) return false;
+    const checkOutDate = new Date(b.checkOut);
+    const oneDayLater = new Date(checkOutDate);
+    oneDayLater.setDate(oneDayLater.getDate() + 1);
+    return new Date() >= oneDayLater;
+  }, [b]);
+
+  const handleWriteReview = () => {
+    if (!b) return;
+    navigation.navigate('WriteReview', {
+      listingId: b.listing.id,
+      listingTitle: b.listing.title,
+      listingImage: b.listing.image,
+    });
   };
 
   if (!b) return (
@@ -78,6 +95,16 @@ export function SuccessScreen({ route, navigation }: any) {
       <View style={{ padding: 16, backgroundColor: colors.bg }}>
         <Btn title={isVietnamese ? 'Xem đặt phòng' : 'View booking'} onPress={viewBooking} />
       </View>
+
+      {canReview && (
+        <View style={{ padding: 16, backgroundColor: colors.bg }}>
+          <Btn 
+            title={isVietnamese ? 'Viết đánh giá' : 'Write a Review'} 
+            icon="star-outline"
+            onPress={handleWriteReview} 
+          />
+        </View>
+      )}
     </Screen>
   );
 }
