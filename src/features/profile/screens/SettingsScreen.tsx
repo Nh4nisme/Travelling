@@ -83,6 +83,11 @@ export function SettingsScreen({ navigation }: any) {
           ]}
         >
           <SettingRow
+            label={t.settings.changePassword}
+            type="navigate"
+            onPress={() => navigation.navigate('ChangePassword')}
+          />
+          <SettingRow
             label={isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN'}
             type="navigate"
             onPress={() => navigation.navigate('PaymentPin')}

@@ -11,7 +11,7 @@ import { bookingService } from '@/services/bookingService';
 type Ctx = {
   user: User | null; loggedIn: boolean; authReady: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (p: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  signUp: (p: { name: string; email: string; password: string; phone?: string; verificationToken?: string }) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   favs: string[]; toggleFav: (id: string) => void;
@@ -85,7 +85,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signUp = useCallback(async (p: { name: string; email: string; password: string; phone?: string }) => {
+  const signUp = useCallback(async (p: { name: string; email: string; password: string; phone?: string; verificationToken?: string }) => {
     const { token, user } = await authService.register({ ...p, email: p.email.trim(), name: p.name.trim() });
     await tokenStorage.set(token);
     setUser(user);

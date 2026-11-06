@@ -8,6 +8,7 @@ export type RootStackParamList = {
   PersonalInfo: undefined; Payments: undefined; Notifications: undefined; HelpCenter: undefined; Settings: undefined;
   Faq: { category?: FaqCategoryId; faqId?: string; query?: string } | undefined; ContactSupport: undefined; ReportProblem: undefined;
   PaymentPin: undefined;
+  ChangePassword: undefined;
   WriteReview: {
     listingId: string;
     listingTitle: string;

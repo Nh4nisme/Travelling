@@ -27,4 +27,12 @@ export const userService = {
       body: { pin },
       token,
     }),
+
+  // Change Password
+  changePassword: (currentPassword: string, newPassword: string, token: string) =>
+    api<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+      token,
+    }),
 };
