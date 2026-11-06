@@ -1,6 +1,7 @@
 const express = require('express');
 const Listing = require('../models/Listing');
 const BookedNight = require('../models/BookedNight');
+const auth = require('../middleware/auth');
 const rules = require('../services/bookingRules');
 
 const router = express.Router();
@@ -78,6 +79,113 @@ router.get('/:id', async (req, res, next) => {
     res.json(result);
   } catch (error) {
     next(error);
+  }
+});
+
+// POST /api/listings/:id/reviews - Thêm review mới
+router.post('/:id/reviews', auth, async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const listingId = req.params.id;
+    const { stars, text } = req.body;
+
+    // Validate input
+    if (!stars || stars < 1 || stars > 5) {
+      return res.status(400).json({ message: 'Stars must be between 1 and 5' });
+    }
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({ message: 'Review text must be at least 10 characters' });
+    }
+
+    // Import Booking model tại đây
+    const Booking = require('../models/Booking');
+    
+    // Tìm booking của user cho listing này
+    const booking = await Booking.findOne({
+      user: userId,
+      listingId: listingId,
+      status: 'confirmed',
+    }).sort({ checkOut: -1 });
+
+    if (!booking) {
+      return res.status(403).json({ message: 'You must have stayed at this property to leave a review' });
+    }
+
+    // Validate: Đã qua checkout + 1 ngày
+    const checkOutDate = new Date(booking.checkOut);
+    const oneDayLater = new Date(checkOutDate);
+    oneDayLater.setDate(oneDayLater.getDate() + 1);
+    
+    if (new Date() < oneDayLater) {
+      return res.status(403).json({ 
+        message: 'You can leave a review 1 day after checkout',
+        code: 'REVIEW_TOO_EARLY'
+      });
+    }
+
+    // Import User model
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    
+    // Check nếu user đã review listing này trước đó
+    const listing = await Listing.findById(listingId);
+    const hasReviewed = listing.reviewItems.some(r => r.name === user.name);
+    
+    if (hasReviewed) {
+      return res.status(400).json({ message: 'You have already reviewed this property' });
+    }
+
+    // Tạo review mới
+    const newReview = {
+      name: user.name,
+      stars: stars,
+      text: text.trim(),
+      avatar: 12,
+    };
+
+    // Thêm vào reviewItems
+    listing.reviewItems.push(newReview);
+    
+    // Cập nhật rating trung bình
+    const totalStars = listing.reviewItems.reduce((sum, r) => sum + r.stars, 0);
+    listing.rating = totalStars / listing.reviewItems.length;
+    listing.reviews = listing.reviewItems.length;
+    
+    await listing.save();
+
+    res.status(201).json({
+      message: 'Review added successfully',
+      review: newReview,
+      listing: {
+        id: listing.id,
+        rating: listing.rating,
+        reviews: listing.reviews,
+      },
+    });
+  } catch (error) {
+    console.error('Lỗi thêm review:', error.message);
+    res.status(500).json({ message: 'Failed to add review' });
+  }
+});
+
+// GET /api/listings/:id/reviews - Lấy danh sách reviews
+router.get('/:id/reviews', async (req, res, next) => {
+  try {
+    const listingId = req.params.id;
+    const listing = await Listing.findById(listingId);
+    
+    if (!listing) {
+      return res.status(404).json({ message: 'Place not found' });
+    }
+
+    res.json({
+      reviews: listing.reviewItems,
+      rating: listing.rating,
+      reviewsCount: listing.reviews,
+    });
+  } catch (error) {
+    console.error('Lỗi lấy reviews:', error.message);
+    res.status(500).json({ message: 'Failed to get reviews' });
   }
 });
 
