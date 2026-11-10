@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -29,6 +30,12 @@ export function DetailScreen({ route, navigation }: any) {
   const [idx, setIdx] = useState(0);
   const [contactingHost, setContactingHost] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      void refreshListings();
+    }, [refreshListings])
+  );
+
   // States mở rộng cho Show all & View more (in-place functional toggle)
   const [showAllFacilities, setShowAllFacilities] = useState(false);
   const [showAllPolicies, setShowAllPolicies] = useState(false);
@@ -44,7 +51,11 @@ export function DetailScreen({ route, navigation }: any) {
         />
       </Screen>
     );
+
   const reviews = l.reviewItems ?? [];
+  const totalReviews = reviews.length > 0 ? reviews.length : l.reviews;
+  const totalStars = reviews.reduce((sum, r) => sum + r.stars, 0);
+  const averageRating = totalReviews > 0 ? (totalStars / totalReviews).toFixed(1) : l.rating.toFixed(1);
 
   const isOwner = Boolean(
     user?.email && l.hostEmail && user.email.toLowerCase() === l.hostEmail.toLowerCase()
@@ -185,10 +196,10 @@ export function DetailScreen({ route, navigation }: any) {
             ]}
           >
             <Text style={{ color: colors.text }}>
-              <Ionicons name="star" color={c.star} /> {l.rating.toFixed(1)}/5
+              <Ionicons name="star" color={c.star} /> {averageRating}/5
             </Text>
             <Text style={{ color: colors.muted }}>
-              {l.reviews} {t.listing.reviews.toLowerCase()} ›
+              {totalReviews} {t.listing.reviews.toLowerCase()} ›
             </Text>
           </Pressable>
         </View>
@@ -289,7 +300,7 @@ export function DetailScreen({ route, navigation }: any) {
           }
         >
           <Text style={{ fontSize: 34, fontWeight: '700', color: colors.text }}>
-            {l.rating.toFixed(1)}
+            {averageRating}
             <Text style={{ fontSize: 16, color: colors.muted }}>/5</Text>
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>

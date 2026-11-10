@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, Share } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn, Header, Photo } from '@/components';
 import { S } from '@/constants/theme';
@@ -17,9 +18,15 @@ import { useLanguage } from '@/context/LanguageContext';
 
 export function BookingDetailScreen({ route, navigation }: any) {
   const { id } = route.params as { id: string };
-  const { bookings, upsertBooking, signOut } = useApp();
+  const { bookings, upsertBooking, signOut, listings, user, refreshListings } = useApp();
   const { colors } = useTheme();
   const { t, isVietnamese } = useLanguage();
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshListings();
+    }, [refreshListings])
+  );
 
   const b = bookings.find((x) => x.id === id);
   const [loading, setLoading] = useState(!b);
@@ -92,9 +99,15 @@ export function BookingDetailScreen({ route, navigation }: any) {
   }
 
   const pay = paymentSummary(b, isVietnamese);
+  const isCompleted = b.stage === 'completed' || (b.status === 'confirmed' && new Date(b.checkOut) <= new Date());
+  const currentListing = listings?.find((l) => l.id === b.listing.id);
+  const userReview = currentListing?.reviewItems?.find(
+    (r) => r.name?.trim().toLowerCase() === user?.name?.trim().toLowerCase()
+  );
+
   const canPayBalance =
     b.status === 'confirmed' &&
-    b.stage !== 'completed' &&
+    !isCompleted &&
     b.payment.status === 'partial' &&
     b.payment.balanceDue > 0;
 
@@ -300,7 +313,7 @@ export function BookingDetailScreen({ route, navigation }: any) {
         </Card>
 
         {/* Section 4: Cancellation Policy */}
-        {b.status === 'confirmed' && b.stage !== 'completed' && (
+        {b.status === 'confirmed' && !isCompleted && (
           <Card title={isVietnamese ? 'Chính sách hủy phòng' : 'Cancellation policy'}>
             <Text style={{ color: colors.muted, lineHeight: 20 }}>
               {isVietnamese
@@ -321,6 +334,67 @@ export function BookingDetailScreen({ route, navigation }: any) {
               </Text>
             ) : (
               <Text style={{ marginTop: 10, color: colors.muted }}>{b.cancellation.reason}</Text>
+            )}
+          </Card>
+        )}
+
+        {/* Section 5: Trip Review for Completed Stays */}
+        {isCompleted && (
+          <Card title={isVietnamese ? 'Đánh giá chuyến đi' : 'Trip review'}>
+            {userReview ? (
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Text style={{ fontWeight: '700', color: colors.text, fontSize: 15 }}>
+                    {isVietnamese ? 'Đánh giá của bạn:' : 'Your review:'}
+                  </Text>
+                  <View style={{ flexDirection: 'row' }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Ionicons
+                        key={s}
+                        name={s <= userReview.stars ? 'star' : 'star-outline'}
+                        size={16}
+                        color={s <= userReview.stars ? (colors.star || '#F5B335') : colors.border}
+                      />
+                    ))}
+                  </View>
+                </View>
+                <Text style={{ color: colors.text, lineHeight: 20, fontStyle: 'italic', marginBottom: 14 }}>
+                  "{userReview.text}"
+                </Text>
+                <Btn
+                  outline
+                  icon="chatbubbles-outline"
+                  title={isVietnamese ? 'Xem tất cả đánh giá' : 'View all reviews'}
+                  onPress={() => navigation.navigate('Reviews', { id: b.listing.id })}
+                />
+              </View>
+            ) : (
+              <View>
+                <Text style={{ color: colors.muted, lineHeight: 20, marginBottom: 14 }}>
+                  {isVietnamese
+                    ? 'Chuyến đi đã hoàn thành! Hãy chia sẻ trải nghiệm lưu trú của bạn để giúp đỡ các du khách khác.'
+                    : 'Your trip is complete! Share your stay experience to help future guests.'}
+                </Text>
+                <View style={{ gap: 10 }}>
+                  <Btn
+                    icon="star"
+                    title={isVietnamese ? 'Viết đánh giá' : 'Write a Review'}
+                    onPress={() =>
+                      navigation.navigate('WriteReview', {
+                        listingId: b.listing.id,
+                        listingTitle: b.listing.title,
+                        listingImage: b.listing.image,
+                      })
+                    }
+                  />
+                  <Btn
+                    outline
+                    icon="chatbubbles-outline"
+                    title={isVietnamese ? 'Xem đánh giá của chỗ ở' : 'View property reviews'}
+                    onPress={() => navigation.navigate('Reviews', { id: b.listing.id })}
+                  />
+                </View>
+              </View>
             )}
           </Card>
         )}

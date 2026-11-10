@@ -62,6 +62,8 @@ function createMongoose() {
   class Schema {
     constructor(def, opts) { this.def = def; this.opts = opts; this.methods = {}; this.indexes = []; }
     index(spec, opts) { this.indexes.push({ spec, opts }); }
+    pre() { return this; }
+    post() { return this; }
   }
   Schema.Types = { ObjectId: 'ObjectId' };
 
@@ -193,7 +195,7 @@ function loadWithFakes() {
     req.user = { _id: req.headers['x-user'] };
     return next();
   };
-  const srcDir = path.join(__dirname, '..', 'src');
+  const srcDir = path.join(__dirname, '..');
   const original = Module._load;
   Module._load = function patched(request, parent, isMain) {
     if (request === 'express') return express;
@@ -210,6 +212,7 @@ function loadWithFakes() {
     Listing: load('models/Listing.js'),
     Booking: load('models/Booking.js'),
     BookedNight: load('models/BookedNight.js'),
+    User: load('models/User.js'),
     rules: load('services/bookingRules.js'),
     restore() { Module._load = original; },
   };

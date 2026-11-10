@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SplashScreen, AuthScreen } from '@/features/auth';
 import { SearchScreen, ResultsScreen, FiltersScreen } from '@/features/search';
 import { DetailScreen, FacilitiesScreen, ReviewsScreen, DescriptionScreen, MapScreen } from '@/features/listing';
-import { BookingDatesScreen, ConfirmScreen, SuccessScreen } from '@/features/booking';
+import { BookingDatesScreen, ConfirmScreen, SuccessScreen, WriteReviewScreen } from '@/features/booking';
 import { BookingDetailScreen } from '@/features/bookings';
 import {
   PersonalInfoScreen,
@@ -70,6 +70,7 @@ export function RootNavigator() {
         <Stack.Screen name="Confirm" component={ConfirmScreen} />
         <Stack.Screen name="Success" component={SuccessScreen} options={{ gestureEnabled: false }} />
         <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
+        <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
         
         {/* Profile sub-screens */}
         <Stack.Screen

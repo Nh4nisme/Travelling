@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Listing = require('../models/Listing');
 const BookedNight = require('../models/BookedNight');
 const auth = require('../middleware/auth');
@@ -10,10 +11,22 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizeListingReviews(listing) {
+  const items = listing.reviewItems || [];
+  const reviews = items.length;
+  const totalStars = items.reduce((sum, r) => sum + r.stars, 0);
+  const rating = reviews > 0 ? Number((totalStars / reviews).toFixed(1)) : (listing.rating || 5);
+  return {
+    ...listing,
+    reviews,
+    rating,
+  };
+}
+
 router.get('/', async (_req, res, next) => {
   try {
     const listings = await Listing.find().sort({ id: 1 }).lean();
-    res.json(listings.map(({ _id, ...listing }) => listing));
+    res.json(listings.map(({ _id, ...listing }) => normalizeListingReviews(listing)));
   } catch (error) {
     next(error);
   }
@@ -44,7 +57,7 @@ router.get('/search', async (req, res, next) => {
     if (facilities.length) query.facilities = { $all: facilities };
 
     const listings = await Listing.find(query).sort({ id: 1 }).lean();
-    res.json(listings.map(({ _id, ...listing }) => listing));
+    res.json(listings.map(({ _id, ...listing }) => normalizeListingReviews(listing)));
   } catch (error) {
     next(error);
   }
@@ -73,16 +86,19 @@ router.get('/:id/availability', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const listing = await Listing.findOne({ id: req.params.id }).lean();
+    let listing = await Listing.findOne({ id: req.params.id }).lean();
+    if (!listing && mongoose.isValidObjectId(req.params.id)) {
+      listing = await Listing.findById(req.params.id).lean();
+    }
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
     const { _id, ...result } = listing;
-    res.json(result);
+    res.json(normalizeListingReviews(result));
   } catch (error) {
     next(error);
   }
 });
 
-// POST /api/listings/:id/reviews - Thêm review mới
+// POST /api/listings/:id/reviews - Thêm hoặc cập nhật review mới
 router.post('/:id/reviews', auth, async (req, res, next) => {
   try {
     const userId = req.user._id;
@@ -100,66 +116,72 @@ router.post('/:id/reviews', auth, async (req, res, next) => {
     // Import Booking model tại đây
     const Booking = require('../models/Booking');
     
-    // Tìm booking của user cho listing này
+    // Tìm booking của user cho listing này nếu có
     const booking = await Booking.findOne({
       user: userId,
-      listingId: listingId,
+      listingId: String(listingId),
       status: 'confirmed',
     }).sort({ checkOut: -1 });
 
-    if (!booking) {
-      return res.status(403).json({ message: 'You must have stayed at this property to leave a review' });
-    }
-
-    // Validate: Đã qua checkout + 1 ngày
-    const checkOutDate = new Date(booking.checkOut);
-    const oneDayLater = new Date(checkOutDate);
-    oneDayLater.setDate(oneDayLater.getDate() + 1);
-    
-    if (new Date() < oneDayLater) {
+    // Trong môi trường production, yêu cầu người dùng phải có đặt phòng trước đó
+    if (!booking && process.env.NODE_ENV === 'production') {
       return res.status(403).json({ 
-        message: 'You can leave a review 1 day after checkout',
-        code: 'REVIEW_TOO_EARLY'
+        message: 'You must have booked this property to leave a review',
+        code: 'NO_BOOKING'
       });
     }
 
     // Import User model
     const User = require('../models/User');
     const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     
-    // Check nếu user đã review listing này trước đó
-    const listing = await Listing.findById(listingId);
-    const hasReviewed = listing.reviewItems.some(r => r.name === user.name);
+    // Tìm listing theo string id hoặc ObjectId
+    let listing = await Listing.findOne({ id: listingId });
+    if (!listing && mongoose.isValidObjectId(listingId)) {
+      listing = await Listing.findById(listingId);
+    }
     
-    if (hasReviewed) {
-      return res.status(400).json({ message: 'You have already reviewed this property' });
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Tạo review mới
-    const newReview = {
+    // Check nếu user đã review listing này trước đó: nếu có thì cập nhật, chưa thì thêm mới
+    const existingIndex = listing.reviewItems.findIndex(
+      (r) => r.name.trim().toLowerCase() === user.name.trim().toLowerCase()
+    );
+
+    const avatarId = (user.name.charCodeAt(0) % 70) + 1;
+    const reviewData = {
       name: user.name,
-      stars: stars,
+      stars: Number(stars),
       text: text.trim(),
-      avatar: 12,
+      avatar: existingIndex >= 0 ? listing.reviewItems[existingIndex].avatar : avatarId,
     };
 
-    // Thêm vào reviewItems
-    listing.reviewItems.push(newReview);
-    
-    // Cập nhật rating trung bình
+    if (existingIndex >= 0) {
+      listing.reviewItems[existingIndex] = reviewData;
+    } else {
+      listing.reviewItems.unshift(reviewData);
+    }
+
+    // Cập nhật rating và reviews count trung thực theo số lượng reviewItems
     const totalStars = listing.reviewItems.reduce((sum, r) => sum + r.stars, 0);
-    listing.rating = totalStars / listing.reviewItems.length;
     listing.reviews = listing.reviewItems.length;
+    listing.rating = listing.reviews > 0 ? Number((totalStars / listing.reviews).toFixed(1)) : 5;
     
     await listing.save();
 
     res.status(201).json({
       message: 'Review added successfully',
-      review: newReview,
+      review: reviewData,
       listing: {
         id: listing.id,
         rating: listing.rating,
         reviews: listing.reviews,
+        reviewItems: listing.reviewItems,
       },
     });
   } catch (error) {
@@ -172,16 +194,24 @@ router.post('/:id/reviews', auth, async (req, res, next) => {
 router.get('/:id/reviews', async (req, res, next) => {
   try {
     const listingId = req.params.id;
-    const listing = await Listing.findById(listingId);
+    let listing = await Listing.findOne({ id: listingId });
+    if (!listing && mongoose.isValidObjectId(listingId)) {
+      listing = await Listing.findById(listingId);
+    }
     
     if (!listing) {
       return res.status(404).json({ message: 'Place not found' });
     }
 
+    const reviewItems = listing.reviewItems || [];
+    const totalStars = reviewItems.reduce((sum, r) => sum + r.stars, 0);
+    const reviewsCount = reviewItems.length;
+    const rating = reviewsCount > 0 ? Number((totalStars / reviewsCount).toFixed(1)) : (listing.rating || 5);
+
     res.json({
-      reviews: listing.reviewItems,
-      rating: listing.rating,
-      reviewsCount: listing.reviews,
+      reviews: reviewItems,
+      rating,
+      reviewsCount,
     });
   } catch (error) {
     console.error('Lỗi lấy reviews:', error.message);
