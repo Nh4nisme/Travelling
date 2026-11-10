@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Share, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen, Btn } from '@/components';
@@ -7,6 +7,7 @@ import { bookingService } from '@/services/bookingService';
 import { fmtDateTime, fmtISO } from '@/utils/date';
 import { money } from '@/utils/pricing';
 import { notify } from '@/utils/dialog';
+import { downloadReceiptPdf } from '@/utils/pdfReceipt';
 import { Row, Divider } from '@/features/bookings/components/Row';
 import { methodLabel, receiptText } from '@/features/bookings/utils';
 import { useTheme } from '@/context/ThemeContext';
@@ -14,10 +15,11 @@ import { useLanguage } from '@/context/LanguageContext';
 
 export function SuccessScreen({ route, navigation }: any) {
   const { bookingId } = route.params as { bookingId: string };
-  const { bookings, upsertBooking } = useApp();
+  const { bookings, upsertBooking, user } = useApp();
   const { colors } = useTheme();
   const { isVietnamese } = useLanguage();
   const b = bookings.find((x) => x.id === bookingId);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // Phòng khi store chưa có (ví dụ vừa tải lại app): lấy từ server
   useEffect(() => {
@@ -28,6 +30,18 @@ export function SuccessScreen({ route, navigation }: any) {
   const share = async () => {
     if (!b) return;
     try { await Share.share({ message: receiptText(b) }); } catch { notify(isVietnamese ? 'Không thể chia sẻ biên lai' : 'Could not share the receipt'); }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!b) return;
+    setDownloadingPdf(true);
+    try {
+      await downloadReceiptPdf(b, isVietnamese, user?.name);
+    } catch (err: any) {
+      notify(isVietnamese ? 'Lỗi tải PDF' : 'PDF Download Error', err?.message || 'Cannot generate PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   const canReview = useMemo(() => {
@@ -88,7 +102,23 @@ export function SuccessScreen({ route, navigation }: any) {
               sub={isVietnamese ? 'Thanh toán trước khi nhận phòng trong chi tiết đặt phòng' : 'Pay before check-in from your booking details'}
             />
           )}
-          <Btn outline icon="share-outline" title={isVietnamese ? 'Chia sẻ biên lai' : 'Share receipt'} onPress={share} style={{ marginTop: 16 }} />
+          <Btn
+            outline
+            icon="document-text-outline"
+            title={
+              downloadingPdf
+                ? isVietnamese
+                  ? 'Đang tạo PDF…'
+                  : 'Generating PDF…'
+                : isVietnamese
+                ? 'Tải biên lai PDF'
+                : 'Get PDF receipt'
+            }
+            onPress={handleDownloadPdf}
+            disabled={downloadingPdf}
+            style={{ marginTop: 16 }}
+          />
+          <Btn outline icon="share-outline" title={isVietnamese ? 'Chia sẻ biên lai' : 'Share receipt'} onPress={share} style={{ marginTop: 10 }} />
         </View>
       </ScrollView>
 

@@ -67,12 +67,19 @@ export function WriteReviewScreen({ route, navigation }: any) {
         }
       );
     } catch (err: any) {
-      if (err?.code === 'REVIEW_TOO_EARLY') {
+      if (err?.code === 'BOOKING_NOT_COMPLETED' || err?.code === 'REVIEW_TOO_EARLY') {
         Alert.alert(
           isVietnamese ? 'Chưa đến lúc' : 'Not yet',
           isVietnamese
-            ? 'Bạn có thể đánh giá sau khi hoàn thành chuyến đi.'
-            : 'You can leave a review after your stay is completed.'
+            ? 'Bạn chỉ có thể đánh giá sau khi chuyến đi đã hoàn thành.'
+            : 'You can only review after your stay is completed.'
+        );
+      } else if (err?.code === 'NO_BOOKING') {
+        Alert.alert(
+          isVietnamese ? 'Chưa đặt phòng' : 'No booking found',
+          isVietnamese
+            ? 'Bạn cần phải từng đặt phòng này mới có thể viết đánh giá.'
+            : 'You must have booked this property to leave a review.'
         );
       } else {
         Alert.alert(

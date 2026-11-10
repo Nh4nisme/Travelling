@@ -114,6 +114,19 @@ function createMongoose() {
         }
         return arr;
       }
+      static async create(arr) {
+        // Hỗ trợ cả mảng lẫn single object
+        const items = Array.isArray(arr) ? arr : [arr];
+        const created = [];
+        for (const item of items) {
+          const d = new Model(item);
+          checkUnique(d);
+          d.__new = false;
+          docs.push(d);
+          created.push(d);
+        }
+        return Array.isArray(arr) ? created : created[0];
+      }
       static async deleteMany(f) {
         for (let i = docs.length - 1; i >= 0; i -= 1) if (matches(docs[i], f)) docs.splice(i, 1);
       }

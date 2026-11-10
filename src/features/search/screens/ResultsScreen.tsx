@@ -22,6 +22,13 @@ export function ResultsScreen({ navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
 
+  // BR06: Tính số đêm từ search dates để hiển thị tổng giá
+  const calculateNights = (): number => {
+    if (!search.start || !search.end) return 1;
+    const diff = search.end.getTime() - search.start.getTime();
+    return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
   const types = filters.types.join(',');
   const facilities = filters.facilities.join(',');
 
@@ -134,7 +141,14 @@ export function ResultsScreen({ navigation }: any) {
             </View>
           )
         }
-        renderItem={({ item }) => <ListingCard l={item} sub="bed" />}
+        renderItem={({ item }) => (
+          <ListingCard
+            l={item}
+            sub="bed"
+            showTotal={filters.total}
+            estimatedNights={calculateNights()}
+          />
+        )}
       />
     </Screen>
   );
