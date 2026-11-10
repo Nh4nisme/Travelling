@@ -7,7 +7,7 @@ const assert = require('node:assert/strict');
 const { loadWithFakes } = require('../testkit/fakeDb');
 
 const kit = loadWithFakes();
-const { call, bookingsRouter, listingsRouter, Listing, BookedNight, Booking, rules } = kit;
+const { call, bookingsRouter, listingsRouter, Listing, BookedNight, Booking, User, rules } = kit;
 test.after(() => kit.restore());
 
 const iso = (offsetDays) => rules.toDateOnly(rules.addDays(rules.todayUTC(), offsetDays));
@@ -15,12 +15,22 @@ const A = 'aaaaaaaaaaaaaaaaaaaaaaaa';
 const B = 'bbbbbbbbbbbbbbbbbbbbbbbb';
 let keySeq = 0;
 
-const book = (user, body) => call(bookingsRouter, 'POST', '/', { user, body: { listingId: '1', adults: 2, children: 0, paymentMethod: 'full', ...body } });
+const book = (user, body) => call(bookingsRouter, 'POST', '/', { user, body: { listingId: '1', adults: 2, children: 0, paymentMethod: 'full', paymentPin: '123456', ...body } });
 const nightsOf = async (listingId = '1') => (await BookedNight.find({ listingId }).sort({ night: 1 })).map((n) => rules.toDateOnly(n.night));
 
 test.beforeEach(async () => {
   await BookedNight.deleteMany({ listingId: '1' });
   await Booking.deleteMany({});
+  await User.deleteMany({});
+
+  const userA = new User({ _id: A, name: 'Alice', email: 'alice@test.com', paymentPinSet: true, paymentPin: 'hashed' });
+  userA.comparePaymentPin = async () => true;
+  await userA.save();
+
+  const userB = new User({ _id: B, name: 'Bob', email: 'bob@test.com', paymentPinSet: true, paymentPin: 'hashed' });
+  userB.comparePaymentPin = async () => true;
+  await userB.save();
+
   if (!(await Listing.findOne({ id: '1' }))) {
     await new Listing({
       id: '1', title: 'Apartment in Omaha', city: 'Omaha', country: 'USA', price: 20, maxGuests: 2,

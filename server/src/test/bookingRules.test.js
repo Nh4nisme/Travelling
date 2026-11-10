@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const r = require('../src/services/bookingRules');
+const r = require('../services/bookingRules');
 
 const D = (s) => r.parseDateOnly(s);
 const listing = { maxGuests: 2, price: 20 };

@@ -33,8 +33,17 @@ async function seedAllHostsAndListings() {
     }
   }
 
-  // 2. Cập nhật đầy đủ hostEmail và hostName cho từng căn hộ trong MongoDB (chạy êm)
+  // 2. Cập nhật đầy đủ thông tin căn hộ, bảo tồn và tính toán chính xác reviews
   for (const item of listingsData) {
+    const existing = await Listing.findOne({ id: item.id });
+    const reviewItems = (existing && existing.reviewItems && existing.reviewItems.length > 0)
+      ? existing.reviewItems
+      : (item.reviewItems || []);
+    
+    const reviews = reviewItems.length;
+    const totalStars = reviewItems.reduce((sum, r) => sum + r.stars, 0);
+    const rating = reviews > 0 ? Number((totalStars / reviews).toFixed(1)) : (item.rating || 5);
+
     await Listing.updateOne(
       { id: item.id },
       {
@@ -46,8 +55,9 @@ async function seedAllHostsAndListings() {
           category: item.category,
           type: item.type,
           price: item.price,
-          rating: item.rating,
-          reviews: item.reviews,
+          rating: rating,
+          reviews: reviews,
+          reviewItems: reviewItems,
           bedrooms: item.bedrooms,
           beds: item.beds,
           baths: item.baths,
@@ -58,6 +68,8 @@ async function seedAllHostsAndListings() {
           checkInTime: item.checkInTime,
           checkOutTime: item.checkOutTime,
           checkInPolicy: item.checkInPolicy,
+          latitude: item.latitude,
+          longitude: item.longitude,
           hostEmail: item.hostEmail,
           hostName: item.hostName,
         },
