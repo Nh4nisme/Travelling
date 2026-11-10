@@ -18,6 +18,13 @@ export const listingService = {
     };
     if (filters.types.length) params.types = filters.types.join(',');
     if (filters.facilities.length) params.facilities = filters.facilities.join(',');
+    // BR06: Truyền presentTotal và số đêm để server lọc theo tổng giá
+    params.presentTotal = String(filters.total);
+    if (filters.total && search.start && search.end) {
+      const diff = new Date(search.end).getTime() - new Date(search.start).getTime();
+      const nights = Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+      params.nights = nights;
+    }
     return api(`/listings/search?${queryString(params)}`);
   },
 };

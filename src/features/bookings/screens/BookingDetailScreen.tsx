@@ -10,6 +10,7 @@ import { bookingService } from '@/services/bookingService';
 import { fmtDateTime, fmtISO } from '@/utils/date';
 import { money } from '@/utils/pricing';
 import { confirmDialog, notify } from '@/utils/dialog';
+import { downloadReceiptPdf } from '@/utils/pdfReceipt';
 import { StatusBadge } from '../components/StatusBadge';
 import { Divider, Row } from '../components/Row';
 import { methodLabel, paymentSummary, receiptText } from '../utils';
@@ -32,6 +33,19 @@ export function BookingDetailScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(!b);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'cancel' | 'pay' | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!b) return;
+    setDownloadingPdf(true);
+    try {
+      await downloadReceiptPdf(b, isVietnamese, user?.name);
+    } catch (err: any) {
+      notify(isVietnamese ? 'Lỗi tải PDF' : 'PDF Download Error', err?.message || 'Cannot generate PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   // Luôn lấy bản mới nhất từ server (trạng thái có thể đổi theo ngày: sắp tới -> đang ở -> đã qua)
   useEffect(() => {
@@ -401,10 +415,26 @@ export function BookingDetailScreen({ route, navigation }: any) {
 
         <Btn
           outline
+          icon="document-text-outline"
+          title={
+            downloadingPdf
+              ? isVietnamese
+                ? 'Đang tạo PDF…'
+                : 'Generating PDF…'
+              : isVietnamese
+              ? 'Tải biên lai PDF'
+              : 'Get PDF receipt'
+          }
+          onPress={handleDownloadPdf}
+          disabled={downloadingPdf}
+          style={{ marginTop: 16 }}
+        />
+        <Btn
+          outline
           icon="share-outline"
           title={t.bookingFlow.shareReceipt}
           onPress={share}
-          style={{ marginTop: 16 }}
+          style={{ marginTop: 10 }}
         />
         {b.cancellation.allowed && (
           <Btn

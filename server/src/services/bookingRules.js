@@ -117,6 +117,17 @@ function paymentFor(method, total) {
   };
 }
 
+function getMinimumPayment(paymentMethod, totalPrice) {
+  // BR04: Mức thanh toán tối thiểu: Full = 100%, Part = 50% (DEPOSIT_RATE)
+  return paymentMethod === 'full' ? totalPrice : Math.round(totalPrice * DEPOSIT_RATE);
+}
+
+function determineBookingStatus(payment, totalPrice) {
+  // BR04: Booking chuyển CONFIRMED khi paid_amount >= mức tối thiểu của hình thức thanh toán
+  const minimumRequired = getMinimumPayment(payment.method, totalPrice);
+  return payment.amountPaid >= minimumRequired ? 'confirmed' : 'pending';
+}
+
 function stageOf(status, checkIn, checkOut, today) {
   if (status === 'cancelled') return 'cancelled';
   if (today < checkIn) return 'upcoming';
@@ -154,6 +165,6 @@ const isDuplicateKey = (err) =>
 module.exports = {
   DAY_MS, MAX_NIGHTS, MAX_ADVANCE_DAYS, PAYMENT_METHODS, FEES, REFUND_TIERS,
   httpError, parseDateOnly, toDateOnly, addDays, diffDays, todayUTC, eachNight,
-  parseStay, priceStay, paymentOptions, paymentFor, stageOf, cancellationInfo,
+  parseStay, priceStay, paymentOptions, paymentFor, getMinimumPayment, determineBookingStatus, stageOf, cancellationInfo,
   generateRef, normalizeKey, isDuplicateKey,
 };

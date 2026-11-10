@@ -16,7 +16,7 @@ export type PriceBreakdown = {
 
 export type Booking = {
   id: string; ref: string;
-  status: 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled';
   stage: BookingStage;
   listing: { id: string; title: string; city: string; country: string; image: string; price: number; checkInTime: string; checkOutTime: string };
   checkIn: string; checkOut: string; nights: number;

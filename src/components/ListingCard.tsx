@@ -6,9 +6,17 @@ import { Heart } from '@/components/Heart';
 import { S, W } from '@/constants/theme';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { calcPrice } from '@/utils/pricing';
 import type { Listing } from '@/types/listing';
 
-export const ListingCard = ({ l, sub }: { l: Listing; sub?: string }) => {
+interface ListingCardProps {
+  l: Listing;
+  sub?: string;
+  showTotal?: boolean;
+  estimatedNights?: number;
+}
+
+export const ListingCard = ({ l, sub, showTotal = false, estimatedNights = 1 }: ListingCardProps) => {
   const nav = useNavigation<any>();
   const { colors } = useTheme();
   const { t } = useLanguage();
@@ -16,6 +24,12 @@ export const ListingCard = ({ l, sub }: { l: Listing; sub?: string }) => {
   const getCategoryLabel = (name: string) => {
     return (t.home.categories as Record<string, string>)[name] ?? name;
   };
+
+  // BR06: Hiển thị tổng giá nếu "Present total price" được bật
+  const displayPrice = showTotal && estimatedNights > 0
+    ? calcPrice(l.price, estimatedNights).total
+    : l.price;
+  const priceLabel = showTotal ? 'total' : t.listing.night;
 
   return (
     <Pressable onPress={() => nav.navigate('Detail', { id: l.id })} style={{ marginBottom: 24 }}>
@@ -33,7 +47,7 @@ export const ListingCard = ({ l, sub }: { l: Listing; sub?: string }) => {
           {sub === 'bed' ? `🛏 ${l.bedrooms} ${t.listing.bedroom}` : getCategoryLabel(l.category)}
         </Text>
         <Text style={{ color: colors.muted }}>
-          <Text style={{ fontWeight: '700', color: colors.text }}>${l.price}</Text>/{t.listing.night}
+          <Text style={{ fontWeight: '700', color: colors.text }}>${displayPrice}</Text>/{priceLabel}
         </Text>
       </View>
     </Pressable>

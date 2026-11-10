@@ -49,7 +49,23 @@ router.get('/search', async (req, res, next) => {
     }
     if (region && region !== 'Anywhere') query.region = region;
     if (typeof req.query.category === 'string' && req.query.category) query.category = req.query.category;
-    query.price = { $gte: minPrice, $lte: maxPrice };
+
+    // BR06: Lọc giá theo nightly hoặc total (tổng = price * nights + fees)
+    const presentTotal = req.query.presentTotal === 'true';
+    const estimatedNights = parseInt(req.query.nights) || 1;
+    const FEES_TOTAL = 10; // Kayak $5 + Parking $5
+
+    if (presentTotal && estimatedNights > 1) {
+      // Filter theo total price: (price * nights + fees) trong [min, max]
+      query.$expr = {
+        $and: [
+          { $gte: [{ $add: [{ $multiply: ['$price', estimatedNights] }, FEES_TOTAL] }, minPrice] },
+          { $lte: [{ $add: [{ $multiply: ['$price', estimatedNights] }, FEES_TOTAL] }, maxPrice] },
+        ],
+      };
+    } else {
+      query.price = { $gte: minPrice, $lte: maxPrice };
+    }
 
     const types = typeof req.query.types === 'string' ? req.query.types.split(',').filter(Boolean) : [];
     const facilities = typeof req.query.facilities === 'string' ? req.query.facilities.split(',').filter(Boolean) : [];
@@ -116,19 +132,55 @@ router.post('/:id/reviews', auth, async (req, res, next) => {
     // Import Booking model tại đây
     const Booking = require('../models/Booking');
     
-    // Tìm booking của user cho listing này nếu có
-    const booking = await Booking.findOne({
+    // BR05: Tìm booking của user cho listing này (đã confirmed và checkout qua rồi)
+    const today = rules.todayUTC();
+    const completedBooking = await Booking.findOne({
       user: userId,
       listingId: String(listingId),
       status: 'confirmed',
+      checkOut: { $lte: today }, // checkout date đã qua => completed stay
     }).sort({ checkOut: -1 });
 
-    // Trong môi trường production, yêu cầu người dùng phải có đặt phòng trước đó
-    if (!booking && process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ 
-        message: 'You must have booked this property to leave a review',
-        code: 'NO_BOOKING'
+    // Trong môi trường production, yêu cầu người dùng phải có booking COMPLETED
+    if (!completedBooking && process.env.NODE_ENV === 'production') {
+      // Kiểm tra xem có booking nào không (dù chưa completed)
+      const anyBooking = await Booking.findOne({
+        user: userId,
+        listingId: String(listingId),
+        status: 'confirmed',
       });
+      if (!anyBooking) {
+        return res.status(403).json({
+          message: 'You must have booked this property to leave a review',
+          code: 'NO_BOOKING'
+        });
+      }
+      // Có booking nhưng chưa completed
+      return res.status(403).json({
+        message: 'You can only review after your stay is completed',
+        code: 'BOOKING_NOT_COMPLETED',
+        stage: rules.stageOf(anyBooking.status, anyBooking.checkIn, anyBooking.checkOut, today)
+      });
+    }
+
+    // Dev/test: nếu không có completedBooking, tìm booking bất kỳ để check BR05
+    if (!completedBooking && process.env.NODE_ENV !== 'production') {
+      const anyBooking = await Booking.findOne({
+        user: userId,
+        listingId: String(listingId),
+        status: 'confirmed',
+      }).sort({ checkOut: -1 });
+
+      if (anyBooking) {
+        const stage = rules.stageOf(anyBooking.status, anyBooking.checkIn, anyBooking.checkOut, today);
+        if (stage !== 'completed') {
+          return res.status(403).json({
+            message: 'You can only review after your stay is completed',
+            code: 'BOOKING_NOT_COMPLETED',
+            stage
+          });
+        }
+      }
     }
 
     // Import User model

@@ -311,6 +311,41 @@ function ChatDetailInner({
             </Pressable>
           ) : null}
 
+          {/* TC15: Banner thông báo xác nhận đặt phòng & lối tắt mở xem booking */}
+          {conv.status === 'confirmed' ? (
+            <Pressable
+              onPress={() => {
+                if (navigation?.navigate) {
+                  navigation.navigate('Main', { screen: 'Bookings' });
+                }
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: isDark ? '#064E3B' : '#DCFCE7',
+                borderColor: isDark ? '#059669' : '#86EFAC',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                marginBottom: 12,
+                gap: 10,
+              }}
+            >
+              <Ionicons name="checkmark-circle" size={22} color="#16A34A" />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: isDark ? '#E5E7EB' : '#14532D' }}>
+                  {isVietnamese ? 'Kỳ nghỉ đã được xác nhận!' : 'Booking Confirmed!'}
+                </Text>
+                <Text style={{ fontSize: 12, color: isDark ? '#A7F3D0' : '#15803D' }} numberOfLines={1}>
+                  {isVietnamese ? 'Nhấn để xem thông tin đặt phòng trong tab Bookings' : 'Tap to view your booking in Bookings tab'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#16A34A" />
+            </Pressable>
+          ) : null}
+
           {/* Date separator */}
           <View style={styles.dateSeparator}>
             <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
