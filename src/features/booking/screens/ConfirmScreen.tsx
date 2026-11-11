@@ -13,6 +13,7 @@ import type { PaymentMethod, Quote } from '@/store/types';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { PaymentPinModal } from '../components/PaymentPinModal';
+import { notificationService } from '@/services/notificationService';
 
 type QuoteState =
   | { status: 'idle' }
@@ -338,6 +339,22 @@ export function ConfirmScreen({ route, navigation }: any) {
               idempotencyKey: attempt.current.key,
             });
             upsertBooking(booking);
+
+            // TASK 3: Gửi notification xác nhận booking + lên lịch nhắc check-in
+            void notificationService.scheduleLocal(
+              isVietnamese ? '🎉 Đặt phòng thành công!' : '🎉 Booking Confirmed!',
+              isVietnamese
+                ? `${l.title} · ${fmtISO(startISO)} - ${fmtISO(endISO)}`
+                : `${l.title} · ${fmtISO(startISO)} – ${fmtISO(endISO)}`,
+              { category: 'bookingUpdates', data: { bookingId: booking.id, type: 'booking_confirmed' } }
+            );
+            void notificationService.scheduleCheckInReminder(
+              booking.id,
+              l.title,
+              booking.checkIn,
+              isVietnamese
+            );
+
             navigation.replace('Success', { bookingId: booking.id });
           } catch (e: any) {
             if (e?.status === 401) {

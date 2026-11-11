@@ -16,6 +16,7 @@ import { Divider, Row } from '../components/Row';
 import { methodLabel, paymentSummary, receiptText } from '../utils';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { notificationService } from '@/services/notificationService';
 
 export function BookingDetailScreen({ route, navigation }: any) {
   const { id } = route.params as { id: string };
@@ -151,6 +152,22 @@ export function BookingDetailScreen({ route, navigation }: any) {
     try {
       const { booking } = await bookingService.cancel(b.id);
       upsertBooking(booking);
+
+      // TASK 4: Hủy check-in reminder + gửi notification hủy booking
+      void notificationService.cancelCheckInReminder(b.id);
+      const refundMsg = booking.payment.refundAmount > 0
+        ? isVietnamese
+          ? `${money(booking.payment.refundAmount)} sẽ được hoàn trả.`
+          : `${money(booking.payment.refundAmount)} will be refunded.`
+        : isVietnamese
+        ? 'Không áp dụng hoàn tiền cho lần hủy này.'
+        : 'No refund applies to this cancellation.';
+      void notificationService.scheduleLocal(
+        isVietnamese ? '❌ Đã hủy đặt phòng' : '❌ Booking Cancelled',
+        `${b.listing.title} · ${refundMsg}`,
+        { category: 'bookingUpdates', data: { bookingId: b.id, type: 'booking_cancelled' } }
+      );
+
       notify(
         isVietnamese ? 'Đã hủy đặt phòng' : 'Booking cancelled',
         booking.payment.refundAmount > 0
@@ -188,6 +205,16 @@ export function BookingDetailScreen({ route, navigation }: any) {
     try {
       const { booking } = await bookingService.payBalance(b.id);
       upsertBooking(booking);
+
+      // Notification: thanh toán balance thành công
+      void notificationService.scheduleLocal(
+        isVietnamese ? '✅ Thanh toán thành công' : '✅ Payment Received',
+        isVietnamese
+          ? `${b.listing.title} · Đã thanh toán đầy đủ.`
+          : `${b.listing.title} · Paid in full.`,
+        { category: 'bookingUpdates', data: { bookingId: b.id, type: 'payment_received' } }
+      );
+
       notify(t.bookingFlow.paymentReceived, t.bookingFlow.paymentReceivedDesc);
     } catch (e: any) {
       if (!(await onAuthError(e)))
