@@ -8,8 +8,8 @@
     "category": "Beach",
     "type": "Entire place",
     "price": 20,
-    "rating": 4.3,
-    "reviews": 4,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -33,32 +33,7 @@
     "longitude": -95.9345,
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
-    "reviewItems": [
-      {
-        "name": "John King",
-        "stars": 4,
-        "text": "We loved staying in this charming home! It had all the amenities we needed, and the historic...",
-        "avatar": 11
-      },
-      {
-        "name": "Jennifer Harris",
-        "stars": 3,
-        "text": "While the location of this home was convenient, we were disappointed with the cleanliness and overall...",
-        "avatar": 47
-      },
-      {
-        "name": "John Edwards",
-        "stars": 5,
-        "text": "This home was perfect for our family vacation! The kids loved the pool and the game room...",
-        "avatar": 33
-      },
-      {
-        "name": "Elizabeth Lopez",
-        "stars": 5,
-        "text": "The photos don't do this home justice - it's absolutely stunning in person...",
-        "avatar": 5
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "2",
@@ -69,8 +44,8 @@
     "category": "Beach",
     "type": "Entire place",
     "price": 28,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -93,26 +68,7 @@
     "longitude": -121.8863,
     "hostEmail": "alex.miller@gmail.com",
     "hostName": "Alex Miller",
-    "reviewItems": [
-      {
-        "name": "Michael Chang",
-        "stars": 5,
-        "text": "Fantastic apartment right in Silicon Valley! High-speed Wi-Fi, modern kitchen, and very quiet neighborhood.",
-        "avatar": 15
-      },
-      {
-        "name": "Sarah Miller",
-        "stars": 4,
-        "text": "Great stay for a business trip. Clean, spacious, and very close to downtown tech hubs.",
-        "avatar": 22
-      },
-      {
-        "name": "David Wilson",
-        "stars": 5,
-        "text": "Super host! The place was spotless and check-in was seamless. Will definitely return next time.",
-        "avatar": 38
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "3",
@@ -123,8 +79,8 @@
     "category": "Beach",
     "type": "Private room",
     "price": 20,
-    "rating": 4.5,
-    "reviews": 2,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -146,20 +102,7 @@
     "longitude": -87.9065,
     "hostEmail": "sarah.omaha@gmail.com",
     "hostName": "Sarah Jenkins",
-    "reviewItems": [
-      {
-        "name": "Emily Clark",
-        "stars": 5,
-        "text": "Charming loft in the historic third ward! Beautiful exposed brick and very comfortable bed.",
-        "avatar": 41
-      },
-      {
-        "name": "Brian Taylor",
-        "stars": 4,
-        "text": "Great location near Lake Michigan and the market. Highly recommended for weekend getaways.",
-        "avatar": 19
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "4",
@@ -170,8 +113,8 @@
     "category": "Beach",
     "type": "Entire place",
     "price": 20,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -195,26 +138,7 @@
     "longitude": 115.1889,
     "hostEmail": "jinny@gmail.com",
     "hostName": "Jinny Oslin",
-    "reviewItems": [
-      {
-        "name": "Sophie Martin",
-        "stars": 5,
-        "text": "Magical treehouse experience in Bali! Waking up to lush jungle views and birds singing was unforgettable.",
-        "avatar": 28
-      },
-      {
-        "name": "Liam Davies",
-        "stars": 5,
-        "text": "Pure paradise. The outdoor shower and pool surrounded by nature were incredible highlights.",
-        "avatar": 32
-      },
-      {
-        "name": "Chloe Dubois",
-        "stars": 4,
-        "text": "Unique and adventurous stay. Very peaceful and authentic Balinese hospitality.",
-        "avatar": 45
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "5",
@@ -225,8 +149,8 @@
     "category": "Mountain",
     "type": "Entire place",
     "price": 120,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 3,
     "beds": 3,
     "baths": 2,
@@ -249,26 +173,7 @@
     "longitude": 6.8694,
     "hostEmail": "pierre.chalet@gmail.com",
     "hostName": "Pierre Dubois",
-    "reviewItems": [
-      {
-        "name": "Lucas Bernard",
-        "stars": 5,
-        "text": "Breathtaking Mont Blanc panoramic views! Perfect ski-in/ski-out chalet with a cozy fireplace.",
-        "avatar": 51
-      },
-      {
-        "name": "Emma Watson",
-        "stars": 5,
-        "text": "We had an amazing winter vacation here. The chalet was warm, luxurious, and well equipped.",
-        "avatar": 14
-      },
-      {
-        "name": "Thomas Petit",
-        "stars": 4,
-        "text": "Stunning alpine retreat. Great sauna to relax after a long day of hiking.",
-        "avatar": 60
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "6",
@@ -279,8 +184,8 @@
     "category": "Mountain",
     "type": "Private room",
     "price": 75,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -302,26 +207,7 @@
     "longitude": 12.1357,
     "hostEmail": "marco.dolomites@gmail.com",
     "hostName": "Marco Rossi",
-    "reviewItems": [
-      {
-        "name": "Matteo Ricci",
-        "stars": 5,
-        "text": "Incredible cabin nestled in the Dolomites. The mountain vistas at sunrise are out of this world.",
-        "avatar": 65
-      },
-      {
-        "name": "Laura Bianchi",
-        "stars": 5,
-        "text": "Warm, rustic charm with all the modern comforts. Perfect base for exploring Cortina trails.",
-        "avatar": 26
-      },
-      {
-        "name": "Andrea Costa",
-        "stars": 4,
-        "text": "Very quiet and scenic retreat. The host Marco was exceptionally kind and helpful.",
-        "avatar": 53
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "7",
@@ -332,8 +218,8 @@
     "category": "Camping",
     "type": "Dormitories",
     "price": 15,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -354,26 +240,7 @@
     "longitude": 108.4583,
     "hostEmail": "minhduc.dalat@gmail.com",
     "hostName": "Minh Đức",
-    "reviewItems": [
-      {
-        "name": "Trần Văn Nam",
-        "stars": 5,
-        "text": "Lều glamping giữa đồi thông Đà Lạt cực kỳ lãng mạn. Buổi tối ngắm thung lũng đèn và đốt lửa trại rất thích.",
-        "avatar": 17
-      },
-      {
-        "name": "Nguyễn Thị Mai",
-        "stars": 5,
-        "text": "Không khí trong lành, view đồi mây tuyệt đẹp mỗi sớm mai. Chủ nhà Minh Đức chu đáo nhiệt tình.",
-        "avatar": 49
-      },
-      {
-        "name": "Hoàng Long",
-        "stars": 4,
-        "text": "Trải nghiệm cắm trại cao cấp tuyệt vời, chăn nệm ấm áp và đầy đủ tiện nghi giữa thiên nhiên.",
-        "avatar": 35
-      }
-    ]
+    "reviewItems": []
   },
   {
     "id": "8",
@@ -384,8 +251,8 @@
     "category": "Camping",
     "type": "Entire place",
     "price": 45,
-    "rating": 4.7,
-    "reviews": 3,
+    "rating": 5,
+    "reviews": 0,
     "bedrooms": 1,
     "beds": 1,
     "baths": 1,
@@ -407,25 +274,6 @@
     "longitude": -115.5708,
     "hostEmail": "david.banff@gmail.com",
     "hostName": "David Tremblay",
-    "reviewItems": [
-      {
-        "name": "Jessica Brown",
-        "stars": 5,
-        "text": "Lake Louise views were mesmerizing! Cozy heated dome tent with the most comfortable bed.",
-        "avatar": 16
-      },
-      {
-        "name": "Daniel Smith",
-        "stars": 5,
-        "text": "Star-gazing through the transparent dome ceiling was an experience of a lifetime!",
-        "avatar": 42
-      },
-      {
-        "name": "Olivia Taylor",
-        "stars": 4,
-        "text": "Breathtaking Canadian Rockies scenery and great hospitality. Highly recommend!",
-        "avatar": 29
-      }
-    ]
+    "reviewItems": []
   }
 ]

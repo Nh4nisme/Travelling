@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Btn, Stars, Photo, Heart, Screen } from '@/components';
 import { S, W, c } from '@/constants/theme';
-import { avatar } from '@/data/reviews';
+import { avatar, DEFAULT_AVATAR } from '@/data/reviews';
 import { ICON, Section, useListing, ListingState } from '@/features/listing/components/shared';
 import { useApp } from '@/store/AppContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -303,36 +303,42 @@ export function DetailScreen({ route, navigation }: any) {
             {averageRating}
             <Text style={{ fontSize: 16, color: colors.muted }}>/5</Text>
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
-            {reviews.map((r) => (
-              <View
-                key={r.name}
-                style={{
-                  width: W * 0.72,
-                  marginRight: 12,
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: 12,
-                  padding: 12,
-                }}
-              >
-                <View style={S.between}>
-                  <View style={[S.row, { gap: 8 }]}>
-                    <Image
-                      source={{ uri: avatar(r.avatar) }}
-                      style={{ width: 36, height: 36, borderRadius: 18 }}
-                    />
-                    <Text style={{ fontWeight: '700', color: colors.text }}>{r.name}</Text>
+          {reviews.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+              {reviews.map((r, idx) => (
+                <View
+                  key={`${r.name}-${idx}`}
+                  style={{
+                    width: W * 0.72,
+                    marginRight: 12,
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    padding: 12,
+                  }}
+                >
+                  <View style={S.between}>
+                    <View style={[S.row, { gap: 8 }]}>
+                      <Image
+                        source={DEFAULT_AVATAR}
+                        style={{ width: 36, height: 36, borderRadius: 18 }}
+                      />
+                      <Text style={{ fontWeight: '700', color: colors.text }}>{r.name}</Text>
+                    </View>
+                    <Stars n={r.stars} />
                   </View>
-                  <Stars n={r.stars} />
+                  <Text numberOfLines={2} style={{ color: colors.muted, marginTop: 10, fontSize: 14 }}>
+                    {r.text}
+                  </Text>
                 </View>
-                <Text numberOfLines={2} style={{ color: colors.muted, marginTop: 10, fontSize: 14 }}>
-                  {r.text}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
+              ))}
+            </ScrollView>
+          ) : (
+            <Text style={{ color: colors.muted, marginTop: 10, fontSize: 14 }}>
+              {t.listing.noReviews}
+            </Text>
+          )}
         </Section>
 
         {/* Policies */}

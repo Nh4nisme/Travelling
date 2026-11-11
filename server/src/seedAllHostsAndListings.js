@@ -33,16 +33,25 @@ async function seedAllHostsAndListings() {
     }
   }
 
-  // 2. Cập nhật đầy đủ thông tin căn hộ, bảo tồn và tính toán chính xác reviews
+  // 2. Cập nhật đầy đủ thông tin căn hộ, bảo tồn và tính toán chính xác reviews thực tế (loại bỏ dữ liệu fake)
+  const FAKE_AUTHORS = [
+    'John King', 'Jennifer Harris', 'John Edwards', 'Elizabeth Lopez',
+    'Michael Chang', 'Sarah Miller', 'David Wilson', 'Emily Clark',
+    'Brian Taylor', 'Sophie Martin', 'Liam Davies', 'Chloe Dubois',
+    'Lucas Bernard', 'Emma Watson', 'Thomas Petit', 'Matteo Ricci',
+    'Laura Bianchi', 'Andrea Costa', 'Trần Văn Nam', 'Nguyễn Thị Mai',
+    'Hoàng Long', 'Jessica Brown', 'Daniel Smith', 'Olivia Taylor',
+    'Jinny Oslin',
+  ];
+
   for (const item of listingsData) {
     const existing = await Listing.findOne({ id: item.id });
-    const reviewItems = (existing && existing.reviewItems && existing.reviewItems.length > 0)
-      ? existing.reviewItems
-      : (item.reviewItems || []);
+    const rawItems = (existing && existing.reviewItems) ? existing.reviewItems : (item.reviewItems || []);
+    const reviewItems = rawItems.filter((r) => !FAKE_AUTHORS.includes(r.name));
     
     const reviews = reviewItems.length;
     const totalStars = reviewItems.reduce((sum, r) => sum + r.stars, 0);
-    const rating = reviews > 0 ? Number((totalStars / reviews).toFixed(1)) : (item.rating || 5);
+    const rating = reviews > 0 ? Number((totalStars / reviews).toFixed(1)) : 5;
 
     await Listing.updateOne(
       { id: item.id },
