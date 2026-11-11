@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Otp = require('../models/Otp');
 const auth = require('../middleware/auth');
+const { sendOtpEmail } = require('../services/emailService');
 
 const router = express.Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,14 +83,22 @@ router.post('/send-otp', async (req, res) => {
       { upsert: true, new: true }
     );
 
-    console.log('=====================================================');
-    console.log(`📧 [EMAIL OTP SERVICE] Mã xác thực gửi tới ${normalized}: ${otpCode}`);
-    console.log('=====================================================');
+    // Gửi email OTP thực sự
+    try {
+      await sendOtpEmail(normalized, otpCode);
+      console.log(`✅ [OTP] Đã gửi mã OTP đến ${normalized}`);
+    } catch (emailError) {
+      console.error('❌ [EMAIL SERVICE] Lỗi gửi email:', emailError.message);
+      // Nếu không gửi được email, trả lỗi cho client
+      return res.status(500).json({ 
+        message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.', 
+        code: 'EMAIL_SEND_FAILED' 
+      });
+    }
 
     return res.json({
       message: 'Mã xác thực OTP đã được gửi đến email của bạn',
       expiresInSeconds: 180,
-      demoOtp: process.env.NODE_ENV !== 'production' ? otpCode : undefined,
     });
   } catch (e) {
     console.error('Lỗi send-otp:', e);

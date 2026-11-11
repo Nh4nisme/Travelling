@@ -98,15 +98,14 @@ export function AuthScreen({ navigation }: any) {
       setTimer(60);
       setOtp('');
 
-      if (res.demoOtp) {
-        Alert.alert(
-          isVietnamese ? 'Mã xác thực OTP (Môi trường Test)' : 'Verification Code (Test Mode)',
-          isVietnamese
-            ? `Mã OTP đã được gửi đến ${trimmed}.\n\nMã xác thực: ${res.demoOtp}`
-            : `OTP sent to ${trimmed}.\n\nCode: ${res.demoOtp}`,
-          [{ text: 'OK' }]
-        );
-      }
+      // Thông báo đã gửi email
+      Alert.alert(
+        isVietnamese ? 'Mã xác thực đã được gửi' : 'Verification Code Sent',
+        isVietnamese
+          ? `Vui lòng kiểm tra email ${trimmed} để lấy mã OTP.`
+          : `Please check ${trimmed} for your OTP code.`,
+        [{ text: 'OK' }]
+      );
     } catch (e: any) {
       // Luồng ngoại lệ 4a: Không thể gửi OTP
       setError(
@@ -161,18 +160,17 @@ export function AuthScreen({ navigation }: any) {
     setLoading(true);
 
     try {
-      const res = await authService.sendOtp(email.trim());
+      await authService.sendOtp(email.trim());
       setTimer(60);
       setOtp('');
-      if (res.demoOtp) {
-        Alert.alert(
-          isVietnamese ? 'Mã xác thực mới (Demo)' : 'New Code (Demo)',
-          isVietnamese
-            ? `Mã OTP mới: ${res.demoOtp}`
-            : `New OTP: ${res.demoOtp}`,
-          [{ text: 'OK' }]
-        );
-      }
+      
+      Alert.alert(
+        isVietnamese ? 'Đã gửi lại mã OTP' : 'OTP Resent',
+        isVietnamese
+          ? 'Vui lòng kiểm tra email của bạn.'
+          : 'Please check your email.',
+        [{ text: 'OK' }]
+      );
     } catch (e: any) {
       setError(
         e?.message ||
