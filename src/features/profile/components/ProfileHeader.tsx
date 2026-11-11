@@ -1,5 +1,5 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { avatar } from '@/data/reviews';
+import { DEFAULT_AVATAR } from '@/data/reviews';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 import type { User } from '@/store/types';
@@ -13,12 +13,11 @@ type ProfileHeaderProps = {
 export function ProfileHeader({ user, favsCount, bookingsCount }: ProfileHeaderProps) {
   const { colors } = useTheme();
   const { t } = useLanguage();
-  const avatarSeed = user?.id ? parseInt(user.id, 10) || 32 : 32;
 
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: avatar(avatarSeed) }}
+        source={DEFAULT_AVATAR}
         style={[styles.avatar, { backgroundColor: colors.soft }]}
       />
       <Text style={[styles.name, { color: colors.text }]}>

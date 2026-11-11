@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Screen, Header, Stars } from '@/components';
 import { S } from '@/constants/theme';
-import { avatar } from '@/data/reviews';
+import { DEFAULT_AVATAR } from '@/data/reviews';
 import { ListingState, useListing } from '@/features/listing/components/shared';
 import { useApp } from '@/store/AppContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -118,7 +118,7 @@ export function ReviewsScreen({ route }: any) {
             <View style={S.between}>
               <View style={[S.row, { gap: 10 }]}>
                 <Image
-                  source={{ uri: avatar(r.avatar || ((r.name.charCodeAt(0) % 70) + 1)) }}
+                  source={DEFAULT_AVATAR}
                   style={{ width: 44, height: 44, borderRadius: 22 }}
                 />
                 <View>
