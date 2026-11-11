@@ -11,7 +11,6 @@ export type CheckEmailResponse = {
 export type SendOtpResponse = {
   message: string;
   expiresInSeconds: number;
-  demoOtp?: string;
 };
 
 export type VerifyOtpResponse = {
