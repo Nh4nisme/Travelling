@@ -301,6 +301,10 @@ export const translations = {
       messages: 'Messages & Inquiries',
       promotions: 'Promotions & Deals',
       description: 'Booking updates include check-in reminders, schedule changes, and host confirmations.',
+      sendTestNotification: 'Send test notification',
+      testNotificationTitle: '🔔 Test Notification',
+      testNotificationBody: 'Notifications are working properly on your device!',
+      permissionDenied: 'Notification permission was denied. Please allow notifications in device settings.',
     },
     paymentPin: {
       title: 'Payment PIN',
@@ -676,6 +680,10 @@ export const translations = {
       messages: 'Tin nhắn & Yêu cầu tư vấn',
       promotions: 'Khuyến mãi & Ưu đãi',
       description: 'Cập nhật đặt phòng bao gồm nhắc nhở nhận phòng, thay đổi lịch trình và xác nhận từ chủ nhà.',
+      sendTestNotification: 'Gửi thông báo thử nghiệm',
+      testNotificationTitle: '🔔 Thông báo thử nghiệm',
+      testNotificationBody: 'Hệ thống thông báo đang hoạt động tốt trên thiết bị của bạn!',
+      permissionDenied: 'Quyền thông báo bị từ chối. Vui lòng cho phép thông báo trong cài đặt thiết bị.',
     },
     paymentPin: {
       title: 'Mã PIN thanh toán',

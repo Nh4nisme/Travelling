@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Conversation, ChatMessage } from '../types';
 import { chatService } from '@/services/chatService';
 import { tokenStorage } from '@/services/tokenStorage';
 import { socketService } from '@/services/socketService';
 import { useApp } from '@/store/AppContext';
+import { notificationService } from '@/services/notificationService';
 
 export interface InboxContextType {
   conversations: Conversation[];
@@ -43,6 +44,24 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
+
+  const conversationsRef = useRef(conversations);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  // Xác định vai trò từ dữ liệu cuộc hội thoại của database
+  const isHostUser = useMemo(() => {
+    if (conversations.length > 0) {
+      return Boolean(conversations[0]?.isHostView);
+    }
+    return Boolean(user && user.email === 'jinny@gmail.com');
+  }, [conversations, user]);
+
+  const isHostUserRef = useRef(isHostUser);
+  useEffect(() => {
+    isHostUserRef.current = isHostUser;
+  }, [isHostUser]);
 
   // 1. Tải danh sách hội thoại THỰC TẾ từ Database MongoDB Atlas
   const refreshConversations = useCallback(async (): Promise<Conversation[]> => {
@@ -105,6 +124,17 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
             }
 
             // Tin nhắn từ đối phương (Bên B nhận từ Bên A) -> Tự động thêm vào hội thoại!
+            const isMe = newMsg.sender === (isHostUserRef.current ? 'host' : 'renter');
+            if (!isMe) {
+              const senderTitle = newMsg.senderName || c.hostName || 'Tin nhắn mới';
+              const bodyPreview = newMsg.text || '📷 Đã gửi một ảnh';
+              void notificationService.scheduleLocal(
+                `💬 ${senderTitle}`,
+                bodyPreview,
+                { category: 'messages', data: { conversationId: c.id, type: 'new_message' } }
+              );
+            }
+
             return {
               ...c,
               lastMessage: newMsg.text || 'Photo attachment',
@@ -177,14 +207,6 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       socket.off('typing:stop', handleTypingStop);
     };
   }, [user?.id]);
-
-  // 3. Xác định vai trò từ dữ liệu cuộc hội thoại của database
-  const isHostUser = useMemo(() => {
-    if (conversations.length > 0) {
-      return Boolean(conversations[0]?.isHostView);
-    }
-    return Boolean(user && user.email === 'jinny@gmail.com');
-  }, [conversations, user]);
 
   // 4. Đánh dấu đã đọc
   const markAsRead = useCallback((convId: string) => {
