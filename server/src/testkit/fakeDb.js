@@ -22,8 +22,39 @@ const setPath = (o, p, val) => {
 };
 const same = (a, b) => (a instanceof Date && b instanceof Date ? +a === +b : String(a) === String(b));
 
+function evalExpr(doc, expr) {
+  if (typeof expr === 'number') return expr;
+  if (typeof expr === 'string') {
+    if (expr.startsWith('$')) return getPath(doc, expr.slice(1));
+    return expr;
+  }
+  if (!expr || typeof expr !== 'object') return expr;
+
+  if ('$add' in expr) {
+    return expr.$add.reduce((sum, item) => sum + evalExpr(doc, item), 0);
+  }
+  if ('$multiply' in expr) {
+    return expr.$multiply.reduce((prod, item) => prod * evalExpr(doc, item), 1);
+  }
+  if ('$gte' in expr) {
+    const [a, b] = expr.$gte.map((item) => evalExpr(doc, item));
+    return a >= b;
+  }
+  if ('$lte' in expr) {
+    const [a, b] = expr.$lte.map((item) => evalExpr(doc, item));
+    return a <= b;
+  }
+  if ('$and' in expr) {
+    return expr.$and.every((sub) => evalExpr(doc, sub));
+  }
+  return true;
+}
+
 function matches(doc, filter) {
   return Object.entries(filter).every(([k, v]) => {
+    if (k === '$expr') {
+      return evalExpr(doc, v);
+    }
     const val = getPath(doc, k);
     if (v && typeof v === 'object' && !(v instanceof Date) && !(v instanceof ObjectId)) {
       if ('$gte' in v && !(val >= v.$gte)) return false;
