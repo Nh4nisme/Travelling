@@ -21,6 +21,7 @@ const setPath = (o, p, val) => {
   t[ks[ks.length - 1]] = val;
 };
 const same = (a, b) => (a instanceof Date && b instanceof Date ? +a === +b : String(a) === String(b));
+const isValidObjectId = (v) => typeof v === 'string' && /^[0-9a-fA-F]{24}$/.test(v);
 
 function evalExpr(doc, expr) {
   if (typeof expr === 'number') return expr;
@@ -133,7 +134,16 @@ function createMongoose() {
       }
       static init() { return Promise.resolve(); }
       static findOne(f) { return new Query(() => docs.find((d) => matches(d, f)) || null); }
-      static findById(id) { return new Query(() => docs.find((d) => same(d._id, id)) || null); }
+      static findById(id) {
+        return new Query(() => {
+          if (!isValidObjectId(id)) {
+            const err = new Error(`Cast to ObjectId failed for value "${id}" at path "_id" for model "${name}"`);
+            err.name = 'CastError';
+            throw err;
+          }
+          return docs.find((d) => same(d._id, id)) || null;
+        });
+      }
       static find(f = {}) { return new Query(() => docs.filter((d) => matches(d, f))); }
       static exists(f) { return new Query(() => { const d = docs.find((x) => matches(x, f)); return d ? { _id: d._id } : null; }); }
       static async insertMany(arr) {
