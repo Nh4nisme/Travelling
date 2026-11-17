@@ -329,6 +329,7 @@ function InboxMain({
         ) : (
           filtered.map((item) => {
             const badgeStyle = getStatusBadgeStyle(item.status);
+            const isAI = item.id === 'ai-assistant';
             return (
               <Pressable
                 key={item.id}
@@ -336,13 +337,25 @@ function InboxMain({
                 style={({ pressed }) => [
                   styles.convItem,
                   { borderBottomColor: colors.border },
+                  isAI && { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)' },
                   pressed && { backgroundColor: colors.soft },
                 ]}
               >
                 {/* Avatar with unread badge */}
                 <View style={{ position: 'relative' }}>
-                  <Image source={{ uri: avatar(item.hostAvatar) }} style={styles.avatar} />
+                  {isAI ? (
+                    <View style={[styles.avatar, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                      <Ionicons name="sparkles" size={24} color="#fff" />
+                    </View>
+                  ) : (
+                    <Image source={{ uri: avatar(item.hostAvatar) }} style={styles.avatar} />
+                  )}
                   {item.unread ? <View style={styles.unreadDot} /> : null}
+                  {isAI && (
+                    <View style={[styles.aiIndicator, { backgroundColor: colors.primary }]}>
+                      <Ionicons name="sparkles" size={8} color="#fff" />
+                    </View>
+                  )}
                 </View>
 
                 {/* Content */}
@@ -360,10 +373,14 @@ function InboxMain({
                       >
                         {item.hostName}
                       </Text>
-                      {item.role === 'Superhost' ? (
+                      {isAI ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                          <Ionicons name="sparkles" size={13} color={colors.primary} />
+                          <Text style={{ fontSize: 10, color: colors.primary, fontWeight: '700' }}>AI</Text>
+                        </View>
+                      ) : item.role === 'Superhost' ? (
                         <Ionicons name="medal" size={13} color="#C47D00" />
-                      ) : null}
-                      {item.role === 'Verified Guest' ? (
+                      ) : item.role === 'Verified Guest' ? (
                         <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
                       ) : null}
                     </View>
@@ -373,24 +390,26 @@ function InboxMain({
                   </View>
 
                   {/* Row 2: Status tag / listing title */}
-                  <View style={[S.row, { gap: 8, marginTop: 4 }]}>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: badgeStyle.bg, borderColor: badgeStyle.border },
-                      ]}
-                    >
-                      <Text style={[styles.statusText, { color: badgeStyle.text }]}>
-                        {getDisplayStatusLabel(item.statusLabel)}
-                      </Text>
-                    </View>
+                  {!isAI && (
+                    <View style={[S.row, { gap: 8, marginTop: 4 }]}>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { backgroundColor: badgeStyle.bg, borderColor: badgeStyle.border },
+                        ]}
+                      >
+                        <Text style={[styles.statusText, { color: badgeStyle.text }]}>
+                          {getDisplayStatusLabel(item.statusLabel)}
+                        </Text>
+                      </View>
 
-                    {item.listingPrice ? (
-                      <Text style={{ color: colors.muted, fontSize: 12 }}>
-                        ${item.listingPrice}/{t.listing.night}
-                      </Text>
-                    ) : null}
-                  </View>
+                      {item.listingPrice ? (
+                        <Text style={{ color: colors.muted, fontSize: 12 }}>
+                          ${item.listingPrice}/{t.listing.night}
+                        </Text>
+                      ) : null}
+                    </View>
+                  )}
 
                   {/* Row 3: Last Message snippet */}
                   <Text
@@ -748,5 +767,17 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+  },
+  aiIndicator: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
 });

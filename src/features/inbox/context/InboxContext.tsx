@@ -5,6 +5,11 @@ import { tokenStorage } from '@/services/tokenStorage';
 import { socketService } from '@/services/socketService';
 import { useApp } from '@/store/AppContext';
 import { notificationService } from '@/services/notificationService';
+import { aiAssistantService } from '@/services/aiAssistantService';
+import { listingService } from '@/services/listingService';
+import { bookingService } from '@/services/bookingService';
+import type { Listing } from '@/types/listing';
+import type { Booking } from '@/store/types';
 
 export interface InboxContextType {
   conversations: Conversation[];
@@ -38,12 +43,16 @@ export function useInbox() {
   return context;
 }
 
+// AI Assistant conversation ID
+const AI_ASSISTANT_ID = 'ai-assistant';
+
 export function InboxProvider({ children }: { children: React.ReactNode }) {
   const { user } = useApp();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
+  const [aiContext, setAiContext] = useState<{ listings?: Listing[]; bookings?: Booking[] }>({});
 
   const conversationsRef = useRef(conversations);
   useEffect(() => {
@@ -63,27 +72,71 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
     isHostUserRef.current = isHostUser;
   }, [isHostUser]);
 
+  // Tạo AI Assistant conversation (ghim cố định)
+  const createAIAssistantConversation = useCallback((): Conversation => {
+    return {
+      id: AI_ASSISTANT_ID,
+      hostName: 'AI Assistant',
+      hostAvatar: 99, // Special avatar seed for AI
+      role: 'AI Support',
+      status: 'support',
+      statusLabel: 'AI Assistant 🤖',
+      lastMessage: aiAssistantService.getWelcomeMessage().split('\n')[0],
+      lastMessageTime: 'Always available',
+      unread: false,
+      messages: [],
+      isTyping: false,
+    };
+  }, []);
+
   // 1. Tải danh sách hội thoại THỰC TẾ từ Database MongoDB Atlas
   const refreshConversations = useCallback(async (): Promise<Conversation[]> => {
     try {
       setLoading(true);
       const token = await tokenStorage.get();
       if (!token) {
-        setConversations([]);
-        return [];
+        // Nếu chưa login, chỉ hiển thị AI Assistant
+        const aiConv = createAIAssistantConversation();
+        setConversations([aiConv]);
+        return [aiConv];
       }
       const data = await chatService.getConversations(token);
       const list = Array.isArray(data) ? data : [];
-      setConversations(list);
-      return list;
+      
+      // Thêm AI Assistant conversation ở đầu danh sách (ghim)
+      const aiConv = createAIAssistantConversation();
+      const withAI = [aiConv, ...list];
+      setConversations(withAI);
+      return withAI;
     } catch (err) {
       console.warn('Lỗi tải conversations từ MongoDB:', err);
-      setConversations([]);
-      return [];
+      // Nếu lỗi, vẫn hiển thị AI Assistant
+      const aiConv = createAIAssistantConversation();
+      setConversations([aiConv]);
+      return [aiConv];
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [createAIAssistantConversation]);
+
+  // Load AI context (listings + bookings) khi mount
+  useEffect(() => {
+    const loadAIContext = async () => {
+      try {
+        const [listings, bookingsData] = await Promise.all([
+          listingService.getAll().catch(() => []),
+          bookingService.list().catch(() => ({ bookings: [] })),
+        ]);
+        setAiContext({
+          listings,
+          bookings: bookingsData.bookings || [],
+        });
+      } catch (err) {
+        console.warn('Failed to load AI context:', err);
+      }
+    };
+    void loadAIContext();
+  }, [user?.id]);
 
   useEffect(() => {
     void refreshConversations();
@@ -224,6 +277,26 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
   // 6. Tải tin nhắn từ Database MongoDB cho 1 hội thoại cụ thể
   const fetchMessages = useCallback(
     async (convId: string): Promise<ChatMessage[]> => {
+      // AI Assistant: khởi tạo với welcome message
+      if (convId === AI_ASSISTANT_ID) {
+        const conv = conversationsRef.current.find(c => c.id === AI_ASSISTANT_ID);
+        if (conv && (!conv.messages || conv.messages.length === 0)) {
+          const welcomeMsg: ChatMessage = {
+            id: 'welcome',
+            sender: 'host',
+            text: aiAssistantService.getWelcomeMessage(),
+            time: 'Now',
+            timestamp: Date.now(),
+          };
+          setConversations((prev) =>
+            prev.map((c) => (c.id === AI_ASSISTANT_ID ? { ...c, messages: [welcomeMsg] } : c))
+          );
+          return [welcomeMsg];
+        }
+        return conv?.messages || [];
+      }
+
+      // Regular conversation
       try {
         const token = await tokenStorage.get();
         if (!token) return [];
@@ -245,6 +318,98 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       if (!text.trim() && !image) return;
 
       const trimmedText = text.trim();
+
+      // Xử lý AI Assistant chat
+      if (convId === AI_ASSISTANT_ID) {
+        // User message
+        const userMsgId = `user-${Date.now()}`;
+        const userMsg: ChatMessage = {
+          id: userMsgId,
+          sender: 'renter',
+          text: trimmedText,
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          timestamp: Date.now(),
+        };
+
+        // Add user message
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id === AI_ASSISTANT_ID) {
+              return {
+                ...c,
+                lastMessage: trimmedText,
+                lastMessageTime: 'Just now',
+                messages: [...(c.messages || []), userMsg],
+              };
+            }
+            return c;
+          })
+        );
+
+        // Show AI typing
+        setTypingMap((prev) => ({ ...prev, [AI_ASSISTANT_ID]: true }));
+
+        try {
+          // Get conversation history
+          const conv = conversationsRef.current.find(c => c.id === AI_ASSISTANT_ID);
+          const history = conv?.messages || [];
+
+          // Get AI response
+          const aiResponse = await aiAssistantService.chat(trimmedText, history, aiContext);
+
+          // AI message
+          const aiMsgId = `ai-${Date.now()}`;
+          const aiMsg: ChatMessage = {
+            id: aiMsgId,
+            sender: 'host',
+            text: aiResponse,
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            timestamp: Date.now(),
+          };
+
+          // Add AI response
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id === AI_ASSISTANT_ID) {
+                return {
+                  ...c,
+                  lastMessage: aiResponse.split('\n')[0], // First line only
+                  lastMessageTime: 'Just now',
+                  messages: [...(c.messages || []), aiMsg],
+                };
+              }
+              return c;
+            })
+          );
+        } catch (err) {
+          console.error('AI Assistant error:', err);
+          // Error message
+          const errorMsg: ChatMessage = {
+            id: `error-${Date.now()}`,
+            sender: 'host',
+            text: 'Sorry, I encountered an error. Please try again! 😊',
+            time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            timestamp: Date.now(),
+          };
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id === AI_ASSISTANT_ID) {
+                return {
+                  ...c,
+                  messages: [...(c.messages || []), errorMsg],
+                };
+              }
+              return c;
+            })
+          );
+        } finally {
+          // Hide AI typing
+          setTypingMap((prev) => ({ ...prev, [AI_ASSISTANT_ID]: false }));
+        }
+        return;
+      }
+
+      // Regular conversation (existing code)
       const token = await tokenStorage.get();
 
       // Optimistic update UI ngay lập tức
@@ -294,7 +459,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
         console.error('Không thể lưu tin nhắn vào MongoDB:', err);
       }
     },
-    [isHostUser]
+    [isHostUser, aiContext]
   );
 
   // 8. Tạo cuộc trò chuyện mới trên Database
