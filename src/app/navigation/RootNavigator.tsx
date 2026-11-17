@@ -53,62 +53,64 @@ export function RootNavigator() {
   };
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen name="Main" component={MainTabs} />
-        <Stack.Screen name="SearchModal" component={SearchScreen} options={{ presentation: 'modal' }} />
-        <Stack.Screen name="Results" component={ResultsScreen} />
-        <Stack.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
-        <Stack.Screen name="Detail" component={DetailScreen} />
-        <Stack.Screen name="Facilities" component={FacilitiesScreen} />
-        <Stack.Screen name="Reviews" component={ReviewsScreen} />
-        <Stack.Screen name="Description" component={DescriptionScreen} />
-        <Stack.Screen name="Map" component={MapScreen} />
-        <Stack.Screen name="BookingDates" component={BookingDatesScreen} />
-        <Stack.Screen name="Confirm" component={ConfirmScreen} />
-        <Stack.Screen name="Success" component={SuccessScreen} options={{ gestureEnabled: false }} />
-        <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
-        <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
-        
-        {/* Profile sub-screens */}
-        <Stack.Screen
-          name="PersonalInfo"
-          component={PersonalInfoScreen}
-          options={{ ...defaultHeaderOptions, title: t.profile.personalInfo }}
-        />
-        <Stack.Screen
-          name="Payments"
-          component={PaymentsScreen}
-          options={{ ...defaultHeaderOptions, title: t.profile.payments }}
-        />
-        <Stack.Screen
-          name="Notifications"
-          component={NotificationsScreen}
-          options={{ ...defaultHeaderOptions, title: t.profile.notifications }}
-        />
-        {/* Help Center tự vẽ <Header /> nên không bật header native */}
-        <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
-        <Stack.Screen name="Faq" component={FaqScreen} />
-        <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
-        <Stack.Screen name="ReportProblem" component={ReportProblemScreen} />
-        <Stack.Screen
-          name="Settings"
-          component={SettingsScreen}
-          options={{ ...defaultHeaderOptions, title: t.settings.title }}
-        />
-        <Stack.Screen
-          name="PaymentPin"
-          component={PaymentPinScreen}
-          options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN' }}
-        />
-        <Stack.Screen
-          name="ChangePassword"
-          component={ChangePasswordScreen}
-          options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Đổi mật khẩu' : 'Change Password' }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="SearchModal" component={SearchScreen} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="Results" component={ResultsScreen} />
+          <Stack.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
+          <Stack.Screen name="Detail" component={DetailScreen} />
+          <Stack.Screen name="Facilities" component={FacilitiesScreen} />
+          <Stack.Screen name="Reviews" component={ReviewsScreen} />
+          <Stack.Screen name="Description" component={DescriptionScreen} />
+          <Stack.Screen name="Map" component={MapScreen} />
+          <Stack.Screen name="BookingDates" component={BookingDatesScreen} />
+          <Stack.Screen name="Confirm" component={ConfirmScreen} />
+          <Stack.Screen name="Success" component={SuccessScreen} options={{ gestureEnabled: false }} />
+          <Stack.Screen name="BookingDetail" component={BookingDetailScreen} />
+          <Stack.Screen name="WriteReview" component={WriteReviewScreen} />
+          
+          {/* Profile sub-screens */}
+          <Stack.Screen
+            name="PersonalInfo"
+            component={PersonalInfoScreen}
+            options={{ ...defaultHeaderOptions, title: t.profile.personalInfo }}
+          />
+          <Stack.Screen
+            name="Payments"
+            component={PaymentsScreen}
+            options={{ ...defaultHeaderOptions, title: t.profile.payments }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{ ...defaultHeaderOptions, title: t.profile.notifications }}
+          />
+          {/* Help Center tự vẽ <Header /> nên không bật header native */}
+          <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
+          <Stack.Screen name="Faq" component={FaqScreen} />
+          <Stack.Screen name="ContactSupport" component={ContactSupportScreen} />
+          <Stack.Screen name="ReportProblem" component={ReportProblemScreen} />
+          <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ ...defaultHeaderOptions, title: t.settings.title }}
+          />
+          <Stack.Screen
+            name="PaymentPin"
+            component={PaymentPinScreen}
+            options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Mã PIN thanh toán' : 'Payment PIN' }}
+          />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={{ ...defaultHeaderOptions, title: isVietnamese ? 'Đổi mật khẩu' : 'Change Password' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </>
   );
 }

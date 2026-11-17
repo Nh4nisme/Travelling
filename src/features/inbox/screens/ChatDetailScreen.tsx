@@ -53,13 +53,14 @@ function ChatDetailInner({
   } = useInbox();
 
   const conv = conversations.find((item) => item.id === convId);
+  const isAIAssistant = convId === 'ai-assistant';
 
   // Nếu chưa tìm thấy conv (đang tải hoặc mới tạo từ listing), refresh lại
   useEffect(() => {
-    if (!conv && convId && convId !== 'conv-1') {
+    if (!conv && convId && convId !== 'conv-1' && !isAIAssistant) {
       void refreshConversations();
     }
-  }, [conv, convId, refreshConversations]);
+  }, [conv, convId, refreshConversations, isAIAssistant]);
 
   const [inputText, setInputText] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -79,7 +80,11 @@ function ChatDetailInner({
   useEffect(() => {
     if (!conv?.id) return;
     let active = true;
-    socketService.joinConversation(conv.id);
+    
+    // AI Assistant không cần socket
+    if (!isAIAssistant) {
+      socketService.joinConversation(conv.id);
+    }
 
     (async () => {
       setLoadingMessages(true);
@@ -90,10 +95,12 @@ function ChatDetailInner({
 
     return () => {
       active = false;
-      if (user?.id) socketService.emitTypingStop(conv.id, user.id);
-      socketService.leaveConversation(conv.id);
+      if (!isAIAssistant && user?.id) {
+        socketService.emitTypingStop(conv.id, user.id);
+        socketService.leaveConversation(conv.id);
+      }
     };
-  }, [conv?.id, fetchMessages, markAsRead, user?.id]);
+  }, [conv?.id, fetchMessages, markAsRead, user?.id, isAIAssistant]);
 
   // 2. Cuộn mượt xuống cuối khi có tin nhắn mới hoặc đối phương đang gõ
   useEffect(() => {
@@ -104,7 +111,9 @@ function ChatDetailInner({
   }, [messageList.length, isPartnerTyping]);
 
   const handleBack = () => {
-    if (user?.id && conv?.id) socketService.emitTypingStop(conv.id, user.id);
+    if (!isAIAssistant && user?.id && conv?.id) {
+      socketService.emitTypingStop(conv.id, user.id);
+    }
     if (onBack) {
       onBack();
     } else if (navigation?.goBack) {
@@ -147,7 +156,8 @@ function ChatDetailInner({
 
   const handleTextChange = (text: string) => {
     setInputText(text);
-    if (user?.id) {
+    // AI Assistant không cần typing indicator qua socket
+    if (!isAIAssistant && user?.id) {
       if (text.trim().length > 0) {
         socketService.emitTypingStart(conv.id, user.id, user.name || 'User');
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
@@ -164,7 +174,9 @@ function ChatDetailInner({
     if (!inputText.trim()) return;
     const textToSend = inputText.trim();
     setInputText('');
-    if (user?.id) socketService.emitTypingStop(conv.id, user.id);
+    if (!isAIAssistant && user?.id) {
+      socketService.emitTypingStop(conv.id, user.id);
+    }
     await sendMessage(conv.id, textToSend);
   };
 
@@ -203,14 +215,31 @@ function ChatDetailInner({
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
 
-        <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.headerAvatar} />
+        {/* AI Assistant avatar with special styling */}
+        {isAIAssistant ? (
+          <View style={[styles.headerAvatar, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+            <Ionicons name="sparkles" size={20} color="#fff" />
+          </View>
+        ) : (
+          <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.headerAvatar} />
+        )}
 
         <View style={{ flex: 1 }}>
           <View style={[S.row, { gap: 6 }]}>
             <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }} numberOfLines={1}>
               {conv.hostName}
             </Text>
-            {conv.role === 'Superhost' ? (
+            {isAIAssistant ? (
+              <View
+                style={[
+                  styles.aiAssistantBadge,
+                  { backgroundColor: isDark ? '#1E3A8A' : '#DBEAFE', borderColor: isDark ? '#3B82F6' : '#93C5FD' },
+                ]}
+              >
+                <Ionicons name="sparkles" size={11} color={colors.primary} />
+                <Text style={[styles.aiAssistantText, { color: colors.primary }]}>AI</Text>
+              </View>
+            ) : conv.role === 'Superhost' ? (
               <View
                 style={[
                   styles.superhostBadge,
@@ -220,8 +249,7 @@ function ChatDetailInner({
                 <Ionicons name="medal" size={11} color="#C47D00" />
                 <Text style={styles.superhostText}>Superhost</Text>
               </View>
-            ) : null}
-            {conv.role === 'Verified Guest' ? (
+            ) : conv.role === 'Verified Guest' ? (
               <View
                 style={[
                   styles.guestBadge,
@@ -239,7 +267,9 @@ function ChatDetailInner({
           </View>
           <Text style={{ fontSize: 12, color: colors.muted, marginTop: 2 }}>
             {isPartnerTyping
-              ? `✍️ ${t.inbox.chat.typing}`
+              ? `✍️ ${isAIAssistant ? 'AI is thinking...' : t.inbox.chat.typing}`
+              : isAIAssistant
+              ? 'Powered by Gemini AI • Always available'
               : conv.partnerPhone
               ? `Phone: ${conv.partnerPhone}`
               : isHostUser
@@ -248,17 +278,19 @@ function ChatDetailInner({
           </Text>
         </View>
 
-        <Pressable
-          hitSlop={10}
-          onPress={() => {
-            if (conv.listingId && navigation?.navigate) {
-              navigation.navigate('Detail', { id: conv.listingId });
-            }
-          }}
-          style={styles.infoBtn}
-        >
-          <Ionicons name="information-circle-outline" size={24} color={colors.muted} />
-        </Pressable>
+        {!isAIAssistant && (
+          <Pressable
+            hitSlop={10}
+            onPress={() => {
+              if (conv.listingId && navigation?.navigate) {
+                navigation.navigate('Detail', { id: conv.listingId });
+              }
+            }}
+            style={styles.infoBtn}
+          >
+            <Ionicons name="information-circle-outline" size={24} color={colors.muted} />
+          </Pressable>
+        )}
       </View>
 
       <KeyboardAvoidingView
@@ -271,8 +303,8 @@ function ChatDetailInner({
           contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Pinned Listing Card (Airbnb style) */}
-          {Boolean(conv.listingTitle) ? (
+          {/* Pinned Listing Card (Airbnb style) - không hiển thị cho AI */}
+          {!isAIAssistant && Boolean(conv.listingTitle) ? (
             <Pressable
               onPress={() => {
                 if (conv.listingId && navigation?.navigate) {
@@ -311,8 +343,8 @@ function ChatDetailInner({
             </Pressable>
           ) : null}
 
-          {/* TC15: Banner thông báo xác nhận đặt phòng & lối tắt mở xem booking */}
-          {conv.status === 'confirmed' ? (
+          {/* TC15: Banner thông báo xác nhận đặt phòng & lối tắt mở xem booking - không hiển thị cho AI */}
+          {!isAIAssistant && conv.status === 'confirmed' ? (
             <Pressable
               onPress={() => {
                 if (navigation?.navigate) {
@@ -347,13 +379,15 @@ function ChatDetailInner({
           ) : null}
 
           {/* Date separator */}
-          <View style={styles.dateSeparator}>
-            <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dateText, { color: colors.muted }]}>
-              {t.inbox.chat.realtimeNotice}
-            </Text>
-            <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
-          </View>
+          {!isAIAssistant && (
+            <View style={styles.dateSeparator}>
+              <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dateText, { color: colors.muted }]}>
+                {t.inbox.chat.realtimeNotice}
+              </Text>
+              <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
+            </View>
+          )}
 
           {/* Indicator khi đang tải tin nhắn */}
           {loadingMessages && messageList.length === 0 ? (
@@ -368,26 +402,26 @@ function ChatDetailInner({
                   width: 54,
                   height: 54,
                   borderRadius: 27,
-                  backgroundColor: colors.soft,
+                  backgroundColor: isAIAssistant ? colors.primary : colors.soft,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: 12,
                 }}
               >
-                <Ionicons name="chatbubbles-outline" size={26} color={colors.primary} />
+                <Ionicons name={isAIAssistant ? "sparkles" : "chatbubbles-outline"} size={26} color={isAIAssistant ? "#fff" : colors.primary} />
               </View>
               <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
-                {t.inbox.chat.emptyHistory} {conv.hostName}
+                {isAIAssistant ? 'AI Travel Assistant' : `${t.inbox.chat.emptyHistory} ${conv.hostName}`}
               </Text>
               <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 6, fontSize: 13, lineHeight: 18 }}>
-                {t.inbox.chat.emptyHint}
+                {isAIAssistant ? 'Ask me anything about tours, bookings, and travel!' : t.inbox.chat.emptyHint}
               </Text>
             </View>
           ) : null}
 
           {/* Messages Stream */}
           {messageList.map((m) => {
-            const isSelf = isHostUser ? m.sender === 'host' : m.sender === 'renter';
+            const isSelf = isAIAssistant ? m.sender === 'renter' : (isHostUser ? m.sender === 'host' : m.sender === 'renter');
             return (
               <View
                 key={m.id}
@@ -397,7 +431,13 @@ function ChatDetailInner({
                 ]}
               >
                 {!isSelf ? (
-                  <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
+                  isAIAssistant ? (
+                    <View style={[styles.bubbleAvatar, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                      <Ionicons name="sparkles" size={14} color="#fff" />
+                    </View>
+                  ) : (
+                    <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
+                  )
                 ) : null}
                 <View
                   style={[
@@ -438,35 +478,43 @@ function ChatDetailInner({
           {/* Hiệu ứng Đối tác đang gõ phản hồi */}
           {isPartnerTyping ? (
             <View style={[styles.msgRow, { justifyContent: 'flex-start' }]}>
-              <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
+              {isAIAssistant ? (
+                <View style={[styles.bubbleAvatar, { backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Ionicons name="sparkles" size={14} color="#fff" />
+                </View>
+              ) : (
+                <Image source={{ uri: avatar(conv.hostAvatar) }} style={styles.bubbleAvatar} />
+              )}
               <View style={[styles.bubble, styles.bubbleHost, { backgroundColor: colors.soft }, styles.typingBubble]}>
                 <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
                 <Text style={[styles.typingText, { color: colors.muted }]}>
-                  {conv.hostName} {t.inbox.chat.typing}
+                  {isAIAssistant ? 'AI thinking...' : `${conv.hostName} ${t.inbox.chat.typing}`}
                 </Text>
               </View>
             </View>
           ) : null}
         </ScrollView>
 
-        {/* Quick Suggestion Chips */}
-        <View style={[styles.suggestionsContainer, { borderTopColor: colors.border }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-          >
-            {suggestions.map((s, idx) => (
-              <Pressable
-                key={idx}
-                onPress={() => void handleSelectSuggestion(s)}
-                style={[styles.suggestionChip, { backgroundColor: colors.soft }]}
-              >
-                <Text style={[styles.suggestionText, { color: colors.text }]}>{s}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
+        {/* Quick Suggestion Chips - không hiển thị cho AI */}
+        {!isAIAssistant && (
+          <View style={[styles.suggestionsContainer, { borderTopColor: colors.border }]}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            >
+              {suggestions.map((s, idx) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => void handleSelectSuggestion(s)}
+                  style={[styles.suggestionChip, { backgroundColor: colors.soft }]}
+                >
+                  <Text style={[styles.suggestionText, { color: colors.text }]}>{s}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Bottom Chat Input Bar */}
         <View
@@ -479,19 +527,25 @@ function ChatDetailInner({
             },
           ]}
         >
-          <Pressable
-            style={styles.attachBtn}
-            hitSlop={8}
-            onPress={() => void handleSendAttachment()}
-          >
-            <Ionicons name="image-outline" size={24} color={colors.muted} />
-          </Pressable>
+          {!isAIAssistant && (
+            <Pressable
+              style={styles.attachBtn}
+              hitSlop={8}
+              onPress={() => void handleSendAttachment()}
+            >
+              <Ionicons name="image-outline" size={24} color={colors.muted} />
+            </Pressable>
+          )}
 
           <TextInput
             style={[styles.textInput, { backgroundColor: colors.soft, color: colors.text }]}
             value={inputText}
             onChangeText={handleTextChange}
-            placeholder={isVietnamese ? `Nhắn cho ${conv.hostName}...` : `Message ${conv.hostName}...`}
+            placeholder={
+              isAIAssistant 
+                ? 'Ask me anything...' 
+                : (isVietnamese ? `Nhắn cho ${conv.hostName}...` : `Message ${conv.hostName}...`)
+            }
             placeholderTextColor={colors.muted}
             multiline
           />
@@ -579,6 +633,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#1E56C9',
+  },
+  aiAssistantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    borderWidth: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  aiAssistantText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   infoBtn: {
     padding: 4,
