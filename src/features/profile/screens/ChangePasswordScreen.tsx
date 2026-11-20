@@ -37,7 +37,7 @@ export function ChangePasswordScreen({ navigation }: any) {
 
   const newPassRef = useRef<any>(null);
   const confirmPassRef = useRef<any>(null);
-
+  // Kiểm tra xem có thay đổi nào so với dữ liệu gốc không
   const handleSubmit = async () => {
     setError('');
 
@@ -64,7 +64,7 @@ export function ChangePasswordScreen({ navigation }: any) {
       );
       return;
     }
-
+    // Gửi yêu cầu thay đổi mật khẩu
     setSubmitting(true);
     try {
       const token = await tokenStorage.get();

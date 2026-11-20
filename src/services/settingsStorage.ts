@@ -27,6 +27,7 @@ const DEFAULT_PREFS: AppPreferences = {
 };
 
 export const settingsStorage = {
+  // Lấy thông tin cài đặt thông báo
   async getNotifications(): Promise<NotificationSettings> {
     try {
       let raw: string | null = null;
@@ -38,7 +39,7 @@ export const settingsStorage = {
       return DEFAULT_NOTIFS;
     }
   },
-
+  // Lưu thông tin cài đặt thông báo
   async saveNotifications(settings: NotificationSettings): Promise<void> {
     try {
       const raw = JSON.stringify(settings);
@@ -46,7 +47,7 @@ export const settingsStorage = {
       else await SecureStore.setItemAsync(NOTIF_KEY, raw);
     } catch {}
   },
-
+  // Lấy thông tin cài đặt ứng dụng
   async getPreferences(): Promise<AppPreferences> {
     try {
       let raw: string | null = null;
@@ -58,7 +59,7 @@ export const settingsStorage = {
       return DEFAULT_PREFS;
     }
   },
-
+  // Lưu thông tin cài đặt ứng dụng
   async savePreferences(prefs: AppPreferences): Promise<void> {
     try {
       const raw = JSON.stringify(prefs);

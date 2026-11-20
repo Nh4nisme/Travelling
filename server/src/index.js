@@ -28,6 +28,7 @@ io.on('connection', (socket) => {
   // Người dùng tham gia vào phòng chat của 1 hội thoại cụ thể
   socket.on('join_conversation', (conversationId) => {
     if (conversationId) {
+      // Tham gia phòng chat với ID hội thoại
       socket.join(conversationId);
     }
   });

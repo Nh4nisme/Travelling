@@ -18,7 +18,7 @@ export function NotificationsScreen() {
   });
   const [loaded, setLoaded] = useState(false);
   const [testing, setTesting] = useState(false);
-
+  // Lấy thông tin cài đặt thông báo từ storage khi component mount
   useEffect(() => {
     (async () => {
       const saved = await settingsStorage.getNotifications();
@@ -26,7 +26,7 @@ export function NotificationsScreen() {
       setLoaded(true);
     })();
   }, []);
-
+  // Xử lý khi người dùng bật/tắt một loại thông báo
   const handleToggle = (key: keyof NotificationSettings) => async (value: boolean) => {
     if (value) {
       const granted = await notificationService.requestPermission();
@@ -42,7 +42,7 @@ export function NotificationsScreen() {
     setSettings(updated);
     void settingsStorage.saveNotifications(updated);
   };
-
+  // Xử lý khi người dùng nhấn nút gửi thông báo thử nghiệm
   const handleSendTest = async () => {
     setTesting(true);
     try {
