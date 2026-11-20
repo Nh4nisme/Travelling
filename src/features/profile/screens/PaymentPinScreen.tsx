@@ -35,7 +35,7 @@ export function PaymentPinScreen({ navigation }: any) {
   const currentPinRef = useRef<PaymentPinInputRef>(null);
   const newPinRef = useRef<PaymentPinInputRef>(null);
   const confirmPinRef = useRef<PaymentPinInputRef>(null);
-
+  // Kiểm tra đúng độ dài và đúng định dạng của mã PIN 6 số
   const handleSave = async () => {
     setError('');
 

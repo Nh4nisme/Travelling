@@ -196,7 +196,7 @@ export function PaymentsScreen() {
       ]
     );
   };
-
+  // Xử lý khi người dùng nhấn vào một mục trong danh sách
   const getStatusBadge = (b: Booking) => {
     if (b.status === 'cancelled') {
       return { label: isVietnamese ? 'Đã hủy' : 'Cancelled', bg: '#fee2e2', text: '#dc2626' };

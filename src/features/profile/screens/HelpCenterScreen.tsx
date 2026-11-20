@@ -28,7 +28,7 @@ export function HelpCenterScreen() {
   const trimmed = query.trim();
   const results = useMemo(() => searchFaqs(trimmed, FAQS), [trimmed]);
   const popular = useMemo(() => FAQS.filter((faq) => faq.popular), []);
-
+  // Xử lý khi người dùng nhấn vào một câu hỏi trong kết quả tìm kiếm hoặc danh sách phổ biến
   const openFaq = (faqId: string) => navigation.navigate('Faq', { faqId });
 
   return (

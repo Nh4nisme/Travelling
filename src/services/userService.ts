@@ -12,7 +12,7 @@ export const userService = {
   toggleFavorite: (listingId: string, token: string) =>
     api<{ favorites: string[] }>(`/auth/favorites/${listingId}`, { method: 'POST', token }),
   
-  // Set/Update Payment PIN
+  // Sửa đổi mã PIN thanh toán
   setPaymentPin: (currentPin: string | null, newPin: string, token: string) =>
     api<{ message: string; user: User }>('/auth/payment-pin', {
       method: 'POST',
@@ -28,7 +28,7 @@ export const userService = {
       token,
     }),
 
-  // Change Password
+  // Đổi mật khẩu
   changePassword: (currentPassword: string, newPassword: string, token: string) =>
     api<{ message: string }>('/auth/change-password', {
       method: 'POST',

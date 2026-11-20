@@ -10,6 +10,7 @@ export type ContactUser = {
 };
 
 export const chatService = {
+  // Lấy danh sách hội thoại
   async getConversations(overrideToken?: string | null): Promise<Conversation[]> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) return [];
@@ -25,7 +26,7 @@ export const chatService = {
     });
     return res.messages;
   },
-
+  // Gửi tin nhắn trong hội thoại
   async sendMessage(
     conversationId: string,
     text: string,
@@ -40,7 +41,7 @@ export const chatService = {
     });
     return res.message;
   },
-
+  // Đánh dấu hội thoại là đã đọc
   async createInquiry(
     payload: {
       hostId?: string;
@@ -60,14 +61,14 @@ export const chatService = {
     });
     return res.conversationId;
   },
-
+  // Lấy danh sách người dùng đã liên hệ
   async getContacts(overrideToken?: string | null): Promise<ContactUser[]> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) return [];
     const res = await api<{ users: ContactUser[] }>('/chat/contacts', { token });
     return res.users;
   },
-
+  // Tìm kiếm người dùng theo email hoặc tên
   async searchUser(query: string, overrideToken?: string | null): Promise<ContactUser | null> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) return null;

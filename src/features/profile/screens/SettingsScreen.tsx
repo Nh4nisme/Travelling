@@ -24,17 +24,17 @@ export function SettingsScreen({ navigation }: any) {
     { label: 'English (US)', value: 'English' },
     { label: 'Tiếng Việt', value: 'Tiếng Việt' },
   ];
-
+  // Xử lý khi người dùng chọn một theme
   const handleThemeSelect = (selectedTheme: ThemeMode) => {
     void setThemeMode(selectedTheme);
     setShowThemeModal(false);
   };
-
+  // Xử lý khi người dùng chọn một ngôn ngữ
   const handleLangSelect = (selectedLang: Language) => {
     void setLanguage(selectedLang);
     setShowLangModal(false);
   };
-
+  // Lấy giá trị hiển thị của theme hiện tại
   const getThemeDisplayValue = () => {
     switch (themeMode) {
       case 'light':

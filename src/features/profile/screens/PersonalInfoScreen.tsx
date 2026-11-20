@@ -20,7 +20,7 @@ export function PersonalInfoScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch latest data from API when opening screen
+  // Đồng bộ thông tin người dùng từ server khi component mount
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -48,7 +48,7 @@ export function PersonalInfoScreen() {
     };
   }, []);
 
-  // Update local state when user in context updates
+  // Cập nhật state khi user thay đổi (ví dụ sau khi đồng bộ từ server)
   useEffect(() => {
     if (user && !fetching) {
       setName((prev) => (prev ? prev : user.name));
@@ -56,7 +56,7 @@ export function PersonalInfoScreen() {
     }
   }, [user]);
 
-  // Check if form has changes compared to current user
+  // Kiểm tra xem có thay đổi nào so với dữ liệu gốc không
   const hasChanges =
     user &&
     (name.trim() !== user.name.trim() || phone.trim() !== (user.phone ?? '').trim());

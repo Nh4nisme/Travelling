@@ -28,7 +28,7 @@ export function ContactSupportScreen() {
       Alert.alert(errorTitle, errorMessage);
     }
   };
-
+  // Xử lý khi người dùng nhấn vào nút email hoặc gọi điện
   const handleEmail = () => {
     const subject = encodeURIComponent('Travelling support request');
     const body = encodeURIComponent(
@@ -40,7 +40,7 @@ export function ContactSupportScreen() {
       `Please email us at ${SUPPORT_CONTACT.email}.`,
     );
   };
-
+  // Xử lý khi người dùng nhấn vào nút gọi điện
   const handleCall = () =>
     void openLink(`tel:${SUPPORT_CONTACT.phoneDial}`, 'Unable to place call', `Please call us at ${SUPPORT_CONTACT.phoneDisplay}.`);
 

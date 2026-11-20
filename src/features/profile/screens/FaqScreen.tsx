@@ -39,7 +39,7 @@ export function FaqScreen() {
     if (!focusId) return filtered;
     return [...filtered].sort((a, b) => Number(b.id === focusId) - Number(a.id === focusId));
   }, [query, category, focusId]);
-
+  // Xử lý khi người dùng nhấn vào nút "Contact Support" trong một câu hỏi
   const goToContact = () => navigation.navigate('ContactSupport');
 
   return (

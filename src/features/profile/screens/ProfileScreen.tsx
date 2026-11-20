@@ -10,7 +10,7 @@ export function ProfileScreen({ navigation }: any) {
   const { user, signOut, favs, bookings } = useApp();
   const { colors } = useTheme();
   const { t } = useLanguage();
-
+  // Xử lý khi người dùng nhấn vào một mục trong menu
   const handleMenuItemPress = (screenName: string) => {
     if (screenName === 'Help center') {
       navigation.navigate('HelpCenter');

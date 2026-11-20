@@ -34,7 +34,7 @@ export interface InboxContextType {
 }
 
 export const InboxContext = createContext<InboxContextType | null>(null);
-
+// Hook để sử dụng InboxContext
 export function useInbox() {
   const context = useContext(InboxContext);
   if (!context) {
@@ -100,6 +100,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
         setConversations([aiConv]);
         return [aiConv];
       }
+      // Lấy danh sách hội thoại từ MongoDB
       const data = await chatService.getConversations(token);
       const list = Array.isArray(data) ? data : [];
       
@@ -144,6 +145,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
 
   // 2. KẾT NỐI REALTIME SOCKET.IO - LẮNG NGHE SỰ KIỆN TỨC THÌ
   useEffect(() => {
+    // Kết nối Socket.io khi user login
     const socket = socketService.connect();
 
     // A. Nhận tin nhắn mới tức thì từ Socket.io (<50ms)
