@@ -21,13 +21,14 @@ export type AddCardPayload = {
 };
 
 export const paymentService = {
+  // Lấy danh sách phương thức thanh toán
   async getMethods(overrideToken?: string | null): Promise<PaymentMethodItem[]> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) return [];
     const res = await api<{ methods: PaymentMethodItem[] }>('/payments/methods', { token });
     return res.methods || [];
   },
-
+  // Thêm phương thức thanh toán mới
   async addCard(
     payload: AddCardPayload,
     overrideToken?: string | null
@@ -40,7 +41,7 @@ export const paymentService = {
       token,
     });
   },
-
+ // Xóa phương thức thanh toán
   async deleteCard(id: string, overrideToken?: string | null): Promise<void> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) throw new Error('Vui lòng đăng nhập.');
@@ -49,7 +50,7 @@ export const paymentService = {
       token,
     });
   },
-
+  // Đặt phương thức thanh toán mặc định
   async setDefault(id: string, overrideToken?: string | null): Promise<PaymentMethodItem> {
     const token = overrideToken ?? (await tokenStorage.get());
     if (!token) throw new Error('Vui lòng đăng nhập.');

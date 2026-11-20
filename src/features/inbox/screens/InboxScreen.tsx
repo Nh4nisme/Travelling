@@ -76,7 +76,7 @@ function InboxMain({
       })();
     }
   }, [openConversationId, navTimestamp, refreshConversations, markAsRead]);
-
+  // Lọc danh sách hội thoại theo tab và search query
   const filtered = useMemo(() => {
     return conversations.filter((item) => {
       const matchTab = activeTab === 'all' || item.status === activeTab;
@@ -90,7 +90,7 @@ function InboxMain({
       return matchHost || matchListing || matchMessage;
     });
   }, [conversations, activeTab, searchQuery]);
-
+  // Chọn hội thoại
   const handleSelectConv = useCallback(
     (id: string) => {
       markAsRead(id);
@@ -98,14 +98,14 @@ function InboxMain({
     },
     [markAsRead]
   );
-
+  // Mở modal bắt đầu chat mới
   const handleOpenNewChat = () => {
     setSearchUserQuery('');
     setFoundUser(null);
     setSearchUserError(null);
     setShowNewChatModal(true);
   };
-
+  // Tìm kiếm người dùng qua SĐT / Email
   const handleSearchUser = async () => {
     const q = searchUserQuery.trim();
     if (!q) {
@@ -128,7 +128,7 @@ function InboxMain({
       setSearchingUser(false);
     }
   };
-
+  // Bắt đầu chat với người dùng đã tìm thấy
   const handleStartChatWith = async (contact: ContactUser) => {
     setStartingChat(true);
     try {
@@ -148,7 +148,7 @@ function InboxMain({
       setStartingChat(false);
     }
   };
-
+  // Lấy style cho badge trạng thái hội thoại
   const getStatusBadgeStyle = useCallback(
     (status: Conversation['status']) => {
       switch (status) {
@@ -173,7 +173,7 @@ function InboxMain({
     },
     [isDark]
   );
-
+  // Nếu đang mở hội thoại, hiển thị màn hình ChatDetailScreen
   if (selectedConversationId) {
     return (
       <ChatDetailScreen

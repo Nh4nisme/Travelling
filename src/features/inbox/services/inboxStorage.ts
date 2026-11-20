@@ -26,7 +26,7 @@ export const inboxStorage = {
       return null;
     }
   },
-
+  // Lưu danh sách hội thoại vào storage
   async saveConversations(conversations: Conversation[], scopeKey?: string): Promise<void> {
     const key = getKey(scopeKey);
     try {
@@ -38,7 +38,7 @@ export const inboxStorage = {
       }
     } catch {}
   },
-
+  // Xóa danh sách hội thoại khỏi storage
   async clear(scopeKey?: string): Promise<void> {
     const key = getKey(scopeKey);
     try {

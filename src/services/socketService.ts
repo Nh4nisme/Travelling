@@ -6,6 +6,7 @@ let currentConversationId: string | null = null;
 let lastWarnTime = 0;
 
 export const socketService = {
+  // Kết nối đến server socket
   connect(): Socket {
     if (!socket) {
       // Ưu tiên polling trước để bắt tay 100% thành công trên mọi thiết bị và mạng LAN, sau đó tự động nâng cấp lên websocket
@@ -49,7 +50,7 @@ export const socketService = {
   getSocket(): Socket | null {
     return socket;
   },
-
+  // Tham gia phòng chat
   joinConversation(conversationId: string) {
     if (!conversationId) return;
     currentConversationId = conversationId;
@@ -58,7 +59,7 @@ export const socketService = {
       s.emit('join_conversation', conversationId);
     }
   },
-
+  // Rời khỏi phòng chat
   leaveConversation(conversationId: string) {
     if (!conversationId) return;
     if (currentConversationId === conversationId) {
@@ -68,7 +69,7 @@ export const socketService = {
       socket.emit('leave_conversation', conversationId);
     }
   },
-
+  // Gửi sự kiện bắt đầu gõ tin nhắn
   emitTypingStart(conversationId: string, userId: string, userName: string) {
     if (!conversationId) return;
     const s = this.connect();
@@ -76,7 +77,7 @@ export const socketService = {
       s.emit('typing:start', { conversationId, userId, userName });
     }
   },
-
+  // Gửi sự kiện dừng gõ tin nhắn
   emitTypingStop(conversationId: string, userId: string) {
     if (!conversationId) return;
     const s = this.connect();

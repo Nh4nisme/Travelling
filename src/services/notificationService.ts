@@ -1,6 +1,6 @@
 /**
  * notificationService.ts
- * Local notification service — dùng expo-notifications (không cần push server).
+ * Local notification service - dùng expo-notifications (không cần push server).
  * Mọi thông báo đều được kiểm tra cài đặt từ settingsStorage trước khi gửi.
  */
 import { Platform } from 'react-native';
@@ -24,7 +24,7 @@ Notifications.setNotificationHandler({
 // ─── Helpers storage ────────────────────────────────────────────────────────
 
 type ScheduledMap = Record<string, string>; // bookingId -> notificationId
-
+  // Đọc mapping bookingId -> notificationId từ SecureStore
 async function readScheduledMap(): Promise<ScheduledMap> {
   try {
     let raw: string | null = null;
@@ -38,7 +38,7 @@ async function readScheduledMap(): Promise<ScheduledMap> {
     return {};
   }
 }
-
+// Ghi mapping bookingId -> notificationId vào SecureStore
 async function writeScheduledMap(map: ScheduledMap): Promise<void> {
   try {
     const raw = JSON.stringify(map);

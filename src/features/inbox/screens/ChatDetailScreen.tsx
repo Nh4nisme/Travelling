@@ -83,6 +83,7 @@ function ChatDetailInner({
     
     // AI Assistant không cần socket
     if (!isAIAssistant) {
+      // Tham gia phòng chat qua socket
       socketService.joinConversation(conv.id);
     }
 
@@ -96,6 +97,7 @@ function ChatDetailInner({
     return () => {
       active = false;
       if (!isAIAssistant && user?.id) {
+        // Khi rời khỏi màn hình, gửi event typing stop và rời phòng chat
         socketService.emitTypingStop(conv.id, user.id);
         socketService.leaveConversation(conv.id);
       }
@@ -153,15 +155,17 @@ function ChatDetailInner({
       </View>
     );
   }
-
+  // 3. Xử lý gõ tin nhắn và gửi
   const handleTextChange = (text: string) => {
     setInputText(text);
     // AI Assistant không cần typing indicator qua socket
     if (!isAIAssistant && user?.id) {
       if (text.trim().length > 0) {
+        // Gửi event typing start và đặt timer dừng gõ sau 2s
         socketService.emitTypingStart(conv.id, user.id, user.name || 'User');
         if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
         typingTimerRef.current = setTimeout(() => {
+          // Sau 2s không gõ, gửi event typing stop
           socketService.emitTypingStop(conv.id, user.id);
         }, 2000);
       } else {
@@ -169,7 +173,7 @@ function ChatDetailInner({
       }
     }
   };
-
+  // 4. Gửi tin nhắn
   const handleSend = async () => {
     if (!inputText.trim()) return;
     const textToSend = inputText.trim();
