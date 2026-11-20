@@ -1,10 +1,10 @@
-# 🌍 Travelling App — Mobile Travel & Vacation Rental Platform
+# Travelling App — Mobile Travel & Vacation Rental Platform
 
 Ứng dụng di động tìm kiếm, đặt phòng nghỉ dưỡng du lịch và trò chuyện trực tuyến thời gian thực (Realtime Two-way Chat), tích hợp trợ lý du lịch AI thông minh (Google Gemini AI). Dự án xây dựng theo kiến trúc Full-Stack hiện đại: **Expo SDK 58 (React Native + TypeScript)** kết hợp **Node.js Express API**, **Socket.IO** và **MongoDB Atlas**.
 
 ---
 
-## 🚀 Công Nghệ Sử Dụng (Tech Stack)
+## Công Nghệ Sử Dụng (Tech Stack)
 
 ### Frontend (Mobile App)
 - **Framework:** React Native, Expo SDK 58 (Hỗ trợ iOS, Android, Web).
@@ -25,7 +25,7 @@
 
 ---
 
-## 🌟 Các Tính Năng Nổi Bật (Key Features)
+## Các Tính Năng Nổi Bật (Key Features)
 
 ### 1. Xác thực & Bảo mật tài khoản (Auth)
 - Đăng nhập, đăng ký tài khoản với xác minh mã OTP 6 số qua Email thực tế.
@@ -58,7 +58,7 @@
 
 ---
 
-## 📁 Cấu Trúc Thư Mục Dự Án (Project Structure)
+## Cấu Trúc Thư Mục Dự Án (Project Structure)
 
 ```
 Travelling/
@@ -169,23 +169,3 @@ pnpm start
   pnpm start:go
   ```
   *(Lưu ý: Thay `localhost` trong `.env` thành địa chỉ IP Wi-Fi nội bộ của máy tính, ví dụ `http://192.168.1.50:4000`).*
-
----
-
-## 🧪 Kiểm Thử (Testing)
-
-Chạy bộ unit test kiểm thử các quy tắc nghiệp vụ đặt phòng (Business Rules BR01 - BR07) của Backend:
-```bash
-cd server
-pnpm test
-```
-
----
-
-## 📄 Tài Liệu Báo Cáo Dự Án Bổ Sung
-
-Các tài liệu chi tiết phục vụ báo cáo và thuyết trình có sẵn trong dự án:
-- 📖 [BAO_CAO_CHUC_NANG_CHAT.md](file:///d:/Study/Mobile/PRJ/Travelling/BAO_CAO_CHUC_NANG_CHAT.md): Báo cáo kỹ thuật chi tiết chức năng Chat.
-- 📖 [BAO_CAO_CHUC_NANG_PROFILE.md](file:///d:/Study/Mobile/PRJ/Travelling/BAO_CAO_CHUC_NANG_PROFILE.md): Báo cáo kỹ thuật chi tiết chức năng Profile & Payments.
-- 📖 [UU_DIEM_VA_CONG_NGHE_CHAT.md](file:///d:/Study/Mobile/PRJ/Travelling/UU_DIEM_VA_CONG_NGHE_CHAT.md): Phân tích ưu điểm và công nghệ của chức năng Chat.
-- 📖 [UU_DIEM_VA_CONG_NGHE_PROFILE.md](file:///d:/Study/Mobile/PRJ/Travelling/UU_DIEM_VA_CONG_NGHE_PROFILE.md): Phân tích ưu điểm và công nghệ của Profile & Payments.
