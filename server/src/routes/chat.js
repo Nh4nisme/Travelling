@@ -287,6 +287,16 @@ router.post('/inquire', auth, async (req, res) => {
         unreadBy: [],
       });
       // Không tạo tin nhắn tự động để giữ lịch sử chat trống ban đầu
+
+      // Bắn sự kiện realtime cho đối phương biết có cuộc hội thoại mới được khởi tạo
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('conversation:created', {
+          conversationId: conversation._id.toString(),
+          hostId: hostId.toString(),
+          renterId: renterId.toString(),
+        });
+      }
     }
 
     res.json({ conversationId: conversation._id.toString() });
