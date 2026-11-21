@@ -89,8 +89,14 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const isRefreshingRef = useRef(false);
+
   // 1. Tải danh sách hội thoại THỰC TẾ từ Database MongoDB Atlas
   const refreshConversations = useCallback(async (): Promise<Conversation[]> => {
+    if (isRefreshingRef.current) {
+      return conversationsRef.current;
+    }
+    isRefreshingRef.current = true;
     try {
       setLoading(true);
       const token = await tokenStorage.get();
@@ -117,6 +123,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       return [aiConv];
     } finally {
       setLoading(false);
+      isRefreshingRef.current = false;
     }
   }, [createAIAssistantConversation]);
 
@@ -151,6 +158,26 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
     // A. Nhận tin nhắn mới tức thì từ Socket.io (<50ms)
     const handleNewMessage = (newMsg: ChatMessage & { conversationId: string }) => {
       if (!newMsg?.conversationId) return;
+
+      // KIỂM TRA: Nếu cuộc hội thoại này CHƯA TỒN TẠI trong danh sách hiện tại của máy mình (lần đầu chat)
+      const convExists = conversationsRef.current.some((c) => c.id === newMsg.conversationId);
+      if (!convExists) {
+        // Tự động tải mới danh sách hội thoại từ MongoDB Atlas để lấy đầy đủ thông tin hội thoại mới
+        void refreshConversations();
+
+        // Bắn thông báo đẩy nếu là tin nhắn từ người khác gửi tới
+        const isMe = newMsg.sender === (isHostUserRef.current ? 'host' : 'renter');
+        if (!isMe) {
+          const senderTitle = newMsg.senderName || 'Tin nhắn mới';
+          const bodyPreview = newMsg.text || '📷 Đã gửi một ảnh';
+          void notificationService.scheduleLocal(
+            `💬 ${senderTitle}`,
+            bodyPreview,
+            { category: 'messages', data: { conversationId: newMsg.conversationId, type: 'new_message' } }
+          );
+        }
+        return;
+      }
 
       setConversations((prev) =>
         prev.map((c) => {
@@ -209,6 +236,15 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       lastMessageTime: string;
       unreadFor?: string;
     }) => {
+      if (!data?.id) return;
+
+      // KIỂM TRA: Nếu hội thoại chưa có trong state -> fetch mới ngay lập tức
+      const convExists = conversationsRef.current.some((c) => c.id === data.id);
+      if (!convExists) {
+        void refreshConversations();
+        return;
+      }
+
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id === data.id) {
@@ -250,14 +286,21 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    // D. Lắng nghe sự kiện hội thoại mới được tạo
+    const handleConversationCreated = () => {
+      void refreshConversations();
+    };
+
     socket.on('message:received', handleNewMessage);
     socket.on('conversation:updated', handleConversationUpdated);
+    socket.on('conversation:created', handleConversationCreated);
     socket.on('typing:start', handleTypingStart);
     socket.on('typing:stop', handleTypingStop);
 
     return () => {
       socket.off('message:received', handleNewMessage);
       socket.off('conversation:updated', handleConversationUpdated);
+      socket.off('conversation:created', handleConversationCreated);
       socket.off('typing:start', handleTypingStart);
       socket.off('typing:stop', handleTypingStop);
     };
